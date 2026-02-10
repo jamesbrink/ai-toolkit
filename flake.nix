@@ -102,18 +102,22 @@
             default = {
               type = "app";
               program = "${ai-toolkit}/bin/ai-toolkit-train";
+              meta.description = "Run a diffusion model training job from a YAML config";
             };
             train = {
               type = "app";
               program = "${ai-toolkit}/bin/ai-toolkit-train";
+              meta.description = "Run a diffusion model training job from a YAML config";
             };
             gradio = {
               type = "app";
               program = "${ai-toolkit}/bin/ai-toolkit-gradio";
+              meta.description = "Launch the Gradio web UI for interactive LoRA training";
             };
             ui = {
               type = "app";
               program = "${ai-toolkit-ui}/bin/ai-toolkit-ui";
+              meta.description = "Start the Next.js dashboard for managing training jobs";
             };
           };
 
