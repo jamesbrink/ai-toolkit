@@ -121,7 +121,8 @@ stdenv.mkDerivation {
       --prefix PATH : ${lib.makeBinPath [ ffmpeg-full git ]} \
       --set-default HF_HUB_ENABLE_HF_TRANSFER "1" \
       --set-default NO_ALBUMENTATIONS_UPDATE "1" \
-      --set-default DISABLE_TELEMETRY "YES"
+      --set-default DISABLE_TELEMETRY "YES" \
+      --set-default GRADIO_SERVER_NAME "0.0.0.0"
 
     # Generic Python wrapper for running any toolkit script
     makeWrapper ${pythonEnv}/bin/python $out/bin/ai-toolkit-python \
