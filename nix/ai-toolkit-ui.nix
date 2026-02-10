@@ -89,16 +89,18 @@ buildNpmPackage {
     # --- Prisma schema + generated client (needed at runtime) ---
     cp -r prisma $out/lib/ai-toolkit-ui/prisma
 
-    # Ensure Prisma client runtime is available for the worker
-    # (standalone node_modules may already have @prisma/client from Next.js)
+    # Ensure Prisma runtime modules are available (client, engines, CLI).
+    # The standalone output may include @prisma/client but not @prisma/engines
+    # or the prisma CLI.  Merge the full build's node_modules on top.
+    mkdir -p "$out/lib/ai-toolkit-ui/node_modules"
     for dir in .prisma @prisma prisma; do
-      if [ -d "node_modules/$dir" ] && [ ! -d "$out/lib/ai-toolkit-ui/node_modules/$dir" ]; then
-        mkdir -p "$out/lib/ai-toolkit-ui/node_modules"
-        cp -r "node_modules/$dir" "$out/lib/ai-toolkit-ui/node_modules/$dir"
+      if [ -d "node_modules/$dir" ]; then
+        mkdir -p "$out/lib/ai-toolkit-ui/node_modules/$dir"
+        cp -r "node_modules/$dir/." "$out/lib/ai-toolkit-ui/node_modules/$dir/"
       fi
     done
 
-    # Prisma CLI for runtime db push
+    # Prisma CLI binary for runtime db push
     if [ -d "node_modules/.bin" ]; then
       mkdir -p "$out/lib/ai-toolkit-ui/node_modules/.bin"
       cp -P node_modules/.bin/prisma "$out/lib/ai-toolkit-ui/node_modules/.bin/prisma" 2>/dev/null || true

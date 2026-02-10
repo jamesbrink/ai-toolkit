@@ -21,7 +21,10 @@ export PATH="${TOOLKIT_PKG}/bin:$PATH"
 
 # --- Port ---
 export PORT="${PORT:-8675}"
-export HOSTNAME="${HOSTNAME:-0.0.0.0}"
+# Next.js standalone uses HOSTNAME to bind. The shell's $HOSTNAME is typically
+# set to the machine name (which may resolve to a non-local IP), so we must
+# override it explicitly. Users can set AI_TOOLKIT_UI_HOST to change the bind address.
+export HOSTNAME="${AI_TOOLKIT_UI_HOST:-0.0.0.0}"
 
 # --- Prisma engines for runtime db push ---
 export PRISMA_SCHEMA_ENGINE_BINARY="${PRISMA_ENGINES_PKG}/bin/schema-engine"
