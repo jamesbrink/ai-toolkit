@@ -15,7 +15,8 @@ import shutil
 import json
 import yaml
 from slugify import slugify
-from transformers import AutoProcessor, AutoModelForCausalLM
+import inspect
+from transformers import AutoProcessor, AutoModelForCausalLM, GenerationMixin, GenerationConfig
 
 sys.path.insert(0, "ai-toolkit")
 from toolkit.job import get_job
@@ -109,6 +110,31 @@ def run_captioning(images, concept_sentence, *captions):
         revision=florence_revision,
         attn_implementation="eager",
     ).to(device)
+    # Fix for transformers >= 4.50: PreTrainedModel no longer inherits GenerationMixin,
+    # so Florence-2's language_model loses .generate(). Patch it back in.
+    if hasattr(model, 'language_model') and not hasattr(model.language_model, 'generate'):
+        model.language_model.__class__ = type(
+            model.language_model.__class__.__name__,
+            (GenerationMixin, model.language_model.__class__),
+            {}
+        )
+    if hasattr(model, 'language_model') and getattr(model.language_model, 'generation_config', None) is None:
+        lm_config = getattr(model.language_model, 'config', model.config)
+        model.language_model.generation_config = GenerationConfig.from_model_config(lm_config)
+    # Disable KV caching — Florence-2's old code expects legacy tuple format for
+    # past_key_values but newer transformers uses DynamicCache objects. Disabling
+    # the cache sidesteps the incompatibility with negligible cost for short captions.
+    if hasattr(model, 'language_model') and hasattr(model.language_model, 'generation_config'):
+        model.language_model.generation_config.use_cache = False
+    # Newer transformers passes kwargs (cache_position, etc.) that old Florence-2
+    # forward() doesn't accept. Wrap forward to filter to only accepted params.
+    if hasattr(model, 'language_model'):
+        _orig_lm_forward = model.language_model.forward
+        _lm_params = set(inspect.signature(_orig_lm_forward).parameters.keys())
+        def _filtered_lm_forward(*args, **kwargs):
+            filtered = {k: v for k, v in kwargs.items() if k in _lm_params}
+            return _orig_lm_forward(*args, **filtered)
+        model.language_model.forward = _filtered_lm_forward
     processor = AutoProcessor.from_pretrained(
         florence_model_id, trust_remote_code=True, revision=florence_revision
     )
