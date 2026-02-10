@@ -146,94 +146,23 @@ export default function SampleImages({ job }: SampleImagesProps) {
     );
   }, [status, sampleImages.length]);
 
-  // Use direct Tailwind class without string interpolation
-  // This way Tailwind can properly generate the class
-  // I hate this, but it's the only way to make it work
-  const gridColsClass = useMemo(() => {
-    const cols = Math.min(numSamples, 40);
+  // Responsive column count: on small screens cap to 2, medium to 4, large to full numSamples
+  const [cols, setCols] = useState(() => {
+    const w = typeof window !== 'undefined' ? window.innerWidth : 1024;
+    if (w < 640) return Math.min(numSamples, 2);
+    if (w < 1024) return Math.min(numSamples, 4);
+    return Math.min(numSamples, 40);
+  });
 
-    switch (cols) {
-      case 1:
-      case 2:
-      case 3:
-        return 'grid-cols-3';
-      case 4:
-        return 'grid-cols-4';
-      case 5:
-        return 'grid-cols-5';
-      case 6:
-        return 'grid-cols-6';
-      case 7:
-        return 'grid-cols-7';
-      case 8:
-        return 'grid-cols-8';
-      case 9:
-        return 'grid-cols-9';
-      case 10:
-        return 'grid-cols-10';
-      case 11:
-        return 'grid-cols-11';
-      case 12:
-        return 'grid-cols-12';
-      case 13:
-        return 'grid-cols-13';
-      case 14:
-        return 'grid-cols-14';
-      case 15:
-        return 'grid-cols-15';
-      case 16:
-        return 'grid-cols-16';
-      case 17:
-        return 'grid-cols-17';
-      case 18:
-        return 'grid-cols-18';
-      case 19:
-        return 'grid-cols-19';
-      case 20:
-        return 'grid-cols-20';
-      case 21:
-        return 'grid-cols-21';
-      case 22:
-        return 'grid-cols-22';
-      case 23:
-        return 'grid-cols-23';
-      case 24:
-        return 'grid-cols-24';
-      case 25:
-        return 'grid-cols-25';
-      case 26:
-        return 'grid-cols-26';
-      case 27:
-        return 'grid-cols-27';
-      case 28:
-        return 'grid-cols-28';
-      case 29:
-        return 'grid-cols-29';
-      case 30:
-        return 'grid-cols-30';
-      case 31:
-        return 'grid-cols-31';
-      case 32:
-        return 'grid-cols-32';
-      case 33:
-        return 'grid-cols-33';
-      case 34:
-        return 'grid-cols-34';
-      case 35:
-        return 'grid-cols-35';
-      case 36:
-        return 'grid-cols-36';
-      case 37:
-        return 'grid-cols-37';
-      case 38:
-        return 'grid-cols-38';
-      case 39:
-        return 'grid-cols-39';
-      case 40:
-        return 'grid-cols-40';
-      default:
-        return 'grid-cols-3';
-    }
+  useEffect(() => {
+    const updateCols = () => {
+      const w = window.innerWidth;
+      if (w < 640) setCols(Math.min(numSamples, 2));
+      else if (w < 1024) setCols(Math.min(numSamples, 4));
+      else setCols(Math.min(numSamples, 40));
+    };
+    window.addEventListener('resize', updateCols);
+    return () => window.removeEventListener('resize', updateCols);
   }, [numSamples]);
 
   const sampleConfig = useMemo(() => {
@@ -259,7 +188,7 @@ export default function SampleImages({ job }: SampleImagesProps) {
       <div className="pb-4">
         {PageInfoContent}
         {sampleImages && (
-          <div className={`grid ${gridColsClass} gap-1`}>
+          <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
             {sampleImages.map((sample: string, idx: number) => {
               // Compute current group (groups are size = numSamples)
               const groupIndex = Math.floor(idx / numSamples);
@@ -268,9 +197,9 @@ export default function SampleImages({ job }: SampleImagesProps) {
               const groupSize = groupEnd - groupStart;
               const isEndOfGroup = idx === groupEnd - 1;
 
-              // Only enforce a MIN of 3 when the group's planned width is < 3
+              // Only enforce a MIN of 3 when the grid columns are >= 3 but group is smaller
               const MIN_COLS = 3;
-              const shouldPad = numSamples < MIN_COLS && groupSize < MIN_COLS;
+              const shouldPad = cols >= MIN_COLS && numSamples < MIN_COLS && groupSize < MIN_COLS;
               const padsNeeded = shouldPad ? MIN_COLS - groupSize : 0;
 
               return (

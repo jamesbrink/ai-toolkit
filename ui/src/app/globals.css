@@ -1,6 +1,30 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --color-gray-950: #0a0a0a;
+  --color-gray-900: #171717;
+  --color-gray-800: #262626;
+  --color-gray-700: #404040;
+  --color-gray-600: #525252;
+  --color-gray-500: #737373;
+  --color-gray-400: #a3a3a3;
+  --color-gray-300: #d4d4d4;
+  --color-gray-200: #e5e5e5;
+  --color-gray-100: #f5f5f5;
+  --color-yellow-950: #1a1203;
+  --color-yellow-900: #2a1c05;
+  --color-yellow-800: #3a2607;
+  --color-yellow-700: #5a3a0b;
+  --color-yellow-600: #7a4e0f;
+  --color-yellow-500: #f59e0b;
+  --color-yellow-400: #fbbf24;
+  --color-yellow-300: #fcd34d;
+  --color-yellow-200: #fde68a;
+  --color-yellow-100: #fef3c7;
+  --color-yellow-50: #fffbeb;
+}
 
 :root {
   --background: #ffffff;
@@ -79,4 +103,14 @@ body {
   .aitk-react-select-container .aitk-react-select__placeholder {
     @apply text-sm text-neutral-200;
   }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.animate-shimmer {
+  background: linear-gradient(90deg, #262626 25%, #404040 50%, #262626 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
 }

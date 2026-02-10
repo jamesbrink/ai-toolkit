@@ -212,17 +212,17 @@ export default function TrainingForm() {
           </>
         )}
 
-        <div className="pr-2">
+        <div className="pr-2 shrink-0">
           <Button
-            className="text-gray-200 bg-gray-800 px-3 py-1 rounded-md"
+            className="text-gray-200 bg-gray-800 px-3 py-1 rounded-md whitespace-nowrap"
             onClick={() => setShowAdvancedView(!showAdvancedView)}
           >
             {showAdvancedView ? 'Show Simple' : 'Show Advanced'}
           </Button>
         </div>
-        <div>
+        <div className="shrink-0">
           <Button
-            className="text-gray-200 bg-green-800 px-3 py-1 rounded-md"
+            className="text-gray-200 bg-green-800 px-3 py-1 rounded-md whitespace-nowrap"
             onClick={() => saveJob()}
             disabled={status === 'saving'}
           >

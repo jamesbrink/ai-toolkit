@@ -85,7 +85,7 @@ export default function AuthWrapper({ authRequired, children }: AuthWrapperProps
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-900 text-gray-100 absolute top-0 left-0 right-0 bottom-0 scroll-auto">
+    <div className="flex min-h-dvh bg-gray-900 text-gray-100 absolute top-0 left-0 right-0 bottom-0 scroll-auto">
       {/* Left side - decorative or brand area */}
       <div className="hidden lg:flex lg:w-1/2 bg-gray-800 flex-col justify-center items-center p-12">
         <div className="mb-4">

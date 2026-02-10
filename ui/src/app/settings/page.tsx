@@ -63,7 +63,7 @@ export default function Settings() {
                     name="HF_TOKEN"
                     value={settings.HF_TOKEN}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent"
+                    className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent"
                     placeholder="Enter your Hugging Face token"
                   />
                 </div>
@@ -82,7 +82,7 @@ export default function Settings() {
                     name="TRAINING_FOLDER"
                     value={settings.TRAINING_FOLDER}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent"
+                    className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent"
                     placeholder="Enter training folder path"
                   />
                 </div>
@@ -104,7 +104,7 @@ export default function Settings() {
                     name="DATASETS_FOLDER"
                     value={settings.DATASETS_FOLDER}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent"
+                    className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent"
                     placeholder="Enter datasets folder path"
                   />
                 </div>
@@ -115,7 +115,7 @@ export default function Settings() {
           <button
             type="submit"
             disabled={status === 'saving'}
-            className="w-full px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full px-4 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {status === 'saving' ? 'Saving...' : 'Save Settings'}
           </button>

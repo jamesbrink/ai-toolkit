@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Dialog, DialogBackdrop, DialogPanel } from '@headlessui/react';
 import { SampleConfig, SampleItem } from '@/types';
@@ -186,6 +186,29 @@ export default function SampleImageViewer({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onCancel, handleArrowUp, handleArrowDown, handleArrowLeft, handleArrowRight]);
 
+  // Swipe gesture tracking
+  const pointerStart = useRef<{ x: number; y: number } | null>(null);
+
+  const onPointerDown = useCallback((e: React.PointerEvent) => {
+    pointerStart.current = { x: e.clientX, y: e.clientY };
+  }, []);
+
+  const onPointerUp = useCallback((e: React.PointerEvent) => {
+    if (!pointerStart.current) return;
+    const dx = e.clientX - pointerStart.current.x;
+    const dy = e.clientY - pointerStart.current.y;
+    pointerStart.current = null;
+
+    const absDx = Math.abs(dx);
+    const absDy = Math.abs(dy);
+
+    // Threshold: 50px horizontal, must exceed vertical by 1.5x
+    if (absDx > 50 && absDx > absDy * 1.5) {
+      if (dx < 0) handleArrowRight(); // swipe left -> next
+      else handleArrowLeft(); // swipe right -> prev
+    }
+  }, [handleArrowLeft, handleArrowRight]);
+
   if (!mounted) return null;
 
   return createPortal(
@@ -200,7 +223,12 @@ export default function SampleImageViewer({
             transition
             className="relative transform rounded-lg bg-gray-800 text-left shadow-xl transition-all data-closed:translate-y-4 data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in max-w-[95%] max-h-[95vh] data-closed:sm:translate-y-0 data-closed:sm:scale-95 flex flex-col overflow-hidden"
           >
-            <div className="overflow-hidden flex items-center justify-center">
+            <div
+              className="overflow-hidden flex items-center justify-center"
+              onPointerDown={onPointerDown}
+              onPointerUp={onPointerUp}
+              style={{ touchAction: 'pan-y' }}
+            >
               {imgPath &&
                 (isVideo(imgPath) ? (
                   <video

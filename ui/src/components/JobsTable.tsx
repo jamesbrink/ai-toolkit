@@ -143,7 +143,7 @@ export default function JobsTable({ onlyActive = false }: JobsTableProps) {
             <div key={gpuKey} className="mb-6">
               <div
                 className={classNames(
-                  'text-md flex px-4 py-1 rounded-t-lg',
+                  'text-md flex flex-col sm:flex-row px-4 py-1 rounded-t-lg',
                   { 'bg-green-900': queue?.is_running },
                   { 'bg-red-900': !queue?.is_running },
                 )}

@@ -109,7 +109,7 @@ export default function SampleControlImage({
         'group relative flex items-center justify-center rounded-xl cursor-pointer ring-1 ring-inset',
         'transition-all duration-200 select-none overflow-hidden text-center',
         'h-20 w-20',
-        backgroundUrl ? 'bg-gray-800 ring-gray-700' : 'bg-gradient-to-b from-gray-800 to-gray-900 ring-gray-700',
+        backgroundUrl ? 'bg-gray-800 ring-gray-700' : 'bg-linear-to-b from-gray-800 to-gray-900 ring-gray-700',
         isDragActive ? 'outline outline-2 outline-blue-500' : 'hover:ring-gray-600',
         className,
       )}

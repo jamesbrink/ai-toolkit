@@ -11,6 +11,7 @@ import { redirect } from 'next/navigation';
 import JobActionBar from '@/components/JobActionBar';
 import JobConfigViewer from '@/components/JobConfigViewer';
 import JobLossGraph from '@/components/JobLossGraph';
+import { JobOverviewSkeleton } from '@/components/Skeleton';
 import { Job } from '@prisma/client';
 
 type PageKey = 'overview' | 'samples' | 'config' | 'loss_log';
@@ -85,7 +86,7 @@ export default function JobPage({ params }: { params: { jobID: string } }) {
         )}
       </TopBar>
       <MainContent className={pages.find(page => page.value === pageKey)?.mainCss}>
-        {status === 'loading' && job == null && <p>Loading...</p>}
+        {status === 'loading' && job == null && <JobOverviewSkeleton />}
         {status === 'error' && job == null && <p>Error fetching job</p>}
         {job && (
           <>
@@ -96,12 +97,12 @@ export default function JobPage({ params }: { params: { jobID: string } }) {
           </>
         )}
       </MainContent>
-      <div className="bg-gray-800 absolute top-12 left-0 w-full h-8 flex items-center px-2 text-sm">
+      <div className="bg-gray-800 absolute top-12 left-0 w-full h-10 flex items-center px-2 text-sm overflow-x-auto">
         {pages.map(page => (
           <Button
             key={page.value}
             onClick={() => setPageKey(page.value)}
-            className={`px-4 py-1 h-8  ${page.value === pageKey ? 'bg-gray-300 dark:bg-gray-700' : ''}`}
+            className={`px-4 py-2 h-10 whitespace-nowrap shrink-0 ${page.value === pageKey ? 'bg-gray-300 dark:bg-gray-700' : ''}`}
           >
             {page.name}
           </Button>

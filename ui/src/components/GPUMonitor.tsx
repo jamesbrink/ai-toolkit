@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { GPUApiResponse } from '@/types';
-import Loading from '@/components/Loading';
 import GPUWidget from '@/components/GPUWidget';
+import { GPUWidgetSkeleton } from '@/components/Skeleton';
 import { apiClient } from '@/utils/api';
 
 const GpuMonitor: React.FC = () => {
@@ -45,30 +45,6 @@ const GpuMonitor: React.FC = () => {
     return () => clearInterval(intervalId);
   }, []);
 
-  const getGridClasses = (gpuCount: number): string => {
-    switch (gpuCount) {
-      case 1:
-        return 'grid-cols-1';
-      case 2:
-        return 'grid-cols-2';
-      case 3:
-        return 'grid-cols-3';
-      case 4:
-        return 'grid-cols-4';
-      case 5:
-      case 6:
-        return 'grid-cols-3';
-      case 7:
-      case 8:
-        return 'grid-cols-4';
-      case 9:
-      case 10:
-        return 'grid-cols-5';
-      default:
-        return 'grid-cols-3';
-    }
-  };
-
   console.log('state', {
     loading,
     gpuData,
@@ -78,7 +54,12 @@ const GpuMonitor: React.FC = () => {
 
   const content = useMemo(() => {
     if (loading && !gpuData) {
-      return <Loading />;
+      return (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+          <GPUWidgetSkeleton />
+          <GPUWidgetSkeleton />
+        </div>
+      );
     }
 
     if (error) {
@@ -116,10 +97,8 @@ const GpuMonitor: React.FC = () => {
       );
     }
 
-    const gridClass = getGridClasses(gpuData?.gpus?.length || 1);
-
     return (
-      <div className={`grid ${gridClass} gap-3`}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
         {gpuData.gpus.map((gpu, idx) => (
           <GPUWidget key={idx} gpu={gpu} />
         ))}

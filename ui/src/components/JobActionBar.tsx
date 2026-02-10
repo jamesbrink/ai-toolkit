@@ -42,7 +42,7 @@ export default function JobActionBar({
             }
             if (onRefresh) onRefresh();
           }}
-          className={`ml-2 opacity-100`}
+          className="ml-1 p-2.5 rounded-lg hover:bg-gray-700"
         >
           <Play />
         </Button>
@@ -54,7 +54,7 @@ export default function JobActionBar({
             await markJobAsStopped(job.id);
             if (onRefresh) onRefresh();
           }}
-          className={`ml-2 opacity-100`}
+          className="ml-1 p-2.5 rounded-lg hover:bg-gray-700"
         >
           <X />
         </Button>
@@ -74,18 +74,18 @@ export default function JobActionBar({
               },
             });
           }}
-          className={`ml-2 opacity-100`}
+          className="ml-1 p-2.5 rounded-lg hover:bg-gray-700"
         >
           <Pause />
         </Button>
       )}
       {!hideView && (
-        <Link href={`/jobs/${job.id}`} className="ml-2 text-gray-200 hover:text-gray-100 inline-block">
+        <Link href={`/jobs/${job.id}`} className="ml-1 p-2.5 rounded-lg hover:bg-gray-700 text-gray-200 hover:text-gray-100 inline-block">
           <Eye />
         </Link>
       )}
       {canEdit && (
-        <Link href={`/jobs/new?id=${job.id}`} className="ml-2 hover:text-gray-100 inline-block">
+        <Link href={`/jobs/new?id=${job.id}`} className="ml-1 p-2.5 rounded-lg hover:bg-gray-700 hover:text-gray-100 inline-block">
           <Pen />
         </Link>
       )}
@@ -113,7 +113,7 @@ export default function JobActionBar({
             },
           });
         }}
-        className={`ml-2 opacity-100`}
+        className="ml-1 p-2.5 rounded-lg hover:bg-gray-700"
       >
         <Trash2 />
       </Button>
