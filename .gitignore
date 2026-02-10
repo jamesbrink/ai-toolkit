@@ -183,3 +183,10 @@ cython_debug/
 aitk_db.db
 /notes.md
 /data
+
+# Gradio
+.gradio/
+
+# Nix build output
+result
+result-*

@@ -52,19 +52,21 @@ const startAndWatchJob = (job: Job) => {
     // write the config file
     fs.writeFileSync(configPath, JSON.stringify(jobConfig, null, 2));
 
-    let pythonPath = 'python';
-    // use .venv or venv if it exists
-    if (fs.existsSync(path.join(TOOLKIT_ROOT, '.venv'))) {
-      if (isWindows) {
-        pythonPath = path.join(TOOLKIT_ROOT, '.venv', 'Scripts', 'python.exe');
-      } else {
-        pythonPath = path.join(TOOLKIT_ROOT, '.venv', 'bin', 'python');
-      }
-    } else if (fs.existsSync(path.join(TOOLKIT_ROOT, 'venv'))) {
-      if (isWindows) {
-        pythonPath = path.join(TOOLKIT_ROOT, 'venv', 'Scripts', 'python.exe');
-      } else {
-        pythonPath = path.join(TOOLKIT_ROOT, 'venv', 'bin', 'python');
+    let pythonPath = process.env.PYTHON_PATH || 'python';
+    // use .venv or venv if it exists (skip venv detection if PYTHON_PATH is set)
+    if (!process.env.PYTHON_PATH) {
+      if (fs.existsSync(path.join(TOOLKIT_ROOT, '.venv'))) {
+        if (isWindows) {
+          pythonPath = path.join(TOOLKIT_ROOT, '.venv', 'Scripts', 'python.exe');
+        } else {
+          pythonPath = path.join(TOOLKIT_ROOT, '.venv', 'bin', 'python');
+        }
+      } else if (fs.existsSync(path.join(TOOLKIT_ROOT, 'venv'))) {
+        if (isWindows) {
+          pythonPath = path.join(TOOLKIT_ROOT, 'venv', 'Scripts', 'python.exe');
+        } else {
+          pythonPath = path.join(TOOLKIT_ROOT, 'venv', 'bin', 'python');
+        }
       }
     }
 

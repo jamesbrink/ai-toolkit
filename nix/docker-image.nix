@@ -4,6 +4,7 @@
 { pkgs
 , lib
 , ai-toolkit
+, ai-toolkit-ui
 }:
 
 pkgs.dockerTools.buildLayeredImage {
@@ -12,10 +13,12 @@ pkgs.dockerTools.buildLayeredImage {
 
   contents = with pkgs; [
     ai-toolkit
+    ai-toolkit-ui
     bashInteractive
     coreutils
     ffmpeg-full
     git
+    nodejs_22
     cacert
   ];
 
@@ -28,11 +31,16 @@ pkgs.dockerTools.buildLayeredImage {
       "/workspace/datasets" = { };
       "/workspace/models" = { };
     };
+    ExposedPorts = {
+      "8675/tcp" = { };
+    };
     Env = [
       "SSL_CERT_FILE=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
       "HF_HUB_ENABLE_HF_TRANSFER=1"
       "NO_ALBUMENTATIONS_UPDATE=1"
       "DISABLE_TELEMETRY=YES"
+      "PORT=8675"
+      "HOSTNAME=0.0.0.0"
     ];
   };
 }

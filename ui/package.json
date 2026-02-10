@@ -8,7 +8,7 @@
     "start": "concurrently --restart-tries -1 --restart-after 1000 -n WORKER,UI \"node dist/cron/worker.js\" \"next start --port 8675\"",
     "build_and_start": "npm install && npm run update_db && npm run build && npm run start",
     "lint": "next lint",
-    "update_db": "npx prisma generate && npx prisma db push",
+    "update_db": "export DATABASE_URL=\"${DATABASE_URL:-file:../../aitk_db.db}\" && npx prisma generate && npx prisma db push",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,css,scss}\""
   },
   "dependencies": {

@@ -40,9 +40,14 @@
             inherit python3;
           };
 
+          # Next.js web UI
+          ai-toolkit-ui = pkgs.callPackage ./nix/ai-toolkit-ui.nix {
+            inherit ai-toolkit;
+          };
+
           # Docker image (Linux only)
           docker-image = pkgs.callPackage ./nix/docker-image.nix {
-            inherit ai-toolkit;
+            inherit ai-toolkit ai-toolkit-ui;
           };
 
           # === Dev shell dependencies ===
@@ -87,6 +92,7 @@
           packages = {
             default = ai-toolkit;
             ai-toolkit = ai-toolkit;
+            ui = ai-toolkit-ui;
           } // lib.optionalAttrs isLinux {
             docker = docker-image;
           };
@@ -104,6 +110,10 @@
             gradio = {
               type = "app";
               program = "${ai-toolkit}/bin/ai-toolkit-gradio";
+            };
+            ui = {
+              type = "app";
+              program = "${ai-toolkit-ui}/bin/ai-toolkit-ui";
             };
           };
 
@@ -143,7 +153,9 @@
               echo ""
               echo "Nix package targets:"
               echo "  nix build          # build ai-toolkit package"
+              echo "  nix build .#ui     # build Next.js web UI"
               echo "  nix run . -- config/your_config.yaml  # run training"
+              echo "  nix run .#ui       # start web UI on port 8675"
               ${lib.optionalString isLinux ''echo "  nix build .#docker  # build Docker image"''}
             '';
           };
