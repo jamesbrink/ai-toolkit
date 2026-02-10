@@ -3,6 +3,22 @@
 { pkgs, lib }:
 
 self: super: {
+  # === CUDA-enabled PyTorch on Linux ===
+  # Use pre-built wheels (torch-bin) that include CUDA runtime libraries.
+  # This aliases torch → torch-bin so all transitive dependencies also get CUDA.
+} // lib.optionalAttrs pkgs.stdenv.isLinux {
+  torch = super.torch-bin.overridePythonAttrs (old: {
+    passthru = (old.passthru or { }) // {
+      # Attributes expected by downstream packages (e.g. bitsandbytes)
+      cudaSupport = true;
+      cudaPackages = pkgs.cudaPackages;
+      rocmSupport = false;
+      rocmPackages = pkgs.rocmPackages;
+    };
+  });
+  torchvision = super.torchvision-bin;
+  torchaudio = super.torchaudio-bin;
+} // {
   # === Missing packages (not in nixpkgs) ===
 
   lycoris-lora = self.buildPythonPackage rec {
@@ -111,7 +127,7 @@ self: super: {
     pythonRelaxDeps = true;
 
     dependencies = with self; [
-      torch safetensors packaging
+      torch safetensors packaging ninja
     ];
 
     doCheck = false;
@@ -134,7 +150,7 @@ self: super: {
     pythonRelaxDeps = true;
 
     dependencies = with self; [
-      torch numpy pywavelets
+      torch numpy pywavelets six
     ];
 
     dontUseCmakeConfigure = true;
@@ -192,6 +208,17 @@ self: super: {
   };
 
   # === nixpkgs package fixes ===
+
+  # accelerate test_convert_to_fp32 fails when torch-bin's inductor can't
+  # find a C compiler in the sandbox. The package itself is fine.
+  accelerate = super.accelerate.overridePythonAttrs (old: {
+    doCheck = false;
+  });
+
+  # bitsandbytes needs ninja at build time for CUDA kernels
+  bitsandbytes = super.bitsandbytes.overridePythonAttrs (old: {
+    nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ self.ninja ];
+  });
 
   # rapidfuzz C extension fails on macOS (libatomic not available with clang)
   rapidfuzz = super.rapidfuzz.overridePythonAttrs (old: lib.optionalAttrs pkgs.stdenv.isDarwin {
