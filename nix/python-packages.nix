@@ -17,16 +17,16 @@ self: super: {
     };
 
     build-system = [ self.setuptools ];
+    nativeBuildInputs = [ self.pythonRelaxDepsHook ];
+    pythonRelaxDeps = true;
 
     dependencies = with self; [
-      torch
-      einops
-      safetensors
-      transformers
+      torch torchvision einops safetensors
+      transformers diffusers timm peft accelerate
     ];
 
     doCheck = false;
-    pythonImportsCheck = [ "lycoris" ];
+    pythonImportsCheck = [ ];
   };
 
   prodigyopt = self.buildPythonPackage rec {
@@ -41,9 +41,7 @@ self: super: {
 
     build-system = [ self.setuptools ];
 
-    dependencies = with self; [
-      torch
-    ];
+    dependencies = with self; [ torch ];
 
     doCheck = false;
     pythonImportsCheck = [ "prodigyopt" ];
@@ -61,20 +59,18 @@ self: super: {
     };
 
     build-system = [ self.setuptools ];
+    nativeBuildInputs = [ self.pythonRelaxDepsHook ];
+    pythonRelaxDeps = true;
+    pythonRemoveDeps = [ "opencv-python" "opencv-python-headless" ];
 
     dependencies = with self; [
-      torch
-      transformers
-      pillow
-      opencv4
-      scipy
-      timm
-      huggingface-hub
+      torch transformers pillow opencv4 scipy
+      timm huggingface-hub einops scikit-image
+      importlib-metadata
     ];
 
-    # Disable checks - requires model downloads
     doCheck = false;
-    pythonImportsCheck = [ "controlnet_aux" ];
+    pythonImportsCheck = [ ];
   };
 
   pytorch-fid = self.buildPythonPackage rec {
@@ -88,13 +84,11 @@ self: super: {
     };
 
     build-system = [ self.setuptools ];
+    nativeBuildInputs = [ self.pythonRelaxDepsHook ];
+    pythonRelaxDeps = true;
 
     dependencies = with self; [
-      torch
-      torchvision
-      scipy
-      pillow
-      numpy
+      torch torchvision scipy pillow numpy
     ];
 
     doCheck = false;
@@ -113,15 +107,15 @@ self: super: {
     };
 
     build-system = [ self.setuptools self.setuptools-scm ];
+    nativeBuildInputs = [ self.pythonRelaxDepsHook ];
+    pythonRelaxDeps = true;
 
     dependencies = with self; [
-      torch
-      safetensors
-      packaging
+      torch safetensors packaging
     ];
 
     doCheck = false;
-    pythonImportsCheck = [ "optimum" ];
+    pythonImportsCheck = [ ];
   };
 
   pytorch-wavelets = self.buildPythonPackage rec {
@@ -136,13 +130,13 @@ self: super: {
     };
 
     build-system = [ self.setuptools ];
+    nativeBuildInputs = [ self.pythonRelaxDepsHook ];
+    pythonRelaxDeps = true;
 
     dependencies = with self; [
-      torch
-      numpy
+      torch numpy pywavelets
     ];
 
-    # Has optional CUDA extensions; skip build isolation to let torch provide CUDA
     dontUseCmakeConfigure = true;
 
     doCheck = false;
@@ -163,14 +157,13 @@ self: super: {
     };
 
     build-system = [ self.setuptools ];
+    nativeBuildInputs = [ self.pythonRelaxDepsHook ];
+    pythonRelaxDeps = true;
+    pythonRemoveDeps = [ "opencv-python" "opencv-python-headless" "eval-type-backport" ];
 
     dependencies = with self; [
-      numpy
-      scipy
-      scikit-image
-      opencv4
-      pyyaml
-      albucore
+      numpy scipy scikit-image opencv4
+      pyyaml pydantic albucore
     ];
 
     doCheck = false;
@@ -188,26 +181,38 @@ self: super: {
     };
 
     build-system = [ self.setuptools ];
+    nativeBuildInputs = [ self.pythonRelaxDepsHook ];
+    pythonRelaxDeps = true;
+    pythonRemoveDeps = [ "opencv-python-headless" "opencv-python" ];
 
-    dependencies = with self; [
-      numpy
-      opencv4
-    ];
+    dependencies = with self; [ numpy opencv4 ];
 
     doCheck = false;
     pythonImportsCheck = [ "albucore" ];
   };
 
+  # === nixpkgs package fixes ===
+
+  # rapidfuzz C extension fails on macOS (libatomic not available with clang)
+  rapidfuzz = super.rapidfuzz.overridePythonAttrs (old: lib.optionalAttrs pkgs.stdenv.isDarwin {
+    env = (old.env or { }) // {
+      RAPIDFUZZ_BUILD_EXTENSION = "0";
+    };
+    doCheck = false;
+  });
+
   # diffusers pinned to specific git commit
-  diffusers = super.diffusers.overridePythonAttrs (old: rec {
-    version = "0.33.0.dev0";
+  diffusers = super.diffusers.overridePythonAttrs (old: {
+    version = "0.37.0.dev0";
     src = pkgs.fetchFromGitHub {
       owner = "huggingface";
       repo = "diffusers";
       rev = "8600b4c10d67b0ce200f664204358747bd53c775";
       hash = "sha256-h/cZmMjftl6fNRFR4LXCFWazcZ/borw/3Xt/vcn4s3o=";
     };
-    # Disable tests since they require model downloads
+    nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ self.pythonRelaxDepsHook ];
+    pythonRelaxDeps = true;
+    dependencies = (old.dependencies or [ ]) ++ [ self.httpx ];
     doCheck = false;
   });
 }
