@@ -51,6 +51,19 @@ body {
     @apply text-sm text-neutral-200 bg-gray-800 hover:bg-gray-700;
   }
 
+  /* option selected / focused state */
+  .aitk-react-select-container .aitk-react-select__option--is-selected {
+    @apply bg-gray-700 text-white;
+  }
+  .aitk-react-select-container .aitk-react-select__option--is-focused {
+    @apply bg-gray-700;
+  }
+
+  /* group label */
+  .aitk-react-select-container .aitk-react-select__group-heading {
+    @apply text-xs text-gray-400 uppercase;
+  }
+
   /* indicator separator */
   .aitk-react-select-container .aitk-react-select__indicator-separator {
     @apply bg-gray-600;
@@ -67,6 +80,3 @@ body {
     @apply text-sm text-neutral-200;
   }
 }
-
-
-

@@ -81,6 +81,7 @@ async function detectMps() {
     if (appleGpu) {
       const totalMB = Math.round(mem.total / (1024 * 1024));
       const usedMB = Math.round((mem.total - mem.available) / (1024 * 1024));
+      const gpuUtil = await getAppleGpuUtilization();
       return {
         hasNvidiaSmi: false,
         deviceType: 'mps',
@@ -88,7 +89,7 @@ async function detectMps() {
           {
             index: 0,
             name: appleGpu.model || 'Apple Silicon GPU',
-            utilization: { gpu: 0, memory: Math.round((usedMB / totalMB) * 100) },
+            utilization: { gpu: gpuUtil, memory: Math.round((usedMB / totalMB) * 100) },
             memory: { total: totalMB, free: totalMB - usedMB, used: usedMB },
             isMps: true,
           },
@@ -99,6 +100,21 @@ async function detectMps() {
     console.error('Error detecting MPS GPU:', error);
   }
   return null;
+}
+
+async function getAppleGpuUtilization(): Promise<number> {
+  try {
+    const { stdout } = await execAsync(
+      'ioreg -r -l -c AGXAccelerator 2>/dev/null | grep "Device Utilization"',
+    );
+    const match = stdout.match(/"Device Utilization %"=(\d+)/);
+    if (match) {
+      return parseInt(match[1]);
+    }
+  } catch {
+    // ioreg not available or no AGXAccelerator — fall back to 0
+  }
+  return 0;
 }
 
 async function getGpuStats(isWindows: boolean) {

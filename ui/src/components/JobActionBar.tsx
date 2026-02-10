@@ -122,15 +122,21 @@ export default function JobActionBar({
         <MenuButton className={'ml-2'}>
           <Cog />
         </MenuButton>
-        <MenuItems anchor="bottom" className="bg-gray-900 border border-gray-700 rounded shadow-lg w-48 px-2 py-2 mt-4">
+        <MenuItems
+          anchor="bottom"
+          className="bg-gray-900 border border-gray-700 rounded shadow-lg w-48 px-2 py-2 mt-4 text-gray-200"
+        >
           <MenuItem>
-            <Link href={`/jobs/new?cloneId=${job.id}`} className="cursor-pointer px-4 py-1 hover:bg-gray-800 rounded block">
+            <Link
+              href={`/jobs/new?cloneId=${job.id}`}
+              className="cursor-pointer px-4 py-1 hover:bg-gray-800 rounded block text-gray-200"
+            >
               Clone Job
             </Link>
           </MenuItem>
           <MenuItem>
             <div
-              className="cursor-pointer px-4 py-1 hover:bg-gray-800 rounded"
+              className="cursor-pointer px-4 py-1 hover:bg-gray-800 rounded text-gray-200"
               onClick={() => {
                 let message = `Are you sure you want to mark this job as stopped? This will set the job status to 'stopped' if the status is hung. Only do this if you are 100% sure the job is stopped. This will NOT stop the job.`;
                 openConfirm({

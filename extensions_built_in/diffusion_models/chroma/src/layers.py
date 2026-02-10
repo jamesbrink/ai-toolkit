@@ -275,7 +275,7 @@ class NerfEmbedder(nn.Module):
         # Store the original dtype to cast back to at the end.
         original_dtype = inputs.dtype
         # Force all operations within this module to run in fp32.
-        with torch.autocast("cuda", enabled=False):
+        with torch.autocast(inputs.device.type, enabled=False):
             # Infer the patch side length from the number of pixels (P^2).
             patch_size = int(P2 ** 0.5)
 

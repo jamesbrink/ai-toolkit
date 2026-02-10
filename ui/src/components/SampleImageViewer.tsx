@@ -264,11 +264,11 @@ export default function SampleImageViewer({
                 </MenuButton>
                 <MenuItems
                   anchor="bottom end"
-                  className="bg-gray-900 border border-gray-700 rounded shadow-lg w-48 px-4 py-2 mt-1 z-50"
+                  className="bg-gray-900 border border-gray-700 rounded shadow-lg w-48 px-4 py-2 mt-1 z-50 text-gray-200"
                 >
                   <MenuItem>
                     <div
-                      className="cursor-pointer"
+                      className="cursor-pointer text-gray-200 hover:bg-gray-800 rounded px-2 py-1"
                       onClick={() => {
                         let message = `Are you sure you want to delete this sample? This action cannot be undone.`;
                         openConfirm({
