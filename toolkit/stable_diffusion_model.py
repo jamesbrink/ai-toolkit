@@ -151,6 +151,12 @@ class StableDiffusion:
         self.vae_device_torch = torch.device(device)
         self.vae_torch_dtype = get_torch_dtype(model_config.vae_dtype)
 
+        # MPS has incomplete float16/bf16 support for certain VAE operations
+        # (e.g. DiagonalGaussianDistribution.sample) which causes SIGTRAP.
+        # Force VAE to float32 on MPS — it's small so the memory cost is negligible.
+        if self.vae_device_torch.type == 'mps' and self.vae_torch_dtype != torch.float32:
+            self.vae_torch_dtype = torch.float32
+
         self.te_device_torch = torch.device(device)
         self.te_torch_dtype = get_torch_dtype(model_config.te_dtype)
 

@@ -23,6 +23,21 @@ from toolkit.job import get_job
 
 MAX_IMAGES = 150
 
+def _detect_device():
+    """Auto-detect the best available training device."""
+    if torch.cuda.is_available():
+        return "cuda:0"
+    if torch.backends.mps.is_available():
+        return "mps"
+    return "cpu"
+
+def _detect_optimizer():
+    """Pick an optimizer compatible with the current platform."""
+    # adamw8bit requires bitsandbytes which requires CUDA
+    if torch.cuda.is_available():
+        return "adamw8bit"
+    return "adamw"
+
 def load_captioning(uploaded_files, concept_sentence):
     uploaded_images = [file for file in uploaded_files if not file.endswith('.txt')]
     txt_files = [file for file in uploaded_files if file.endswith('.txt')]
@@ -209,6 +224,11 @@ def start_training(
     with open("config/examples/train_lora_flux_24gb.yaml", "r") as f:
         config = yaml.safe_load(f)
 
+    # Auto-detect device and optimizer for the current platform
+    proc = config["config"]["process"][0]
+    proc["device"] = _detect_device()
+    proc["train"]["optimizer"] = _detect_optimizer()
+
     # Update the config with user inputs
     config["config"]["name"] = slugged_lora_name
     config["config"]["process"][0]["model"]["low_vram"] = low_vram
@@ -266,8 +286,8 @@ def start_training(
 
     return f"Training completed successfully. Model saved as {slugged_lora_name}"
 
-config_yaml = '''
-device: cuda:0
+config_yaml = f'''
+device: {_detect_device()}
 model:
   is_flux: true
   quantize: true
@@ -299,8 +319,8 @@ train:
     use_ema: true
   gradient_accumulation_steps: 1
   gradient_checkpointing: true
-  noise_scheduler: flowmatch 
-  optimizer: adamw8bit #options: prodigy, dadaptation, adamw, adamw8bit, lion, lion8bit
+  noise_scheduler: flowmatch
+  optimizer: {_detect_optimizer()} #options: prodigy, dadaptation, adamw, adamw8bit, lion, lion8bit
   train_text_encoder: false #probably doesn't work for flux
   train_unet: true
 '''
