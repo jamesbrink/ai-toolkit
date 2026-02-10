@@ -17,9 +17,13 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 
 def flush(garbage_collect=True):
-    torch.cuda.empty_cache()
     if garbage_collect:
         gc.collect()
+    if hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+        torch.mps.synchronize()
+        torch.mps.empty_cache()
+    elif torch.cuda.is_available():
+        torch.cuda.empty_cache()
 
 
 ControlTypes = Literal['depth', 'pose', 'line', 'inpaint', 'mask']

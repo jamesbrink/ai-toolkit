@@ -42,8 +42,11 @@ from torchvision.transforms import functional as TF
 
 
 def flush():
-    torch.cuda.empty_cache()
     gc.collect()
+    if hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+        torch.mps.empty_cache()
+    elif torch.cuda.is_available():
+        torch.cuda.empty_cache()
 
 
 adapter_transforms = transforms.Compose([
@@ -344,9 +347,16 @@ class SDTrainer(BaseSDTrainProcess):
                     unload_text_encoder(self.sd)
                 else:
                     # todo once every model is tested to work, unload properly. Though, this will all be merged into one thing.
-                    # keep legacy usage for now. 
+                    # keep legacy usage for now.
                     self.sd.text_encoder_to("cpu")
                 flush()
+                # Extra aggressive cleanup for MPS — text encoders are large (~10GB for T5)
+                # and we need this memory back before loading the transformer to MPS
+                if hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+                    import gc
+                    gc.collect()
+                    torch.mps.synchronize()
+                    torch.mps.empty_cache()
         
         if self.train_config.blank_prompt_preservation and self.cached_blank_embeds is None:
             # make sure we have this if not unloading
@@ -2064,7 +2074,7 @@ class SDTrainer(BaseSDTrainProcess):
             else:
                 total_loss += loss
             if len(batch_list) > 1 and self.model_config.low_vram:
-                torch.cuda.empty_cache()
+                flush()
 
 
         if not self.is_grad_accumulation_step:

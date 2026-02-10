@@ -74,8 +74,11 @@ from toolkit.util.blended_blur_noise import get_blended_blur_noise
 from toolkit.util.get_model import get_model_class
 
 def flush():
-    torch.cuda.empty_cache()
     gc.collect()
+    if hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+        torch.mps.empty_cache()
+    elif torch.cuda.is_available():
+        torch.cuda.empty_cache()
 
 
 class BaseSDTrainProcess(BaseTrainProcess):
@@ -102,8 +105,16 @@ class BaseSDTrainProcess(BaseTrainProcess):
         self.grad_accumulation_step = 1
         # if true, then we do not do an optimizer step. We are accumulating gradients
         self.is_grad_accumulation_step = False
-        self.device = str(self.accelerator.device)
-        self.device_torch = self.accelerator.device
+        # Respect the config's device setting if provided, otherwise use the
+        # Accelerator's auto-detected device.  This allows forcing CPU training
+        # on Apple Silicon where MPS may be unstable for certain workloads.
+        config_device = self.get_conf('device', None)
+        if config_device is not None:
+            self.device = str(config_device)
+            self.device_torch = torch.device(config_device)
+        else:
+            self.device = str(self.accelerator.device)
+            self.device_torch = self.accelerator.device
         network_config = self.get_conf('network', None)
         if network_config is not None:
             self.network_config = NetworkConfig(**network_config)
@@ -1576,9 +1587,7 @@ class BaseSDTrainProcess(BaseTrainProcess):
                 self.load_training_state_from_metadata(previous_refiner_save)
 
         self.sd = ModelClass(
-            # todo handle single gpu and multi gpu here
-            # device=self.device,
-            device=self.accelerator.device,
+            device=self.device_torch,
             model_config=model_config_to_load,
             dtype=self.train_config.dtype,
             custom_pipeline=self.custom_pipeline,
@@ -2078,8 +2087,6 @@ class BaseSDTrainProcess(BaseTrainProcess):
 
         # make sure all params require grad
         self.ensure_params_requires_grad(force=True)
-
-
         ###################################################################
         # TRAIN LOOP
         ###################################################################
@@ -2188,7 +2195,7 @@ class BaseSDTrainProcess(BaseTrainProcess):
             except torch.cuda.OutOfMemoryError:
                 did_oom = True
             except RuntimeError as e:
-                if "CUDA out of memory" in str(e):
+                if "CUDA out of memory" in str(e) or "MPS backend out of memory" in str(e):
                     did_oom = True
                 else:
                     raise  # not an OOM; surface real errors
@@ -2198,7 +2205,8 @@ class BaseSDTrainProcess(BaseTrainProcess):
                     raise RuntimeError("OOM during training step 3 times in a row, aborting training")
                 optimizer.zero_grad(set_to_none=True)
                 flush()
-                torch.cuda.ipc_collect()
+                if torch.cuda.is_available():
+                    torch.cuda.ipc_collect()
                 # skip this step and keep going
                 print_acc("")
                 print_acc("################################################")
@@ -2208,7 +2216,10 @@ class BaseSDTrainProcess(BaseTrainProcess):
             else:
                 self.num_consecutive_oom = 0
             if self.torch_profiler is not None:
-                torch.cuda.synchronize()  # Make sure all CUDA ops are done
+                if torch.cuda.is_available():
+                    torch.cuda.synchronize()
+                elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+                    torch.mps.synchronize()
                 self.torch_profiler.stop()
                 
                 print("\n==== Profile Results ====")
@@ -2217,7 +2228,8 @@ class BaseSDTrainProcess(BaseTrainProcess):
             if not did_first_flush:
                 flush()
                 did_first_flush = True
-            # flush()
+            elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+                flush()  # MPS needs periodic cache clearing to avoid memory buildup
             # setup the networks to gradient checkpointing and everything works
             if self.adapter is not None and isinstance(self.adapter, ReferenceAdapter):
                 self.adapter.clear_memory()

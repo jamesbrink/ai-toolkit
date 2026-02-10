@@ -9,9 +9,13 @@ def value_map(inputs, min_in, max_in, min_out, max_out):
 
 
 def flush(garbage_collect=True):
-    torch.cuda.empty_cache()
     if garbage_collect:
         gc.collect()
+    if hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+        torch.mps.synchronize()
+        torch.mps.empty_cache()
+    elif torch.cuda.is_available():
+        torch.cuda.empty_cache()
 
 
 def get_mean_std(tensor):

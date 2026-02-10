@@ -951,6 +951,10 @@ class DatasetConfig:
 
         self.num_workers: int = kwargs.get('num_workers', 2)
         self.prefetch_factor: int = kwargs.get('prefetch_factor', 2)
+        # MPS does not support multiprocessing DataLoader workers
+        if hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+            self.num_workers = 0
+            self.prefetch_factor = None
         self.extra_values: List[float] = kwargs.get('extra_values', [])
         self.square_crop: bool = kwargs.get('square_crop', False)
         # apply same augmentations to control images. Usually want this true unless special case

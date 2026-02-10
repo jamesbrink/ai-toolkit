@@ -1,3 +1,4 @@
+import os
 from accelerate import Accelerator
 from diffusers.utils.torch_utils import is_compiled_module
 
@@ -7,7 +8,11 @@ global_accelerator = None
 def get_accelerator() -> Accelerator:
     global global_accelerator
     if global_accelerator is None:
-        global_accelerator = Accelerator()
+        # Allow forcing CPU mode via environment variable.  On Apple Silicon the
+        # Accelerator auto-detects MPS, but some workloads (e.g. quantized
+        # backward pass) crash on MPS and need a true CPU fallback.
+        force_cpu = os.environ.get("AITK_FORCE_CPU", "0") == "1"
+        global_accelerator = Accelerator(cpu=force_cpu)
     return global_accelerator
 
 def unwrap_model(model):

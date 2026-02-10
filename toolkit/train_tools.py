@@ -109,7 +109,10 @@ def get_noise_from_latents(latents):
     noise = []
     for seed in seed_list:
         torch.manual_seed(seed)
-        torch.cuda.manual_seed(seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed(seed)
+        elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+            torch.mps.manual_seed(seed)
         noise.append(torch.randn_like(latents[0]))
     return torch.stack(noise)
 

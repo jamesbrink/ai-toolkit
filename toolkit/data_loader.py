@@ -668,7 +668,8 @@ def get_dataloader_from_datasets(
 
     dataloader_kwargs = {}
     
-    if is_native_windows():
+    if is_native_windows() or torch.backends.mps.is_available():
+        # MPS tensors can't be shared between DataLoader worker processes
         dataloader_kwargs['num_workers'] = 0
     else:
         dataloader_kwargs['num_workers'] = dataset_config_list[0].num_workers

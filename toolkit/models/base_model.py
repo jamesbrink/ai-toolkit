@@ -90,9 +90,40 @@ class BlankNetwork:
         pass
 
 
-def flush():
-    torch.cuda.empty_cache()
-    gc.collect()
+def flush(garbage_collect=True):
+    if garbage_collect:
+        gc.collect()
+    if hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+        torch.mps.synchronize()
+        torch.mps.empty_cache()
+    elif torch.cuda.is_available():
+        torch.cuda.empty_cache()
+
+
+def _gradual_move_to_device(module, device):
+    """Move a large model to a device by transferring children one at a time.
+
+    On Apple Silicon, .to() on a huge module allocates a full copy at the
+    destination before freeing the source, temporarily doubling memory.  By
+    moving each direct child individually (with flush() in between) we keep
+    peak memory close to the model size instead of 2x.
+    """
+    children = list(module.named_children())
+    if not children:
+        # Leaf module — just move it directly
+        module.to(device)
+        return
+    # Move parameters / buffers that live directly on the module (not in children)
+    for name, param in list(module.named_parameters(recurse=False)):
+        setattr(module, name, torch.nn.Parameter(param.to(device), requires_grad=param.requires_grad))
+    for name, buf in list(module.named_buffers(recurse=False)):
+        module.register_buffer(name, buf.to(device))
+    # Move each child, flushing between them
+    for _name, child in children:
+        child.to(device)
+        flush(garbage_collect=False)
+    # One full flush at the end
+    flush()
 
 
 UNET_IN_CHANNELS = 4  # Stable Diffusion の in_channels は 4 で固定。XLも同じ。
@@ -412,6 +443,15 @@ class BaseModel:
         self.save_device_state()
         self.set_device_state_preset('generate')
 
+        # On MPS the VAE is kept in float32 for encoding quality, but the
+        # diffusion pipeline outputs float16 latents.  Cast the VAE to the
+        # pipeline dtype so vae.decode() doesn't hit a dtype mismatch.
+        _vae_dtype_override = None
+        if (hasattr(torch.backends, 'mps') and torch.backends.mps.is_available()
+                and self.vae.dtype != self.torch_dtype):
+            _vae_dtype_override = self.vae.dtype
+            self.vae.to(dtype=self.torch_dtype)
+
         # save current seed state for training
         rng_state = torch.get_rng_state()
         cuda_rng_state = torch.cuda.get_rng_state() if torch.cuda.is_available() else None
@@ -682,6 +722,10 @@ class BaseModel:
         torch.set_rng_state(rng_state)
         if cuda_rng_state is not None:
             torch.cuda.set_rng_state(cuda_rng_state)
+
+        # Restore VAE dtype if we overrode it for MPS sampling
+        if _vae_dtype_override is not None:
+            self.vae.to(dtype=_vae_dtype_override)
 
         self.restore_device_state()
         if network is not None:
@@ -1100,14 +1144,18 @@ class BaseModel:
         if dtype is None:
             dtype = self.vae_torch_dtype
 
+        # On MPS, run VAE encoding on CPU to avoid SIGTRAP crashes caused by
+        # MPS state corruption when large quantized models share unified memory.
+        use_cpu_vae = (str(device).startswith('mps'))
+        vae_device = torch.device('cpu') if use_cpu_vae else device
+        if use_cpu_vae:
+            dtype = torch.float32
+
         latent_list = []
-        # Move to vae to device if on cpu
-        if self.vae.device == torch.device("cpu"):
-            self.vae.to(device)
+        self.vae.to(vae_device, dtype=dtype)
         self.vae.eval()
         self.vae.requires_grad_(False)
-        # move to device and dtype
-        image_list = [image.to(device, dtype=dtype) for image in image_list]
+        image_list = [image.to(vae_device, dtype=dtype) for image in image_list]
 
         VAE_SCALE_FACTOR = 2 ** (
             len(self.vae.config['block_out_channels']) - 1)
@@ -1119,7 +1167,7 @@ class BaseModel:
                 image_list[i] = Resize((image.shape[1] // VAE_SCALE_FACTOR * VAE_SCALE_FACTOR,
                                         image.shape[2] // VAE_SCALE_FACTOR * VAE_SCALE_FACTOR))(image)
 
-        images = torch.stack(image_list).to(device, dtype=dtype)
+        images = torch.stack(image_list).to(vae_device, dtype=dtype)
         if isinstance(self.vae, AutoencoderTiny):
             latents = self.vae.encode(images, return_dict=False)[0]
         else:
@@ -1459,7 +1507,13 @@ class BaseModel:
             self.unet.train()
         else:
             self.unet.eval()
-        self.unet.to(state['unet']['device'])
+        unet_device = state['unet']['device']
+        if (hasattr(torch.backends, 'mps') and torch.backends.mps.is_available()
+                and str(unet_device) == 'mps'
+                and self.model_config.low_vram):
+            _gradual_move_to_device(self.unet, unet_device)
+        else:
+            self.unet.to(unet_device)
         if state['unet']['requires_grad']:
             self.unet.requires_grad_(True)
         else:

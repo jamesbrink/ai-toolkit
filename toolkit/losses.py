@@ -42,7 +42,8 @@ class ComparativeTotalVariation(torch.nn.Module):
 
 # Gradient penalty
 def get_gradient_penalty(critic, real, fake, device):
-    with torch.autocast(device_type='cuda'):
+    device_type = 'mps' if (hasattr(torch.backends, 'mps') and torch.backends.mps.is_available()) else ('cuda' if torch.cuda.is_available() else 'cpu')
+    with torch.autocast(device_type=device_type):
         real = real.float()
         fake = fake.float()
         alpha = torch.rand(real.size(0), 1, 1, 1).to(device).float()

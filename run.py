@@ -19,6 +19,72 @@ if os.environ.get("DEBUG_TOOLKIT", "0") == "1":
     # set torch to trace mode
     import torch
     torch.autograd.set_detect_anomaly(True)
+
+# Workaround for PyTorch 2.9.x MPS bug: torch.cat and torch.stack crash with
+# SIGTRAP on Apple Silicon. Replace with pre-allocated tensor + slice assignment.
+# Two layers of patching are needed:
+#   1. Python-level: monkey-patch torch.cat/stack for direct Python calls
+#   2. Dispatch-level: TorchDispatchMode for C++ autograd backward calls
+import torch as _torch
+if hasattr(_torch.backends, 'mps') and _torch.backends.mps.is_available():
+    from torch.utils._python_dispatch import TorchDispatchMode as _TorchDispatchMode
+
+    def _safe_cat_impl(tensors, dim=0):
+        ndim = tensors[0].ndim
+        if dim < 0:
+            dim = ndim + dim
+        cat_size = sum(t.shape[dim] for t in tensors)
+        out_shape = list(tensors[0].shape)
+        out_shape[dim] = cat_size
+        result = _torch.empty(out_shape, dtype=tensors[0].dtype, device=tensors[0].device)
+        offset = 0
+        for t in tensors:
+            size = t.shape[dim]
+            slices = [slice(None)] * ndim
+            slices[dim] = slice(offset, offset + size)
+            result[tuple(slices)] = t
+            offset += size
+        return result
+
+    # Layer 1: Python-level monkey-patch
+    _original_cat = _torch.cat
+
+    def _mps_safe_cat(tensors, dim=0, *, out=None):
+        if not tensors or not tensors[0].is_mps or out is not None:
+            return _original_cat(tensors, dim=dim, out=out)
+        return _safe_cat_impl(tensors, dim)
+
+    _original_stack = _torch.stack
+
+    def _mps_safe_stack(tensors, dim=0, *, out=None):
+        if not tensors or not tensors[0].is_mps or out is not None:
+            return _original_stack(tensors, dim=dim, out=out)
+        return _safe_cat_impl([t.unsqueeze(dim) for t in tensors], dim)
+
+    _torch.cat = _mps_safe_cat
+    _torch.concat = _mps_safe_cat
+    _torch.stack = _mps_safe_stack
+
+    # Layer 2: Dispatch-level interception for C++ autograd backward passes
+    class _MPSCatFixMode(_TorchDispatchMode):
+        def __torch_dispatch__(self, func, types, args, kwargs=None):
+            kwargs = kwargs or {}
+            if func in (_torch.ops.aten.cat.default,):
+                tensors = args[0]
+                dim = args[1] if len(args) > 1 else 0
+                if tensors and tensors[0].is_mps:
+                    return _safe_cat_impl(tensors, dim)
+            elif func == _torch.ops.aten.stack.default:
+                tensors = args[0]
+                dim = args[1] if len(args) > 1 else 0
+                if tensors and tensors[0].is_mps:
+                    return _safe_cat_impl([t.unsqueeze(dim) for t in tensors], dim)
+            return func(*args, **kwargs)
+
+    # Enable the dispatch mode globally
+    _mps_cat_fix = _MPSCatFixMode()
+    _mps_cat_fix.__enter__()
+
 import argparse
 from toolkit.job import get_job
 from toolkit.accelerator import get_accelerator
