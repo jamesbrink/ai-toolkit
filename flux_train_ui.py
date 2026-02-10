@@ -98,12 +98,25 @@ def create_dataset(*inputs):
 
 def run_captioning(images, concept_sentence, *captions):
     #Load internally to not consume resources for training
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    if torch.cuda.is_available():
+        device = "cuda"
+    elif torch.backends.mps.is_available():
+        device = "mps"
+    else:
+        device = "cpu"
     torch_dtype = torch.float16
+    florence_model_id = "multimodalart/Florence-2-large-no-flash-attn"
+    florence_revision = "8db3793cf5b453b2ccfb3a4f613b403b2e6b7ca2"
     model = AutoModelForCausalLM.from_pretrained(
-        "multimodalart/Florence-2-large-no-flash-attn", torch_dtype=torch_dtype, trust_remote_code=True
+        florence_model_id,
+        torch_dtype=torch_dtype,
+        trust_remote_code=True,
+        revision=florence_revision,
+        attn_implementation="eager",
     ).to(device)
-    processor = AutoProcessor.from_pretrained("multimodalart/Florence-2-large-no-flash-attn", trust_remote_code=True)
+    processor = AutoProcessor.from_pretrained(
+        florence_model_id, trust_remote_code=True, revision=florence_revision
+    )
 
     captions = list(captions)
     for i, image_path in enumerate(images):
