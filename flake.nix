@@ -15,8 +15,16 @@
         "aarch64-darwin"
       ];
 
-      perSystem = { pkgs, lib, system, ... }:
+      perSystem = { lib, system, ... }:
         let
+          # Import nixpkgs with unfree packages allowed (required for CUDA on Linux)
+          pkgs = import inputs.nixpkgs {
+            inherit system;
+            config = {
+              allowUnfree = true;
+            };
+          };
+
           isDarwin = pkgs.stdenv.isDarwin;
           isLinux = pkgs.stdenv.isLinux;
 
