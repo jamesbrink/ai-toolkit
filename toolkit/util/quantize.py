@@ -51,7 +51,29 @@ class aotype:
         self.config = torchao_qtypes[name]
 
 
+_MPS_FLOAT8_WARNING_SHOWN = False
+
+
 def get_qtype(qtype: Union[str, qtype]) -> qtype:
+    global _MPS_FLOAT8_WARNING_SHOWN
+
+    # MPS (Apple Metal) does not support Float8 dtypes.
+    # Automatically fall back to an int8 equivalent so training can proceed.
+    if torch.backends.mps.is_available() and isinstance(qtype, str) and "float8" in qtype:
+        if not _MPS_FLOAT8_WARNING_SHOWN:
+            _MPS_FLOAT8_WARNING_SHOWN = True
+            fallback = "uint8" if qtype == "float8" else "qint8"
+            print_acc(
+                f"WARNING: Float8 quantization ('{qtype}') is not supported on MPS. "
+                f"Falling back to '{fallback}'."
+            )
+        if qtype == "float8":
+            # torchao float8 -> torchao uint8
+            qtype = "uint8"
+        else:
+            # quanto qfloat8 -> quanto qint8
+            qtype = "qint8"
+
     if qtype in torchao_qtypes:
         return aotype(qtype)
     if isinstance(qtype, str):
