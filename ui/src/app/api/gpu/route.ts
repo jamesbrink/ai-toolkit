@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import os from 'os';
+import si from 'systeminformation';
 
 const execAsync = promisify(exec);
 
@@ -14,26 +15,37 @@ export async function GET() {
     // Check if nvidia-smi is available
     const hasNvidiaSmi = await checkNvidiaSmi(isWindows);
 
-    if (!hasNvidiaSmi) {
+    if (hasNvidiaSmi) {
+      // Get GPU stats
+      const gpuStats = await getGpuStats(isWindows);
+
       return NextResponse.json({
-        hasNvidiaSmi: false,
-        gpus: [],
-        error: 'nvidia-smi not found or not accessible',
+        hasNvidiaSmi: true,
+        deviceType: 'nvidia',
+        gpus: gpuStats,
       });
     }
 
-    // Get GPU stats
-    const gpuStats = await getGpuStats(isWindows);
+    // No NVIDIA GPU — check for Apple Silicon MPS
+    if (platform === 'darwin' && os.arch() === 'arm64') {
+      const mpsResult = await detectMps();
+      if (mpsResult) {
+        return NextResponse.json(mpsResult);
+      }
+    }
 
     return NextResponse.json({
-      hasNvidiaSmi: true,
-      gpus: gpuStats,
+      hasNvidiaSmi: false,
+      deviceType: 'none',
+      gpus: [],
+      error: 'No supported GPU detected',
     });
   } catch (error) {
-    console.error('Error fetching NVIDIA GPU stats:', error);
+    console.error('Error fetching GPU stats:', error);
     return NextResponse.json(
       {
         hasNvidiaSmi: false,
+        deviceType: 'none',
         gpus: [],
         error: `Failed to fetch GPU stats: ${error instanceof Error ? error.message : String(error)}`,
       },
@@ -57,6 +69,36 @@ async function checkNvidiaSmi(isWindows: boolean): Promise<boolean> {
   } catch (error) {
     return false;
   }
+}
+
+async function detectMps() {
+  try {
+    const graphics = await si.graphics();
+    const mem = await si.mem();
+    const appleGpu = graphics.controllers.find(
+      c => c.vendor?.toLowerCase().includes('apple') || c.model?.toLowerCase().includes('apple'),
+    );
+    if (appleGpu) {
+      const totalMB = Math.round(mem.total / (1024 * 1024));
+      const usedMB = Math.round((mem.total - mem.available) / (1024 * 1024));
+      return {
+        hasNvidiaSmi: false,
+        deviceType: 'mps',
+        gpus: [
+          {
+            index: 0,
+            name: appleGpu.model || 'Apple Silicon GPU',
+            utilization: { gpu: 0, memory: Math.round((usedMB / totalMB) * 100) },
+            memory: { total: totalMB, free: totalMB - usedMB, used: usedMB },
+            isMps: true,
+          },
+        ],
+      };
+    }
+  } catch (error) {
+    console.error('Error detecting MPS GPU:', error);
+  }
+  return null;
 }
 
 async function getGpuStats(isWindows: boolean) {

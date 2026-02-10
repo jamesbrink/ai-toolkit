@@ -9,7 +9,7 @@ import {
   jobTypeOptions,
 } from './options';
 import { defaultDatasetConfig } from './jobConfig';
-import { GroupedSelectOption, JobConfig, SelectOption } from '@/types';
+import { DeviceType, GroupedSelectOption, JobConfig, SelectOption } from '@/types';
 import { objectCopy } from '@/utils/basic';
 import { TextInput, SelectInput, Checkbox, FormGroup, NumberInput, SliderInput } from '@/components/formInputs';
 import Card from '@/components/Card';
@@ -30,6 +30,7 @@ type Props = {
   setGpuIDs: (value: string | null) => void;
   gpuList: any;
   datasetOptions: any;
+  deviceType: DeviceType;
 };
 
 const isDev = process.env.NODE_ENV === 'development';
@@ -44,6 +45,7 @@ export default function SimpleJob({
   setGpuIDs,
   gpuList,
   datasetOptions,
+  deviceType,
 }: Props) {
   const modelArch = useMemo(() => {
     return modelArchs.find(a => a.name === jobConfig.config.process[0].model.arch) as ModelArch;
@@ -163,7 +165,11 @@ export default function SimpleJob({
               value={`${gpuIDs}`}
               docKey="gpuids"
               onChange={value => setGpuIDs(value)}
-              options={gpuList.map((gpu: any) => ({ value: `${gpu.index}`, label: `GPU #${gpu.index}` }))}
+              options={
+                deviceType === 'mps'
+                  ? [{ value: 'mps', label: 'Apple Silicon (MPS)' }]
+                  : gpuList.map((gpu: any) => ({ value: `${gpu.index}`, label: `GPU #${gpu.index}` }))
+              }
             />
             {disableSections.includes('trigger_word') ? null : (
               <TextInput
@@ -309,6 +315,12 @@ export default function SimpleJob({
                 }}
                 options={quantizationOptions}
               />
+              {deviceType === 'mps' && jobConfig.config.process[0].model.quantize && (
+                <p className="text-xs text-yellow-400 mt-2">
+                  Transformer quantization may crash during backward pass on MPS. Only text encoder quantization is
+                  safe.
+                </p>
+              )}
             </Card>
           )}
           {modelArch?.additionalSections?.includes('model.multistage') && (
@@ -489,10 +501,18 @@ export default function SimpleJob({
                   label="Optimizer"
                   value={jobConfig.config.process[0].train.optimizer}
                   onChange={value => setJobConfig(value, 'config.process[0].train.optimizer')}
-                  options={[
-                    { value: 'adamw8bit', label: 'AdamW8Bit' },
-                    { value: 'adafactor', label: 'Adafactor' },
-                  ]}
+                  options={
+                    deviceType === 'mps'
+                      ? [
+                          { value: 'adamw', label: 'AdamW' },
+                          { value: 'adafactor', label: 'Adafactor' },
+                        ]
+                      : [
+                          { value: 'adamw8bit', label: 'AdamW8Bit' },
+                          { value: 'adamw', label: 'AdamW' },
+                          { value: 'adafactor', label: 'Adafactor' },
+                        ]
+                  }
                 />
                 <NumberInput
                   label="Learning Rate"

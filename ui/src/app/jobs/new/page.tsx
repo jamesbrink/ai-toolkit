@@ -29,7 +29,7 @@ export default function TrainingForm() {
   const cloneId = searchParams.get('cloneId');
   const [gpuIDs, setGpuIDs] = useState<string | null>(null);
   const { settings, isSettingsLoaded } = useSettings();
-  const { gpuList, isGPUInfoLoaded } = useGPUInfo();
+  const { gpuList, isGPUInfoLoaded, deviceType } = useGPUInfo();
   const { datasets, status: datasetFetchStatus } = useDatasetList();
   const [datasetOptions, setDatasetOptions] = useState<{ value: string; label: string }[]>([]);
   const [showAdvancedView, setShowAdvancedView] = useState(false);
@@ -87,12 +87,24 @@ export default function TrainingForm() {
   }, [runId]);
 
   useEffect(() => {
-    if (isGPUInfoLoaded) {
-      if (gpuIDs === null && gpuList.length > 0) {
+    if (isGPUInfoLoaded && gpuIDs === null) {
+      if (deviceType === 'mps') {
+        setGpuIDs('mps');
+      } else if (gpuList.length > 0) {
         setGpuIDs(`${gpuList[0].index}`);
       }
     }
-  }, [gpuList, isGPUInfoLoaded]);
+  }, [gpuList, isGPUInfoLoaded, deviceType]);
+
+  // Auto-apply MPS defaults for new jobs
+  useEffect(() => {
+    if (isGPUInfoLoaded && deviceType === 'mps' && !runId && !cloneId) {
+      setJobConfig('mps', 'config.process[0].device');
+      if (jobConfig.config.process[0].train.optimizer === 'adamw8bit') {
+        setJobConfig('adamw', 'config.process[0].train.optimizer');
+      }
+    }
+  }, [isGPUInfoLoaded, deviceType]);
 
   useEffect(() => {
     if (isSettingsLoaded) {
@@ -157,7 +169,11 @@ export default function TrainingForm() {
               <SelectInput
                 value={`${gpuIDs}`}
                 onChange={value => setGpuIDs(value)}
-                options={gpuList.map((gpu: any) => ({ value: `${gpu.index}`, label: `GPU #${gpu.index}` }))}
+                options={
+                  deviceType === 'mps'
+                    ? [{ value: 'mps', label: 'Apple Silicon (MPS)' }]
+                    : gpuList.map((gpu: any) => ({ value: `${gpu.index}`, label: `GPU #${gpu.index}` }))
+                }
               />
             </div>
             <div className="mx-4 bg-gray-200 dark:bg-gray-800 w-1 h-6"></div>
@@ -228,6 +244,7 @@ export default function TrainingForm() {
             gpuList={gpuList}
             datasetOptions={datasetOptions}
             settings={settings}
+            deviceType={deviceType}
           />
         </div>
       ) : (
@@ -249,6 +266,7 @@ export default function TrainingForm() {
               setGpuIDs={setGpuIDs}
               gpuList={gpuList}
               datasetOptions={datasetOptions}
+              deviceType={deviceType}
             />
           </ErrorBoundary>
 

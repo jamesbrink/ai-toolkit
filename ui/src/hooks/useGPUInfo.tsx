@@ -1,6 +1,6 @@
 'use client';
 
-import { GPUApiResponse, GpuInfo } from '@/types';
+import { DeviceType, GPUApiResponse, GpuInfo } from '@/types';
 import { useEffect, useState } from 'react';
 import { apiClient } from '@/utils/api';
 
@@ -8,11 +8,13 @@ export default function useGPUInfo(gpuIds: null | number[] = null, reloadInterva
   const [gpuList, setGpuList] = useState<GpuInfo[]>([]);
   const [isGPUInfoLoaded, setIsLoaded] = useState(false);
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [deviceType, setDeviceType] = useState<DeviceType>('none');
 
   const fetchGpuInfo = async () => {
     setStatus('loading');
     try {
       const data: GPUApiResponse = await apiClient.get('/api/gpu').then(res => res.data);
+      setDeviceType(data.deviceType || (data.hasNvidiaSmi ? 'nvidia' : 'none'));
       let gpus = data.gpus.sort((a, b) => a.index - b.index);
       if (gpuIds) {
         gpus = gpus.filter(gpu => gpuIds.includes(gpu.index));
@@ -44,5 +46,5 @@ export default function useGPUInfo(gpuIds: null | number[] = null, reloadInterva
     }
   }, [gpuIds, reloadInterval]); // Added dependencies
 
-  return { gpuList, setGpuList, isGPUInfoLoaded, status, refreshGpuInfo: fetchGpuInfo };
+  return { gpuList, setGpuList, isGPUInfoLoaded, status, deviceType, refreshGpuInfo: fetchGpuInfo };
 }

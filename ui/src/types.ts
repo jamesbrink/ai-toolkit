@@ -2,6 +2,8 @@
  * GPU API response
  */
 
+export type DeviceType = 'nvidia' | 'mps' | 'cpu' | 'none';
+
 export interface GpuUtilization {
   gpu: number;
   memory: number;
@@ -30,13 +32,14 @@ export interface GpuFan {
 export interface GpuInfo {
   index: number;
   name: string;
-  driverVersion: string;
-  temperature: number;
+  driverVersion?: string;
+  temperature?: number;
   utilization: GpuUtilization;
   memory: GpuMemory;
-  power: GpuPower;
-  clocks: GpuClocks;
-  fan: GpuFan;
+  power?: GpuPower;
+  clocks?: GpuClocks;
+  fan?: GpuFan;
+  isMps?: boolean;
 }
 
 export interface CpuInfo {
@@ -51,6 +54,7 @@ export interface CpuInfo {
 
 export interface GPUApiResponse {
   hasNvidiaSmi: boolean;
+  deviceType: DeviceType;
   gpus: GpuInfo[];
   error?: string;
 }

@@ -98,11 +98,11 @@ const GpuMonitor: React.FC = () => {
       );
     }
 
-    if (!gpuData.hasNvidiaSmi) {
+    if (!gpuData.hasNvidiaSmi && gpuData.deviceType !== 'mps') {
       return (
         <div className="bg-yellow-900 border border-yellow-700 text-yellow-300 px-4 py-3 rounded relative" role="alert">
-          <strong className="font-bold">No NVIDIA GPUs detected!</strong>
-          <span className="block sm:inline"> nvidia-smi is not available on this system.</span>
+          <strong className="font-bold">No GPUs detected!</strong>
+          <span className="block sm:inline"> No NVIDIA or Apple Silicon GPU found on this system.</span>
           {gpuData.error && <p className="mt-2 text-sm">{gpuData.error}</p>}
         </div>
       );

@@ -88,12 +88,20 @@ const startAndWatchJob = (job: Job) => {
       return;
     }
 
+    const isMpsJob = job.gpu_ids === 'mps';
+
     const additionalEnv: any = {
       AITK_JOB_ID: jobID,
-      CUDA_DEVICE_ORDER: 'PCI_BUS_ID',
-      CUDA_VISIBLE_DEVICES: `${job.gpu_ids}`,
       IS_AI_TOOLKIT_UI: '1',
     };
+
+    if (isMpsJob) {
+      additionalEnv.PYTORCH_ENABLE_MPS_FALLBACK = '1';
+      additionalEnv.PYTORCH_MPS_HIGH_WATERMARK_RATIO = '0.0';
+    } else {
+      additionalEnv.CUDA_DEVICE_ORDER = 'PCI_BUS_ID';
+      additionalEnv.CUDA_VISIBLE_DEVICES = `${job.gpu_ids}`;
+    }
 
     // HF_TOKEN
     const hfToken = await getHFToken();

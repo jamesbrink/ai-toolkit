@@ -19,7 +19,7 @@ interface JobsTableProps {
 export default function JobsTable({ onlyActive = false }: JobsTableProps) {
   const { jobs, status, refreshJobs } = useJobsList(onlyActive, 5000);
   const { queues, status: queueStatus, refreshQueues } = useQueueList();
-  const { gpuList, isGPUInfoLoaded } = useGPUInfo();
+  const { gpuList, isGPUInfoLoaded, deviceType } = useGPUInfo();
 
   const refresh = () => {
     refreshJobs();
@@ -97,12 +97,18 @@ export default function JobsTable({ onlyActive = false }: JobsTableProps) {
     if (jobs.length === 0) return {};
     let jd: { [key: string]: { name: string; jobs: Job[] } } = {};
     gpuList.forEach(gpu => {
-      jd[`${gpu.index}`] = { name: `${gpu.name}`, jobs: [] };
+      const key = gpu.isMps ? 'mps' : `${gpu.index}`;
+      jd[key] = { name: `${gpu.name}`, jobs: [] };
     });
     jd['Idle'] = { name: 'Idle', jobs: [] };
     jobs.forEach(job => {
-      const gpu = gpuList.find(gpu => job.gpu_ids?.split(',').includes(gpu.index.toString())) as GpuInfo;
-      const key = `${gpu?.index || '0'}`;
+      let key: string;
+      if (job.gpu_ids === 'mps') {
+        key = 'mps';
+      } else {
+        const gpu = gpuList.find(gpu => job.gpu_ids?.split(',').includes(gpu.index.toString())) as GpuInfo;
+        key = `${gpu?.index || '0'}`;
+      }
       if (['queued', 'running', 'stopping'].includes(job.status) && key in jd) {
         jd[key].jobs.push(job);
       } else {
@@ -144,7 +150,9 @@ export default function JobsTable({ onlyActive = false }: JobsTableProps) {
               >
                 <div className="flex items-center space-x-2 flex-1 py-2">
                   <h2 className="font-semibold text-gray-100">{jobsDict[gpuKey].name}</h2>
-                  <span className="px-2 py-0.5 bg-gray-700 rounded-full text-xs text-gray-300"># {queue?.gpu_ids}</span>
+                  <span className="px-2 py-0.5 bg-gray-700 rounded-full text-xs text-gray-300">
+                    {queue?.gpu_ids === 'mps' ? 'MPS' : `# ${queue?.gpu_ids}`}
+                  </span>
                 </div>
                 <div className="text-sm text-gray-300 italic flex items-center">
                   {queue?.is_running ? (

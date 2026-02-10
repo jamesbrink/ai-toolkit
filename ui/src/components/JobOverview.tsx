@@ -14,7 +14,8 @@ interface JobOverviewProps {
 }
 
 export default function JobOverview({ job }: JobOverviewProps) {
-  const gpuIds = useMemo(() => job.gpu_ids.split(',').map(id => parseInt(id)), [job.gpu_ids]);
+  const isMpsJob = job.gpu_ids === 'mps';
+  const gpuIds = useMemo(() => (isMpsJob ? null : job.gpu_ids.split(',').map(id => parseInt(id))), [job.gpu_ids]);
   const { log, setLog, status: statusLog, refresh: refreshLog } = useJobLog(job.id, 2000);
   const logRef = useRef<HTMLDivElement>(null);
   // Track whether we should auto-scroll to bottom
@@ -120,8 +121,10 @@ export default function JobOverview({ job }: JobOverviewProps) {
             <div className="flex items-center space-x-4">
               <Cpu className="w-5 h-5 text-purple-400" />
               <div>
-                <p className="text-xs text-gray-400">Assigned GPUs</p>
-                <p className="text-sm font-medium text-gray-200">GPUs: {job.gpu_ids}</p>
+                <p className="text-xs text-gray-400">{isMpsJob ? 'Device' : 'Assigned GPUs'}</p>
+                <p className="text-sm font-medium text-gray-200">
+                  {isMpsJob ? 'Apple Silicon (MPS)' : `GPUs: ${job.gpu_ids}`}
+                </p>
               </div>
             </div>
 
