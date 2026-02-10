@@ -12,8 +12,14 @@ mkdir -p "$DATA_DIR"
 # --- Database ---
 export DATABASE_URL="file:${DATA_DIR}/aitk_db.db"
 
-# --- Toolkit root (where run.py lives) ---
+# --- Toolkit root (where run.py lives, read-only in Nix store) ---
 export TOOLKIT_ROOT="${TOOLKIT_ROOT:-${TOOLKIT_PKG}/lib/ai-toolkit}"
+
+# --- Writable data folders (default under DATA_DIR, not the read-only store) ---
+export DATASETS_FOLDER="${DATASETS_FOLDER:-${DATA_DIR}/datasets}"
+export TRAINING_FOLDER="${TRAINING_FOLDER:-${DATA_DIR}/output}"
+export DATA_ROOT="${DATA_ROOT:-${DATA_DIR}/data}"
+mkdir -p "$DATASETS_FOLDER" "$TRAINING_FOLDER" "$DATA_ROOT"
 
 # --- Python from ai-toolkit package ---
 export PYTHON_PATH="${TOOLKIT_PKG}/bin/ai-toolkit-python"
@@ -33,8 +39,8 @@ export PRISMA_QUERY_ENGINE_LIBRARY="${PRISMA_ENGINES_PKG}/lib/libquery_engine.no
 export PRISMA_ENGINES_CHECKSUM_IGNORE_MISSING=1
 
 # --- Ensure DB schema is up to date ---
-cd "$UI_DIR"
-if ! npx prisma db push --schema ./prisma/schema.prisma --skip-generate 2>&1; then
+echo "Running prisma db push to ensure schema is up to date..."
+if ! node "$UI_DIR/node_modules/prisma/build/index.js" db push --schema "$UI_DIR/prisma/schema.prisma" --skip-generate; then
   echo "Warning: prisma db push failed, DB may need manual setup"
 fi
 

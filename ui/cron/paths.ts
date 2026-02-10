@@ -2,9 +2,9 @@ import path from 'path';
 import prisma from './prisma';
 
 export const TOOLKIT_ROOT = process.env.TOOLKIT_ROOT || path.resolve('@', '..', '..');
-export const defaultTrainFolder = path.join(TOOLKIT_ROOT, 'output');
-export const defaultDatasetsFolder = path.join(TOOLKIT_ROOT, 'datasets');
-export const defaultDataRoot = path.join(TOOLKIT_ROOT, 'data');
+export const defaultTrainFolder = process.env.TRAINING_FOLDER || path.join(TOOLKIT_ROOT, 'output');
+export const defaultDatasetsFolder = process.env.DATASETS_FOLDER || path.join(TOOLKIT_ROOT, 'datasets');
+export const defaultDataRoot = process.env.DATA_ROOT || path.join(TOOLKIT_ROOT, 'data');
 
 console.log('TOOLKIT_ROOT:', TOOLKIT_ROOT);
 

@@ -38,7 +38,8 @@ let
     opencv4
     pillow
     av
-    torchcodec
+    # torchcodec — skipped: cmake build against torch-bin's CUDA Caffe2 is
+    # problematic in the Nix sandbox. Only needed for video model training.
     kornia
     controlnet-aux
     invisible-watermark

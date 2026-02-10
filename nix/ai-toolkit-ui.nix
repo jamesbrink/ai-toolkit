@@ -25,7 +25,7 @@ buildNpmPackage {
         || baseName == "aitk_db.db" || baseName == ".turbo");
   };
 
-  npmDepsHash = "sha256-NBvuZhSNKN+YF4QeLxCftYWgOpgC2pSNJdtPkecjOf8=";
+  npmDepsHash = "sha256-ocfIcKwBA+flsuqnPo6zwOlD7np+quFaAAS/FGoNVSA=";
 
   nodejs = nodejs_22;
 
@@ -45,7 +45,7 @@ buildNpmPackage {
 
   # Prisma engine configuration — avoids network downloads in the sandbox.
   # NOTE: prisma-engines_6 version in nixpkgs must be compatible with the
-  # @prisma/client version in package.json (currently ^6.3.1).
+  # @prisma/client version in package.json (currently ^6.19.1).
   # If the build fails with a version mismatch, override prisma-engines_6.
   env = {
     PRISMA_SCHEMA_ENGINE_BINARY = "${prisma-engines_6}/bin/schema-engine";
@@ -89,22 +89,11 @@ buildNpmPackage {
     # --- Prisma schema + generated client (needed at runtime) ---
     cp -r prisma $out/lib/ai-toolkit-ui/prisma
 
-    # Ensure Prisma runtime modules are available (client, engines, CLI).
-    # The standalone output may include @prisma/client but not @prisma/engines
-    # or the prisma CLI.  Merge the full build's node_modules on top.
-    mkdir -p "$out/lib/ai-toolkit-ui/node_modules"
-    for dir in .prisma @prisma prisma; do
-      if [ -d "node_modules/$dir" ]; then
-        mkdir -p "$out/lib/ai-toolkit-ui/node_modules/$dir"
-        cp -r "node_modules/$dir/." "$out/lib/ai-toolkit-ui/node_modules/$dir/"
-      fi
-    done
-
-    # Prisma CLI binary for runtime db push
-    if [ -d "node_modules/.bin" ]; then
-      mkdir -p "$out/lib/ai-toolkit-ui/node_modules/.bin"
-      cp -P node_modules/.bin/prisma "$out/lib/ai-toolkit-ui/node_modules/.bin/prisma" 2>/dev/null || true
-    fi
+    # Merge the full build's node_modules over the standalone output.
+    # The standalone output includes a minimal node_modules, but the Prisma
+    # CLI (used for runtime db push) needs its full transitive dependency
+    # tree (e.g. @prisma/config -> effect, c12, etc.).
+    cp -r node_modules/. "$out/lib/ai-toolkit-ui/node_modules/"
 
     # --- Wrapper script ---
     mkdir -p $out/bin
