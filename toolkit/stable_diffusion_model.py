@@ -1201,15 +1201,6 @@ class StableDiffusion:
         self.save_device_state()
         self.set_device_state_preset('generate')
 
-        # On MPS the VAE is kept in float32 for encoding quality, but the
-        # diffusion pipeline outputs float16 latents.  Cast the VAE to the
-        # pipeline dtype so vae.decode() doesn't hit a dtype mismatch.
-        _vae_dtype_override = None
-        if (hasattr(torch.backends, 'mps') and torch.backends.mps.is_available()
-                and self.vae.dtype != self.torch_dtype):
-            _vae_dtype_override = self.vae.dtype
-            self.vae.to(dtype=self.torch_dtype)
-
         # save current seed state for training
         rng_state = torch.get_rng_state()
         cuda_rng_state = torch.cuda.get_rng_state() if torch.cuda.is_available() else None
@@ -1615,8 +1606,19 @@ class StableDiffusion:
                             **extra
                         ).images[0]
                     elif self.is_flux:
+                        # On MPS the VAE must stay float32 for numerical stability,
+                        # but the pipeline runs in float16.  Request raw latents and
+                        # decode manually so we can cast to the VAE's dtype first.
+                        _mps_manual_decode = (
+                            hasattr(torch.backends, 'mps') and torch.backends.mps.is_available()
+                            and self.vae.dtype != self.torch_dtype
+                        )
+                        _flux_extra = {**extra}
+                        if _mps_manual_decode:
+                            _flux_extra['output_type'] = 'latent'
+
                         if self.model_config.use_flux_cfg:
-                            img = pipeline(
+                            _flux_out = pipeline(
                                 prompt_embeds=conditional_embeds.text_embeds,
                                 pooled_prompt_embeds=conditional_embeds.pooled_embeds,
                                 negative_prompt_embeds=unconditional_embeds.text_embeds,
@@ -1627,8 +1629,8 @@ class StableDiffusion:
                                 guidance_scale=gen_config.guidance_scale,
                                 latents=gen_config.latents,
                                 generator=generator,
-                                **extra
-                            ).images[0]
+                                **_flux_extra
+                            )
                         else:
                             # Fix a bug in diffusers/torch
                             def callback_on_step_end(pipe, i, t, callback_kwargs):
@@ -1636,7 +1638,7 @@ class StableDiffusion:
                                 if latents.dtype != self.unet.dtype:
                                     latents = latents.to(self.unet.dtype)
                                 return {"latents": latents}
-                            img = pipeline(
+                            _flux_out = pipeline(
                                 prompt_embeds=conditional_embeds.text_embeds,
                                 pooled_prompt_embeds=conditional_embeds.pooled_embeds,
                                 # negative_prompt_embeds=unconditional_embeds.text_embeds,
@@ -1648,8 +1650,23 @@ class StableDiffusion:
                                 latents=gen_config.latents,
                                 generator=generator,
                                 callback_on_step_end=callback_on_step_end,
-                                **extra
-                            ).images[0]
+                                **_flux_extra
+                            )
+
+                        if _mps_manual_decode:
+                            # Manually unpack and decode latents with float32 VAE
+                            raw_latents = _flux_out.images  # raw packed latents when output_type='latent'
+                            raw_latents = FluxPipeline._unpack_latents(
+                                raw_latents, gen_config.height, gen_config.width,
+                                self.vae_scale_factor
+                            )
+                            raw_latents = (raw_latents / self.vae.config['scaling_factor']) + self.vae.config['shift_factor']
+                            raw_latents = raw_latents.to(dtype=self.vae.dtype)
+                            with torch.no_grad():
+                                img = self.vae.decode(raw_latents, return_dict=False)[0]
+                            img = self.pipeline.image_processor.postprocess(img, output_type='pil')[0]
+                        else:
+                            img = _flux_out.images[0]
                     elif self.is_lumina2:
                         pipeline: Lumina2Pipeline = pipeline
 
@@ -1768,10 +1785,6 @@ class StableDiffusion:
         torch.set_rng_state(rng_state)
         if cuda_rng_state is not None:
             torch.cuda.set_rng_state(cuda_rng_state)
-
-        # Restore VAE dtype if we overrode it for MPS sampling
-        if _vae_dtype_override is not None:
-            self.vae.to(dtype=_vae_dtype_override)
 
         self.restore_device_state()
         if network is not None:

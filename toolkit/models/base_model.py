@@ -443,15 +443,6 @@ class BaseModel:
         self.save_device_state()
         self.set_device_state_preset('generate')
 
-        # On MPS the VAE is kept in float32 for encoding quality, but the
-        # diffusion pipeline outputs float16 latents.  Cast the VAE to the
-        # pipeline dtype so vae.decode() doesn't hit a dtype mismatch.
-        _vae_dtype_override = None
-        if (hasattr(torch.backends, 'mps') and torch.backends.mps.is_available()
-                and self.vae.dtype != self.torch_dtype):
-            _vae_dtype_override = self.vae.dtype
-            self.vae.to(dtype=self.torch_dtype)
-
         # save current seed state for training
         rng_state = torch.get_rng_state()
         cuda_rng_state = torch.cuda.get_rng_state() if torch.cuda.is_available() else None
@@ -722,10 +713,6 @@ class BaseModel:
         torch.set_rng_state(rng_state)
         if cuda_rng_state is not None:
             torch.cuda.set_rng_state(cuda_rng_state)
-
-        # Restore VAE dtype if we overrode it for MPS sampling
-        if _vae_dtype_override is not None:
-            self.vae.to(dtype=_vae_dtype_override)
 
         self.restore_device_state()
         if network is not None:
