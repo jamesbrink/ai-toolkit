@@ -47,7 +47,12 @@ const startAndWatchJob = (job: Job) => {
 
     // update the config dataset path
     const jobConfig = JSON.parse(job.job_config);
-    jobConfig.config.process[0].sqlite_db_path = path.join(TOOLKIT_ROOT, 'aitk_db.db');
+    // Derive sqlite_db_path from DATABASE_URL (file:/path/to/aitk_db.db) when
+    // available, so the training process uses the same writable DB as the UI.
+    // Falls back to TOOLKIT_ROOT for non-Nix installs where the repo is writable.
+    const dbUrl = process.env.DATABASE_URL || '';
+    const dbPath = dbUrl.startsWith('file:') ? dbUrl.slice(5) : path.join(TOOLKIT_ROOT, 'aitk_db.db');
+    jobConfig.config.process[0].sqlite_db_path = dbPath;
 
     // write the config file
     fs.writeFileSync(configPath, JSON.stringify(jobConfig, null, 2));
