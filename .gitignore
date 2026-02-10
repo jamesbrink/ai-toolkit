@@ -190,3 +190,6 @@ aitk_db.db
 # Nix build output
 result
 result-*
+
+# Temporary files from UI
+/tmp/
