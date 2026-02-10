@@ -1,0 +1,69 @@
+---
+# Flux LoRA training config for macOS (Apple Silicon / MPS)
+# Requires: Apple Silicon Mac with 32GB+ unified memory
+# Usage: nix run . -- config/examples/train_lora_flux_macos.yaml
+#   or:  python run.py config/examples/train_lora_flux_macos.yaml
+job: extension
+config:
+  name: "flux_lora_macos_v1"
+  process:
+    - type: 'sd_trainer'
+      training_folder: "output"
+      # Use MPS (Metal Performance Shaders) on Apple Silicon
+      device: mps
+      network:
+        type: "lora"
+        linear: 8        # lower rank to fit in memory
+        linear_alpha: 8
+      save:
+        dtype: float16
+        save_every: 250
+        max_step_saves_to_keep: 4
+        push_to_hub: false
+      datasets:
+        - folder_path: "/path/to/your/images"
+          caption_ext: "txt"
+          caption_dropout_rate: 0.05
+          shuffle_tokens: false
+          cache_latents_to_disk: true
+          resolution: [ 512, 768 ]  # keep resolutions lower for MPS memory
+      train:
+        batch_size: 1
+        steps: 2000
+        gradient_accumulation_steps: 1
+        train_unet: true
+        train_text_encoder: false
+        gradient_checkpointing: true
+        noise_scheduler: "flowmatch"
+        optimizer: "adamw"  # use standard adamw on macOS (adamw8bit requires CUDA)
+        lr: 1e-4
+
+        ema_config:
+          use_ema: true
+          ema_decay: 0.99
+
+        # bf16 works on Apple Silicon M-series
+        dtype: bf16
+      model:
+        name_or_path: "black-forest-labs/FLUX.1-dev"
+        is_flux: true
+        quantize: true
+      sample:
+        sampler: "flowmatch"
+        sample_every: 250
+        width: 768
+        height: 768
+        prompts:
+          - "woman with red hair, playing chess at the park, bomb going off in the background"
+          - "a woman holding a coffee cup, in a beanie, sitting at a cafe"
+          - "a horse is a DJ at a night club, fish eye lens, smoke machine, lazer lights, holding a martini"
+          - "a bear building a log cabin in the snow covered mountains"
+          - "woman playing the guitar, on stage, singing a song, laser lights, punk rocker"
+        neg: ""
+        seed: 42
+        walk_seed: true
+        guidance_scale: 4
+        sample_steps: 20
+meta:
+  name: "[name]"
+  version: '1.0'

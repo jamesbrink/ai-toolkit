@@ -20,6 +20,24 @@
           isDarwin = pkgs.stdenv.isDarwin;
           isLinux = pkgs.stdenv.isLinux;
 
+          # Python with custom package overlay
+          python3 = pkgs.python312.override {
+            packageOverrides = import ./nix/python-packages.nix {
+              inherit pkgs lib;
+            };
+          };
+
+          # Main package
+          ai-toolkit = pkgs.callPackage ./nix/ai-toolkit.nix {
+            inherit python3;
+          };
+
+          # Docker image (Linux only)
+          docker-image = pkgs.callPackage ./nix/docker-image.nix {
+            inherit ai-toolkit;
+          };
+
+          # === Dev shell dependencies ===
           buildTools = with pkgs; [
             cmake
             pkg-config
@@ -43,10 +61,6 @@
             git
           ];
 
-          # On current nixpkgs-unstable, Apple frameworks (Accelerate, Metal,
-          # MetalPerformanceShaders, CoreGraphics, CoreVideo, Foundation,
-          # Security, SystemConfiguration) are bundled into the default SDK
-          # provided by the Darwin stdenv. No explicit framework deps needed.
           darwinDeps = lib.optionals isDarwin [
             pkgs.libiconv
           ];
@@ -61,6 +75,31 @@
           ]);
         in
         {
+          # nix build / nix build .#default
+          packages = {
+            default = ai-toolkit;
+            ai-toolkit = ai-toolkit;
+          } // lib.optionalAttrs isLinux {
+            docker = docker-image;
+          };
+
+          # nix run / nix run .#train -- config.yaml
+          apps = {
+            default = {
+              type = "app";
+              program = "${ai-toolkit}/bin/ai-toolkit-train";
+            };
+            train = {
+              type = "app";
+              program = "${ai-toolkit}/bin/ai-toolkit-train";
+            };
+            gradio = {
+              type = "app";
+              program = "${ai-toolkit}/bin/ai-toolkit-gradio";
+            };
+          };
+
+          # nix develop
           devShells.default = pkgs.mkShell {
             packages = buildTools ++ commonLibs ++ runtimes ++ darwinDeps ++ linuxDeps;
 
@@ -85,9 +124,19 @@
               fi
               source venv/bin/activate
 
+              echo ""
               echo "AI Toolkit dev shell"
               echo "  Python: $(python3 --version)"
               echo "  Node:   $(node --version)"
+              echo ""
+              echo "Quick start:"
+              echo "  pip install -r requirements.txt   # first time only"
+              echo "  python run.py config/your_config.yaml"
+              echo ""
+              echo "Nix package targets:"
+              echo "  nix build          # build ai-toolkit package"
+              echo "  nix run . -- config/your_config.yaml  # run training"
+              ${lib.optionalString isLinux ''echo "  nix build .#docker  # build Docker image"''}
             '';
           };
         };
