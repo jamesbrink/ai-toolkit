@@ -1,6 +1,7 @@
 import os
 os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "1"
 os.environ["NO_ALBUMENTATIONS_UPDATE"] = "1"
+import warnings
 import sys
 from typing import Union, OrderedDict
 from dotenv import load_dotenv
@@ -19,6 +20,15 @@ if os.environ.get("DEBUG_TOOLKIT", "0") == "1":
     # set torch to trace mode
     import torch
     torch.autograd.set_detect_anomaly(True)
+
+# Suppress harmless CUDA autocast warnings on non-CUDA systems (MPS/CPU).
+# Libraries like diffusers and accelerate may reference device_type='cuda'
+# in autocast calls even when CUDA is unavailable.
+warnings.filterwarnings(
+    "ignore",
+    message="User provided device_type of 'cuda', but CUDA is not available",
+    category=UserWarning,
+)
 
 # Workaround for PyTorch 2.9.x MPS bug: torch.cat and torch.stack crash with
 # SIGTRAP on Apple Silicon. Replace with pre-allocated tensor + slice assignment.

@@ -103,6 +103,13 @@ export default function TrainingForm() {
       if (jobConfig.config.process[0].train.optimizer === 'adamw8bit') {
         setJobConfig('adamw', 'config.process[0].train.optimizer');
       }
+      // qint8 backward crashes on MPS — disable transformer quantization
+      setJobConfig(false, 'config.process[0].model.quantize');
+      // Text encoder quantization is safe (inference-only)
+      setJobConfig(true, 'config.process[0].model.quantize_te');
+      setJobConfig('qint8', 'config.process[0].model.qtype_te');
+      // Gradual model loading avoids peak memory on unified memory
+      setJobConfig(true, 'config.process[0].model.low_vram');
     }
   }, [isGPUInfoLoaded, deviceType]);
 

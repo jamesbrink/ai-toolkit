@@ -15,7 +15,6 @@ from diffusers.pipelines.pixart_alpha.pipeline_pixart_sigma import ASPECT_RATIO_
     ASPECT_RATIO_2048_BIN, ASPECT_RATIO_256_BIN
 from diffusers.pipelines.stable_diffusion_xl.pipeline_stable_diffusion_xl import rescale_noise_cfg
 from safetensors.torch import save_file, load_file
-from torch import autocast
 from torch.nn import Parameter
 from torch.utils.checkpoint import checkpoint
 from tqdm import tqdm
@@ -423,7 +422,14 @@ class StableDiffusion:
             
             if self.model_config.lora_path is not None:
                 raise ValueError("LoRA is not supported for SD3 models currently")
-            
+
+            if self.model_config.quantize and self.device_torch.type == 'mps':
+                print_acc(
+                    "WARNING: Skipping transformer quantization on MPS "
+                    "(quantized backward pass crashes)."
+                )
+                self.model_config.quantize = False
+
             if self.model_config.quantize:
                 quantization_type = get_qtype(self.model_config.qtype)
                 print_acc("Quantizing transformer")
@@ -793,6 +799,16 @@ class StableDiffusion:
                     pipe.unload_lora_weights()
             flush()
             
+            # MPS: quantized int8 backward pass crashes — skip transformer
+            # quantization entirely and fall through to low_vram or device move.
+            if self.model_config.quantize and self.device_torch.type == 'mps':
+                print_acc(
+                    "WARNING: Skipping transformer quantization on MPS "
+                    "(quantized backward pass crashes). Set quantize: false "
+                    "in your config to silence this warning."
+                )
+                self.model_config.quantize = False
+
             if self.model_config.quantize:
                 # patch the state dict method
                 patch_dequantization_on_save(transformer)
@@ -902,9 +918,16 @@ class StableDiffusion:
 
             if self.model_config.lora_path is not None:
                 raise ValueError("Loading LoRA is not supported for Lumina2 models currently")
-            
+
             flush()
-            
+
+            if self.model_config.quantize and self.device_torch.type == 'mps':
+                print_acc(
+                    "WARNING: Skipping transformer quantization on MPS "
+                    "(quantized backward pass crashes)."
+                )
+                self.model_config.quantize = False
+
             if self.model_config.quantize:
                 # patch the state dict method
                 patch_dequantization_on_save(transformer)

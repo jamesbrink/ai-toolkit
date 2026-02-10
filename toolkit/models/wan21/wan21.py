@@ -371,7 +371,14 @@ class Wan21(BaseModel):
                 "Loading LoRA is not supported for Wan2.1 models currently")
 
         flush()
-        
+
+        if self.model_config.quantize and self.device_torch.type == 'mps':
+            self.print_and_status_update(
+                "WARNING: Skipping transformer quantization on MPS "
+                "(quantized backward pass crashes)."
+            )
+            self.model_config.quantize = False
+
         if self.model_config.quantize:
             self.print_and_status_update("Quantizing Transformer")
             quantize_model(self, transformer)

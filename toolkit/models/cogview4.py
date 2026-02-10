@@ -146,6 +146,13 @@ class CogView4(BaseModel):
 
         flush()
 
+        if self.model_config.quantize and self.device_torch.type == 'mps':
+            self.print_and_status_update(
+                "WARNING: Skipping transformer quantization on MPS "
+                "(quantized backward pass crashes)."
+            )
+            self.model_config.quantize = False
+
         if self.model_config.quantize:
             quantization_args = self.model_config.quantize_kwargs
             if 'exclude' not in quantization_args:
