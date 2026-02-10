@@ -95,7 +95,7 @@ All must handle MPS via `torch.mps.synchronize()` before `torch.mps.empty_cache(
 - `DEBUG_TOOLKIT=1` — enables PyTorch anomaly detection
 
 ### Device utility module (`toolkit/device_utils.py`)
-MPS-aware wrappers: `get_device()`, `empty_cache()`, `manual_seed()`, `synchronize()`, `autocast()`.
+MPS-aware wrappers: `is_mps_available()`, `is_cuda_available()`, `get_device()`, `get_device_name()`, `empty_cache()`, `manual_seed()`, `synchronize()`, `autocast()`.
 
 ## Nix Packaging
 
@@ -137,6 +137,15 @@ Two concurrent processes:
 Python discovery in worker: `PYTHON_PATH` env var → `.venv/bin/python` → `venv/bin/python` → `python`
 Path config: `TOOLKIT_ROOT` env var → `ui/cron/paths.ts` fallback
 
+### Web UI technology stack
+- **Tailwind CSS 4.1** — CSS-first config via `@import "tailwindcss"` in `globals.css`. No `tailwind.config.ts` (deleted during v3→v4 migration). Theme defined in `@theme` block in `globals.css`. PostCSS uses `@tailwindcss/postcss` plugin.
+- **Responsive sidebar** — 3 modes: mobile drawer (<768px, HeadlessUI `Dialog`), tablet icon rail (768–1024px, expands on hover), desktop full-width (>1024px). State managed by `SidebarContext.tsx` / `SidebarProvider`.
+- **Dynamic viewport height** — `h-dvh` (not `h-screen`) in root layout for correct mobile browser behavior.
+- **react-select dark theme** — Default inline `style` attributes from react-select can't be overridden by CSS classes. The `styles` prop in `formInputs.tsx` (`reactSelectDarkStyles` object) is required for dark mode.
+- **WCAG AA contrast** — All text uses `text-gray-400` (#a3a3a3) or lighter on dark backgrounds (~7.3:1 ratio). Avoid `text-gray-500` (#737373) which only achieves ~3.8:1 (fails WCAG AA 4.5:1 requirement).
+- **Skeleton loading states** — `Skeleton.tsx` provides `GPUWidgetSkeleton`, `TableSkeleton`, `JobOverviewSkeleton` presets with shimmer animation.
+- **MPS detection in UI** — `useGPUInfo` hook returns `deviceType: 'mps'` on Apple Silicon. The job creation page auto-applies MPS-safe defaults (adamw optimizer, no transformer quantization, low_vram mode).
+
 ### Rebuilding after changes
 ```bash
 nix build .#ai-toolkit         # Rebuild Python package (picks up toolkit/ changes)
@@ -150,7 +159,8 @@ Source filtering in both derivations excludes: `node_modules`, `venv`, `output`,
 - `extensions/` — user extensions (gitignored except `extensions/example`)
 - `jobs/` — job types and process base classes
 - `config/examples/` — reference training configs for all supported models
-- `ui/` — Next.js web UI
+- `ui/` — Next.js web UI (Tailwind 4.1, Prisma 6, HeadlessUI)
+- `ui/src/components/` — key UI components: `Sidebar.tsx` (responsive 3-mode nav), `SidebarContext.tsx` (drawer state), `Skeleton.tsx` (loading states), `formInputs.tsx` (form controls + react-select dark styles), `JobActionBar.tsx` (job controls), `SampleImages.tsx` (responsive image grid), `layout.tsx` (TopBar/MainContent with hamburger menu)
 - `nix/` — Nix packaging derivations and wrapper scripts
 
 ## Environment variables
@@ -159,4 +169,10 @@ Source filtering in both derivations excludes: `node_modules`, `venv`, `output`,
 - `DATABASE_URL` — SQLite path for UI (set by Nix wrapper)
 - `TOOLKIT_ROOT` — path to ai-toolkit source (set by Nix wrapper)
 - `PYTHON_PATH` — Python binary for UI worker to spawn training jobs
+- `AI_TOOLKIT_UI_DATA` — override writable data directory (default: `~/.local/share/ai-toolkit`)
+- `AI_TOOLKIT_UI_HOST` — override UI bind address (default: `0.0.0.0`)
+- `DATASETS_FOLDER` — override datasets directory (default: `$AI_TOOLKIT_UI_DATA/datasets`)
+- `TRAINING_FOLDER` — override training output directory (default: `$AI_TOOLKIT_UI_DATA/output`)
+- `DATA_ROOT` — override general data directory (default: `$AI_TOOLKIT_UI_DATA/data`)
+- `PORT` — override UI port (default: `8675`)
 - Standard HuggingFace env vars (`HF_TOKEN`, etc.) for gated model access
