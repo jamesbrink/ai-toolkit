@@ -386,7 +386,7 @@ export default function JobLossGraph({ job }: Props) {
               onChange={e => setPlotStride(Number(e.target.value))}
               className="w-full accent-blue-500"
             />
-            <div className="mt-2 text-[11px] text-gray-500">UI downsample for huge runs.</div>
+            <div className="mt-2 text-[11px] text-gray-400">UI downsample for huge runs.</div>
           </div>
 
           <div className="bg-gray-950 border border-gray-800 rounded-lg p-3 md:col-span-2">
@@ -403,7 +403,7 @@ export default function JobLossGraph({ job }: Props) {
               onChange={e => setWindowSize(Number(e.target.value))}
               className="w-full accent-blue-500"
             />
-            <div className="mt-2 text-[11px] text-gray-500">
+            <div className="mt-2 text-[11px] text-gray-400">
               Set to 0 to show all (not recommended for very long runs).
             </div>
           </div>

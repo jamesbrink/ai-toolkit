@@ -48,7 +48,7 @@ export default function Settings() {
                 <div>
                   <label htmlFor="HF_TOKEN" className="block text-sm font-medium mb-2">
                     Hugging Face Token
-                    <div className="text-gray-500 text-sm ml-1">
+                    <div className="text-gray-400 text-sm ml-1">
                       Create a Read token on{' '}
                       <a href="https://huggingface.co/settings/tokens" target="_blank" rel="noreferrer">
                         {' '}
@@ -71,7 +71,7 @@ export default function Settings() {
                 <div>
                   <label htmlFor="TRAINING_FOLDER" className="block text-sm font-medium mb-2">
                     Training Folder Path
-                    <div className="text-gray-500 text-sm ml-1">
+                    <div className="text-gray-400 text-sm ml-1">
                       We will store your training information here. Must be an absolute path. If blank, it will default
                       to the output folder in the project root.
                     </div>
@@ -90,9 +90,9 @@ export default function Settings() {
                 <div>
                   <label htmlFor="DATASETS_FOLDER" className="block text-sm font-medium mb-2">
                     Dataset Folder Path
-                    <div className="text-gray-500 text-sm ml-1">
+                    <div className="text-gray-400 text-sm ml-1">
                       Where we store and find your datasets.{' '}
-                      <span className="text-orange-800">
+                      <span className="text-orange-400">
                         Warning: This software may modify datasets so it is recommended you keep a backup somewhere else
                         or have a dedicated folder for this software.
                       </span>

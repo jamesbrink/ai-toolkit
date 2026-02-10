@@ -90,7 +90,7 @@ export default function GPUWidget({ gpu }: GPUWidgetProps) {
             <p className="text-xs text-gray-400 mt-0.5">
               {formatMemory(gpu.memory.used)} / {formatMemory(gpu.memory.total)}
             </p>
-            {gpu.isMps && <p className="text-xs text-gray-500 mt-0.5">Shared with CPU</p>}
+            {gpu.isMps && <p className="text-xs text-gray-400 mt-0.5">Shared with CPU</p>}
           </div>
         </div>
 

@@ -110,7 +110,7 @@ const GpuMonitor: React.FC = () => {
     <div className="w-full">
       <div className="flex justify-between items-center mb-2">
         <h1 className="text-md">GPU Monitor</h1>
-        <div className="text-xs text-gray-500">Last updated: {lastUpdated?.toLocaleTimeString()}</div>
+        <div className="text-xs text-gray-400">Last updated: {lastUpdated?.toLocaleTimeString()}</div>
       </div>
       {content}
     </div>

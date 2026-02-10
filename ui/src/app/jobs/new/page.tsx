@@ -162,7 +162,7 @@ export default function TrainingForm() {
     <>
       <TopBar>
         <div>
-          <Button className="text-gray-500 dark:text-gray-300 px-3 mt-1" onClick={() => history.back()}>
+          <Button className="text-gray-300 px-3 mt-1" onClick={() => history.back()}>
             <FaChevronLeft />
           </Button>
         </div>

@@ -56,7 +56,7 @@ export default function DatasetPage({ params }: { params: { datasetName: string 
       showIt = true;
       bgColor = 'bg-gray-50 dark:bg-gray-800/50';
       textColor = 'text-gray-900 dark:text-gray-100';
-      iconColor = 'text-gray-500 dark:text-gray-400';
+      iconColor = 'text-gray-400';
     }
     if (status == 'error') {
       icon = <LuBan className="w-8 h-8" />;
@@ -74,7 +74,7 @@ export default function DatasetPage({ params }: { params: { datasetName: string 
       showIt = true;
       bgColor = 'bg-gray-50 dark:bg-gray-800/50';
       textColor = 'text-gray-900 dark:text-gray-100';
-      iconColor = 'text-gray-500 dark:text-gray-400';
+      iconColor = 'text-gray-400';
     }
 
     if (!showIt) return null;
@@ -95,7 +95,7 @@ export default function DatasetPage({ params }: { params: { datasetName: string 
       {/* Fixed top bar */}
       <TopBar>
         <div>
-          <Button className="text-gray-500 dark:text-gray-300 px-3 mt-1" onClick={() => history.back()}>
+          <Button className="text-gray-300 px-3 mt-1" onClick={() => history.back()}>
             <FaChevronLeft />
           </Button>
         </div>

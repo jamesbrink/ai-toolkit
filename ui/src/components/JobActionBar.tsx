@@ -44,7 +44,7 @@ export default function JobActionBar({
           }}
           className="ml-1 p-2.5 rounded-lg hover:bg-gray-700 flex items-center justify-center"
         >
-          <Play />
+          <Play className="w-5 h-5" />
         </Button>
       )}
       {canRemoveFromQueue && (
@@ -56,7 +56,7 @@ export default function JobActionBar({
           }}
           className="ml-1 p-2.5 rounded-lg hover:bg-gray-700 flex items-center justify-center"
         >
-          <X />
+          <X className="w-5 h-5" />
         </Button>
       )}
       {canStop && (
@@ -76,17 +76,17 @@ export default function JobActionBar({
           }}
           className="ml-1 p-2.5 rounded-lg hover:bg-gray-700 flex items-center justify-center"
         >
-          <Pause />
+          <Pause className="w-5 h-5" />
         </Button>
       )}
       {!hideView && (
-        <Link href={`/jobs/${job.id}`} className="ml-1 p-2.5 rounded-lg hover:bg-gray-700 text-gray-200 hover:text-gray-100 inline-flex items-center justify-center">
-          <Eye />
+        <Link href={`/jobs/${job.id}`} className="ml-1 p-2.5 rounded-lg hover:bg-gray-700 text-gray-200 hover:text-gray-100 flex items-center justify-center">
+          <Eye className="w-5 h-5" />
         </Link>
       )}
       {canEdit && (
-        <Link href={`/jobs/new?id=${job.id}`} className="ml-1 p-2.5 rounded-lg hover:bg-gray-700 hover:text-gray-100 inline-flex items-center justify-center">
-          <Pen />
+        <Link href={`/jobs/new?id=${job.id}`} className="ml-1 p-2.5 rounded-lg hover:bg-gray-700 hover:text-gray-100 flex items-center justify-center">
+          <Pen className="w-5 h-5" />
         </Link>
       )}
       <Button
@@ -115,12 +115,12 @@ export default function JobActionBar({
         }}
         className="ml-1 p-2.5 rounded-lg hover:bg-gray-700 flex items-center justify-center"
       >
-        <Trash2 />
+        <Trash2 className="w-5 h-5" />
       </Button>
       <div className="border-r border-gray-700 ml-2 h-6"></div>
-      <Menu>
+      <Menu as="div" className="flex items-center">
         <MenuButton className="ml-1 p-2.5 rounded-lg hover:bg-gray-700 flex items-center justify-center">
-          <Cog />
+          <Cog className="w-5 h-5" />
         </MenuButton>
         <MenuItems
           anchor="bottom"

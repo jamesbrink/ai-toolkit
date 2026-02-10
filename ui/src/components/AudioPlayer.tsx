@@ -689,7 +689,7 @@ export default function AudioPlayer({
               {err}
             </div>
           ) : !isReady ? (
-            <div className="mt-2 text-gray-500" style={{ fontSize: subSize }}>
+            <div className="mt-2 text-gray-400" style={{ fontSize: subSize }}>
               Loading…
             </div>
           ) : null}

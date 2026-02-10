@@ -130,7 +130,7 @@ function NavContent({
           <div className="min-w-[26px] min-h-[26px]">
             <HeartIcon />
           </div>
-          <div className="uppercase text-gray-500 text-sm mb-2 flex-1 pt-2 pl-0">
+          <div className="uppercase text-gray-400 text-sm mb-2 flex-1 pt-2 pl-0">
             Support AI-Toolkit
           </div>
         </a>

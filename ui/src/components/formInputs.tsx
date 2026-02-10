@@ -12,7 +12,76 @@ const Select = dynamic(() => import('react-select'), { ssr: false });
 
 const labelClasses = 'block text-xs mb-1.5 mt-3 text-gray-300';
 const inputClasses =
-  'w-full text-sm px-3 py-2.5 bg-gray-800 border border-gray-700 rounded-sm focus:ring-2 focus:ring-gray-600 focus:border-transparent text-gray-100 placeholder-gray-500';
+  'w-full text-sm px-3 py-2.5 bg-gray-800 border border-gray-700 rounded-sm focus:ring-2 focus:ring-gray-600 focus:border-transparent text-gray-100 placeholder-gray-400';
+
+// Dark theme styles for react-select (overrides default inline styles)
+const reactSelectDarkStyles = {
+  control: (base: any, state: any) => ({
+    ...base,
+    backgroundColor: '#262626',
+    borderColor: state.isFocused ? 'transparent' : '#404040',
+    minHeight: '2rem',
+    boxShadow: state.isFocused ? '0 0 0 2px #525252' : 'none',
+    '&:hover': { borderColor: state.isFocused ? 'transparent' : '#525252' },
+  }),
+  menu: (base: any) => ({
+    ...base,
+    backgroundColor: '#262626',
+    border: '1px solid #404040',
+    zIndex: 50,
+  }),
+  menuList: (base: any) => ({
+    ...base,
+    padding: 0,
+  }),
+  option: (base: any, state: any) => ({
+    ...base,
+    backgroundColor: state.isSelected ? '#404040' : state.isFocused ? '#404040' : '#262626',
+    color: state.isSelected ? '#ffffff' : '#e5e5e5',
+    fontSize: '0.875rem',
+    '&:hover': { backgroundColor: '#404040' },
+    '&:active': { backgroundColor: '#404040' },
+  }),
+  singleValue: (base: any) => ({
+    ...base,
+    color: '#e5e5e5',
+    fontSize: '0.875rem',
+  }),
+  input: (base: any) => ({
+    ...base,
+    color: '#e5e5e5',
+  }),
+  placeholder: (base: any) => ({
+    ...base,
+    color: '#a3a3a3',
+    fontSize: '0.875rem',
+  }),
+  groupHeading: (base: any) => ({
+    ...base,
+    color: '#a3a3a3',
+    textTransform: 'uppercase' as const,
+    fontSize: '0.75rem',
+  }),
+  indicatorSeparator: (base: any) => ({
+    ...base,
+    backgroundColor: '#525252',
+  }),
+  dropdownIndicator: (base: any) => ({
+    ...base,
+    color: '#a3a3a3',
+    padding: '0 8px',
+    '&:hover': { color: '#d4d4d4' },
+  }),
+  clearIndicator: (base: any) => ({
+    ...base,
+    color: '#a3a3a3',
+    '&:hover': { color: '#d4d4d4' },
+  }),
+  noOptionsMessage: (base: any) => ({
+    ...base,
+    color: '#a3a3a3',
+  }),
+};
 
 export interface InputProps {
   label?: string;
@@ -42,7 +111,7 @@ export const TextInput = forwardRef<HTMLInputElement, TextInputProps>((props: Te
         <label className={labelClasses}>
           {label}{' '}
           {doc && (
-            <div className="inline-block ml-1 text-xs text-gray-500 cursor-pointer" onClick={() => openDoc(doc)}>
+            <div className="inline-block ml-1 text-xs text-gray-400 cursor-pointer" onClick={() => openDoc(doc)}>
               <CircleHelp className="inline-block w-4 h-4 cursor-pointer" />
             </div>
           )}
@@ -95,7 +164,7 @@ export const NumberInput = (props: NumberInputProps) => {
         <label className={labelClasses}>
           {label}{' '}
           {doc && (
-            <div className="inline-block ml-1 text-xs text-gray-500 cursor-pointer" onClick={() => openDoc(doc)}>
+            <div className="inline-block ml-1 text-xs text-gray-400 cursor-pointer" onClick={() => openDoc(doc)}>
               <CircleHelp className="inline-block w-4 h-4 cursor-pointer" />
             </div>
           )}
@@ -178,7 +247,7 @@ export const SelectInput = (props: SelectInputProps) => {
         <label className={labelClasses}>
           {label}{' '}
           {doc && (
-            <div className="inline-block ml-1 text-xs text-gray-500 cursor-pointer" onClick={() => openDoc(doc)}>
+            <div className="inline-block ml-1 text-xs text-gray-400 cursor-pointer" onClick={() => openDoc(doc)}>
               <CircleHelp className="inline-block w-4 h-4 cursor-pointer" />
             </div>
           )}
@@ -190,6 +259,7 @@ export const SelectInput = (props: SelectInputProps) => {
         isDisabled={props.disabled}
         className="aitk-react-select-container"
         classNamePrefix="aitk-react-select"
+        styles={reactSelectDarkStyles}
         onChange={selected => {
           if (selected) {
             onChange((selected as { value: string }).value);
@@ -250,13 +320,13 @@ export const Checkbox = (props: CheckboxProps) => {
             htmlFor={id}
             className={classNames(
               'text-sm font-medium cursor-pointer select-none',
-              disabled ? 'text-gray-500' : 'text-gray-300',
+              disabled ? 'text-gray-400' : 'text-gray-300',
             )}
           >
             {label}
           </label>
           {doc && (
-            <div className="inline-block ml-1 text-xs text-gray-500 cursor-pointer" onClick={() => openDoc(doc)}>
+            <div className="inline-block ml-1 text-xs text-gray-400 cursor-pointer" onClick={() => openDoc(doc)}>
               <CircleHelp className="inline-block w-4 h-4 cursor-pointer" />
             </div>
           )}
@@ -286,7 +356,7 @@ export const FormGroup: React.FC<FormGroupProps> = props => {
         <label className={classNames(labelClasses, 'mb-2')}>
           {label}{' '}
           {doc && (
-            <div className="inline-block ml-1 text-xs text-gray-500 cursor-pointer" onClick={() => openDoc(doc)}>
+            <div className="inline-block ml-1 text-xs text-gray-400 cursor-pointer" onClick={() => openDoc(doc)}>
               <CircleHelp className="inline-block w-4 h-4 cursor-pointer" />
             </div>
           )}
@@ -386,7 +456,7 @@ export const SliderInput: React.FC<SliderInputProps> = props => {
         <label className={labelClasses}>
           {label}{' '}
           {doc && (
-            <div className="inline-block ml-1 text-xs text-gray-500 cursor-pointer" onClick={() => openDoc(doc)}>
+            <div className="inline-block ml-1 text-xs text-gray-400 cursor-pointer" onClick={() => openDoc(doc)}>
               <CircleHelp className="inline-block w-4 h-4 cursor-pointer" />
             </div>
           )}
@@ -425,7 +495,7 @@ export const SliderInput: React.FC<SliderInputProps> = props => {
             />
           </div>
 
-          <div className="flex justify-between text-xs text-gray-500 mt-0.5 select-none">
+          <div className="flex justify-between text-xs text-gray-400 mt-0.5 select-none">
             <span>{min}</span>
             <span>{max}</span>
           </div>

@@ -18,7 +18,7 @@ const Card: React.FC<CardProps> = ({ title, children, collapsible, defaultOpen }
             <DisclosureButton className="w-full text-left flex items-center justify-between">
               <div className="flex-1">
                 {title && (
-                  <h2 className={classNames('text-lg mb-2 font-semibold uppercase text-gray-500', { 'mb-0': !open })}>
+                  <h2 className={classNames('text-lg mb-2 font-semibold uppercase text-gray-400', { 'mb-0': !open })}>
                     {title}
                   </h2>
                 )}
@@ -34,7 +34,7 @@ const Card: React.FC<CardProps> = ({ title, children, collapsible, defaultOpen }
   }
   return (
     <section className="space-y-2 px-4 pb-4 pt-2 bg-gray-900 rounded-lg">
-      {title && <h2 className="text-lg mb-2 font-semibold uppercase text-gray-500">{title}</h2>}
+      {title && <h2 className="text-lg mb-2 font-semibold uppercase text-gray-400">{title}</h2>}
       {children ?? null}
     </section>
   );

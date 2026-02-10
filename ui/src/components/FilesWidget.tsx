@@ -62,7 +62,7 @@ export default function FilesWidget({ jobID }: { jobID: string }) {
                           {nameWithoutExt}
                         </span>
                       </div>
-                      <span className="text-xs text-gray-500">.safetensors</span>
+                      <span className="text-xs text-gray-400">.safetensors</span>
                     </div>
                   </div>
                   <div className="flex items-center space-x-3 flex-shrink-0">

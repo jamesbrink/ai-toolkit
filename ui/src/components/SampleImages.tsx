@@ -112,7 +112,7 @@ export default function SampleImages({ job }: SampleImagesProps) {
       showIt = true;
       bgColor = 'bg-gray-50 dark:bg-gray-800/50';
       textColor = 'text-gray-900 dark:text-gray-100';
-      iconColor = 'text-gray-500 dark:text-gray-400';
+      iconColor = 'text-gray-400';
     }
     if (status == 'error') {
       icon = <LuBan className="w-8 h-8" />;
@@ -130,7 +130,7 @@ export default function SampleImages({ job }: SampleImagesProps) {
       showIt = true;
       bgColor = 'bg-gray-50 dark:bg-gray-800/50';
       textColor = 'text-gray-900 dark:text-gray-100';
-      iconColor = 'text-gray-500 dark:text-gray-400';
+      iconColor = 'text-gray-400';
     }
 
     if (!showIt) return null;
@@ -237,14 +237,14 @@ export default function SampleImages({ job }: SampleImagesProps) {
         onClick={scrollToTop}
         title="Scroll to Top"
       >
-        <FaCaretUp className="text-gray-500 dark:text-gray-400" />
+        <FaCaretUp className="text-gray-400" />
       </div>
       <div
         className="fixed bottom-5 right-6 w-10 h-10 rounded-full bg-gray-900 shadow-lg flex items-center justify-center text-white opacity-80 hover:opacity-100 cursor-pointer"
         onClick={scrollToBottom}
         title="Scroll to Bottom"
       >
-        <FaCaretDown className="text-gray-500 dark:text-gray-400" />
+        <FaCaretDown className="text-gray-400" />
       </div>
     </div>
   );
