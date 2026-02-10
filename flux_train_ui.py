@@ -409,4 +409,5 @@ with gr.Blocks() as demo:
     do_captioning.click(fn=run_captioning, inputs=[images, concept_sentence] + caption_list, outputs=caption_list)
 
 if __name__ == "__main__":
-    demo.launch(share=True, show_error=True, theme=theme, css=css)
+    share = "--share" in sys.argv
+    demo.launch(share=share, show_error=True, theme=theme, css=css)
