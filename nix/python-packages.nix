@@ -220,6 +220,16 @@ self: super: {
     nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ self.ninja ];
   });
 
+  # torchao inductor tests fail without a C compiler in the Nix sandbox
+  torchao = super.torchao.overridePythonAttrs (old: {
+    doCheck = false;
+  });
+
+  # timm inductor test fails without a C compiler in the Nix sandbox
+  timm = super.timm.overridePythonAttrs (old: {
+    doCheck = false;
+  });
+
   # rapidfuzz C extension fails on macOS (libatomic not available with clang)
   rapidfuzz = super.rapidfuzz.overridePythonAttrs (old: lib.optionalAttrs pkgs.stdenv.isDarwin {
     env = (old.env or { }) // {
