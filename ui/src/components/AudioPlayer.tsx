@@ -461,7 +461,6 @@ export default function AudioPlayer({
   useEffect(() => {
     if (isPlaying) startLoop();
     else stopLoop();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPlaying, duration]);
 
   function ensureAudioGraph() {

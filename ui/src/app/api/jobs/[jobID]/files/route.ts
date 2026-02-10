@@ -25,7 +25,7 @@ export async function GET(request: NextRequest, { params }: { params: { jobID: s
   }
 
   // find all safetensors files in the job folder
-  let files = fs
+  const files = fs
     .readdirSync(jobFolder)
     .filter(file => {
       return file.endsWith('.safetensors');

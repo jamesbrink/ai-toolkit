@@ -47,13 +47,7 @@ function isActive(href: string, pathname: string): boolean {
 /**
  * Shared nav content rendered in all sidebar modes (mobile drawer, tablet rail, desktop full).
  */
-function NavContent({
-  collapsed,
-  onNavClick,
-}: {
-  collapsed: boolean;
-  onNavClick?: () => void;
-}) {
+function NavContent({ collapsed, onNavClick }: { collapsed: boolean; onNavClick?: () => void }) {
   const pathname = usePathname();
 
   const socialsBoxClass =
@@ -68,11 +62,7 @@ function NavContent({
           <img src="/ostris_logo.png" alt="Ostris AI Toolkit" className="w-auto h-7" />
         ) : (
           <h1 className="text-l">
-            <img
-              src="/ostris_logo.png"
-              alt="Ostris AI Toolkit"
-              className="w-auto h-7 mr-3 inline"
-            />
+            <img src="/ostris_logo.png" alt="Ostris AI Toolkit" className="w-auto h-7 mr-3 inline" />
             <span className="font-bold uppercase">Ostris</span>
             <span className="ml-2 uppercase text-gray-300">AI-Toolkit</span>
           </h1>
@@ -93,9 +83,7 @@ function NavContent({
                   className={classNames(
                     'flex items-center py-3 rounded-lg transition-colors',
                     collapsed ? 'justify-center px-2' : 'px-4',
-                    active
-                      ? 'bg-gray-800 text-white'
-                      : 'text-gray-300 hover:bg-gray-800',
+                    active ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-800',
                   )}
                 >
                   <item.icon className={classNames('w-5 h-5 shrink-0', !collapsed && 'mr-3')} />
@@ -130,9 +118,7 @@ function NavContent({
           <div className="min-w-[26px] min-h-[26px]">
             <HeartIcon />
           </div>
-          <div className="uppercase text-gray-400 text-sm mb-2 flex-1 pt-2 pl-0">
-            Support AI-Toolkit
-          </div>
+          <div className="uppercase text-gray-400 text-sm mb-2 flex-1 pt-2 pl-0">Support AI-Toolkit</div>
         </a>
       )}
 
@@ -156,13 +142,7 @@ function NavContent({
         ) : (
           <div className="grid grid-cols-3 gap-4">
             {socialLinks.map(link => (
-              <a
-                key={link.name}
-                href={link.href}
-                target="_blank"
-                rel="noreferrer"
-                className={socialsBoxClass}
-              >
+              <a key={link.name} href={link.href} target="_blank" rel="noreferrer" className={socialsBoxClass}>
                 <link.icon className={socialIconClass} />
               </a>
             ))}

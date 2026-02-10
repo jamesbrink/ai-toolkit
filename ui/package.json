@@ -7,7 +7,7 @@
     "build": "tsc -p tsconfig.worker.json && next build",
     "start": "concurrently --restart-tries -1 --restart-after 1000 -n WORKER,UI \"node dist/cron/worker.js\" \"next start --port 8675\"",
     "build_and_start": "npm install && npm run update_db && npm run build && npm run start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "update_db": "export DATABASE_URL=\"${DATABASE_URL:-file:../../aitk_db.db}\" && npx prisma generate && npx prisma db push",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,css,scss}\""
   },
@@ -35,18 +35,25 @@
     "yaml": "^2.7.0"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.2",
+    "@next/eslint-plugin-next": "^15.5.12",
+    "@tailwindcss/postcss": "^4.1",
     "@types/archiver": "^6.0.3",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "concurrently": "^9.1.2",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^5.2.0",
     "postcss": "^8",
     "prettier": "^3.5.1",
     "prettier-basic": "^1.0.0",
-    "@tailwindcss/postcss": "^4.1",
     "tailwindcss": "^4.1",
     "ts-node-dev": "^2.0.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "typescript-eslint": "^8.55.0"
   },
   "prettier": "prettier-basic"
 }

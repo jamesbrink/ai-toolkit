@@ -7,8 +7,8 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { name } = body;
-    let datasetsPath = await getDatasetsRoot();
-    let datasetPath = path.join(datasetsPath, name);
+    const datasetsPath = await getDatasetsRoot();
+    const datasetPath = path.join(datasetsPath, name);
 
     // if folder doesnt exist, ignore
     if (!fs.existsSync(datasetPath)) {

@@ -1,11 +1,9 @@
-/* eslint-disable */
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 import { getDatasetsRoot } from '@/server/settings';
 
 export async function POST(request: NextRequest) {
-  
   const body = await request.json();
   const { imgPath } = body;
   console.log('Received POST request for caption:', imgPath);

@@ -6,7 +6,7 @@ export async function GET() {
   try {
     const cpuInfoRaw = await si.cpu();
     const memoryData = await si.mem();
-    let cpuInfo: CpuInfo = {
+    const cpuInfo: CpuInfo = {
       name: `${cpuInfoRaw.manufacturer} ${cpuInfoRaw.brand}`,
       cores: cpuInfoRaw.cores,
       temperature: (await si.cpuTemperature()).main || 0,

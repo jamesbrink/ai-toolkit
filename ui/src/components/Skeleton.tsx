@@ -15,7 +15,7 @@ export function Skeleton({ className, variant = 'rect', width, height }: Skeleto
         {
           'h-4 rounded': variant === 'text',
           'rounded-full': variant === 'circle',
-          'rounded': variant === 'rect',
+          rounded: variant === 'rect',
           'rounded-lg': variant === 'card',
         },
         className,

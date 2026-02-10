@@ -104,9 +104,7 @@ async function detectMps() {
 
 async function getAppleGpuUtilization(): Promise<number> {
   try {
-    const { stdout } = await execAsync(
-      'ioreg -r -l -c AGXAccelerator 2>/dev/null | grep "Device Utilization"',
-    );
+    const { stdout } = await execAsync('ioreg -r -l -c AGXAccelerator 2>/dev/null | grep "Device Utilization"');
     const match = stdout.match(/"Device Utilization %"=(\d+)/);
     if (match) {
       return parseInt(match[1]);

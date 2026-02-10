@@ -27,7 +27,7 @@ function all<T = any>(db: sqlite3.Database, sql: string, params: any[] = []) {
 
 function closeDb(db: sqlite3.Database) {
   return new Promise<void>((resolve, reject) => {
-    db.close((err) => (err ? reject(err) : resolve()));
+    db.close(err => (err ? reject(err) : resolve()));
   });
 }
 
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest, { params }: { params: { jobID: s
 
   try {
     const keysRows = await all<{ key: string }>(db, `SELECT key FROM metric_keys ORDER BY key ASC`);
-    const keys = keysRows.map((r) => r.key);
+    const keys = keysRows.map(r => r.key);
 
     const points = await all<{
       step: number;
@@ -80,13 +80,13 @@ export async function GET(request: NextRequest, { params }: { params: { jobID: s
       ORDER BY m.step ASC
       LIMIT ?
       `,
-      [key, sinceStep, sinceStep, stride, limit]
+      [key, sinceStep, sinceStep, stride, limit],
     );
 
     return NextResponse.json({
       key,
       keys,
-      points: points.map((p) => ({
+      points: points.map(p => ({
         step: p.step,
         wall_time: p.wall_time,
         value: p.value ?? (p.value_text ? Number(p.value_text) : null),

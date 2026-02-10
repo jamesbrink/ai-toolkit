@@ -51,6 +51,7 @@ export default function FilesWidget({ jobID }: { jobID: string }) {
                 <a
                   key={index}
                   target="_blank"
+                  rel="noreferrer"
                   href={`/api/files/${encodeURIComponent(file.path)}`}
                   className="group flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-gray-800 transition-all duration-200"
                 >

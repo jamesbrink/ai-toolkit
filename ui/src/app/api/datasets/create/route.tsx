@@ -10,8 +10,8 @@ export async function POST(request: Request) {
     // clean name by making lower case,  removing special characters, and replacing spaces with underscores
     name = name.toLowerCase().replace(/[^a-z0-9]+/g, '_');
 
-    let datasetsPath = await getDatasetsRoot();
-    let datasetPath = path.join(datasetsPath, name);
+    const datasetsPath = await getDatasetsRoot();
+    const datasetPath = path.join(datasetsPath, name);
 
     // if folder doesnt exist, create it
     if (!fs.existsSync(datasetPath)) {

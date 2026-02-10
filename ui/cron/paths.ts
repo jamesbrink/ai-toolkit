@@ -10,7 +10,7 @@ console.log('TOOLKIT_ROOT:', TOOLKIT_ROOT);
 
 export const getTrainingFolder = async () => {
   const key = 'TRAINING_FOLDER';
-  let row = await prisma.settings.findFirst({
+  const row = await prisma.settings.findFirst({
     where: {
       key: key,
     },
@@ -24,7 +24,7 @@ export const getTrainingFolder = async () => {
 
 export const getHFToken = async () => {
   const key = 'HF_TOKEN';
-  let row = await prisma.settings.findFirst({
+  const row = await prisma.settings.findFirst({
     where: {
       key: key,
     },

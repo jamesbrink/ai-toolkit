@@ -7,14 +7,13 @@ import { useDropzone } from 'react-dropzone';
 import { apiClient } from '@/utils/api';
 
 export interface AddSingleImageModalState {
-
-  onComplete?: (imagePath: string|null) => void;
+  onComplete?: (imagePath: string | null) => void;
 }
 
 export const addSingleImageModalState = createGlobalState<AddSingleImageModalState | null>(null);
 
-export const openAddImageModal = (onComplete: (imagePath: string|null) => void) => {
-  addSingleImageModalState.set({onComplete });
+export const openAddImageModal = (onComplete: (imagePath: string | null) => void) => {
+  addSingleImageModalState.set({ onComplete });
 };
 
 export default function AddSingleImageModal() {
@@ -29,7 +28,7 @@ export default function AddSingleImageModal() {
     }
   };
 
-  const onDone = (imagePath: string|null) => {
+  const onDone = (imagePath: string | null) => {
     if (addSingleImageModalInfo?.onComplete && !isUploading) {
       addSingleImageModalInfo.onComplete(imagePath);
       setAddSingleImageModalInfo(null);

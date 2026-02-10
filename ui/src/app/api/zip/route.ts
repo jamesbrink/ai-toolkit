@@ -1,4 +1,3 @@
-/* eslint-disable */
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import fsp from 'fs/promises';

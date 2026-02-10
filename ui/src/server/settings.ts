@@ -16,7 +16,7 @@ export const getDatasetsRoot = async () => {
   if (datasetsPath) {
     return datasetsPath;
   }
-  let row = await prisma.settings.findFirst({
+  const row = await prisma.settings.findFirst({
     where: {
       key: 'DATASETS_FOLDER',
     },
@@ -35,7 +35,7 @@ export const getTrainingFolder = async () => {
   if (trainingRoot) {
     return trainingRoot;
   }
-  let row = await prisma.settings.findFirst({
+  const row = await prisma.settings.findFirst({
     where: {
       key: key,
     },
@@ -54,7 +54,7 @@ export const getHFToken = async () => {
   if (token) {
     return token;
   }
-  let row = await prisma.settings.findFirst({
+  const row = await prisma.settings.findFirst({
     where: {
       key: key,
     },
@@ -73,7 +73,7 @@ export const getDataRoot = async () => {
   if (dataRoot) {
     return dataRoot;
   }
-  let row = await prisma.settings.findFirst({
+  const row = await prisma.settings.findFirst({
     where: {
       key: key,
     },

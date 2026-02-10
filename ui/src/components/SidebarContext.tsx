@@ -31,9 +31,5 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
     return () => mql.removeEventListener('change', handler);
   }, []);
 
-  return (
-    <SidebarContext.Provider value={{ isOpen, toggle, close }}>
-      {children}
-    </SidebarContext.Provider>
-  );
+  return <SidebarContext.Provider value={{ isOpen, toggle, close }}>{children}</SidebarContext.Provider>;
 }

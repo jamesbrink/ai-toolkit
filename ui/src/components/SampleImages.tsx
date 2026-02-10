@@ -52,11 +52,7 @@ export const SampleImagesMenu = ({ job }: SampleImagesMenuProps) => {
         'opacity-50 cursor-not-allowed': isZipping,
       })}
     >
-      {isZipping ? (
-        <LuLoader className="animate-spin mr-2" />
-      ) : (
-        <FaDownload className="mr-2" />
-      )}
+      {isZipping ? <LuLoader className="animate-spin mr-2" /> : <FaDownload className="mr-2" />}
       {isZipping ? 'Preparing' : 'Download'}
     </Button>
   );

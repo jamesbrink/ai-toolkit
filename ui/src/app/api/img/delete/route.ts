@@ -6,7 +6,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { imgPath } = body;
-    let datasetsPath = await getDatasetsRoot();
+    const datasetsPath = await getDatasetsRoot();
     const trainingPath = await getTrainingFolder();
 
     // make sure the dataset path is in the image path

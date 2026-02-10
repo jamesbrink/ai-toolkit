@@ -74,7 +74,7 @@ export const getAvaliableJobActions = (job: Job) => {
   const jobConfig = getJobConfig(job);
   const isStopping = job.stop && job.status === 'running';
   const canDelete = ['queued', 'completed', 'stopped', 'error'].includes(job.status) && !isStopping;
-  const canEdit = ['queued','completed', 'stopped', 'error'].includes(job.status) && !isStopping;
+  const canEdit = ['queued', 'completed', 'stopped', 'error'].includes(job.status) && !isStopping;
   const canRemoveFromQueue = job.status === 'queued';
   const canStop = job.status === 'running' && !isStopping;
   let canStart = ['stopped', 'error'].includes(job.status) && !isStopping;

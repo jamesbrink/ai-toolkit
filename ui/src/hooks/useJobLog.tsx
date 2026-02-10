@@ -30,7 +30,7 @@ export default function useJobLog(jobID: string, reloadInterval: null | number =
       .then(res => res.data)
       .then(data => {
         if (data.log) {
-          let cleanLog = clean(data.log);
+          const cleanLog = clean(data.log);
           setLog(cleanLog);
         }
         setStatus('success');

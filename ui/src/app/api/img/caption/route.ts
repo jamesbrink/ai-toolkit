@@ -6,7 +6,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { imgPath, caption } = body;
-    let datasetsPath = await getDatasetsRoot();
+    const datasetsPath = await getDatasetsRoot();
     // make sure the dataset path is in the image path
     if (!imgPath.startsWith(datasetsPath)) {
       return NextResponse.json({ error: 'Invalid image path' }, { status: 400 });

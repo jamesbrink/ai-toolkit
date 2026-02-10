@@ -128,10 +128,7 @@ export default function DatasetPage({ params }: { params: { datasetName: string 
         )}
       </MainContent>
       <AddImagesModal />
-      <FullscreenDropOverlay
-        datasetName={datasetName}
-        onComplete={() => refreshImageList(datasetName)}
-      />
+      <FullscreenDropOverlay datasetName={datasetName} onComplete={() => refreshImageList(datasetName)} />
     </>
   );
 }

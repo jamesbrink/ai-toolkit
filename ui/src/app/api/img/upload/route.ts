@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { getDataRoot } from '@/server/settings';
-import {v4 as uuidv4} from 'uuid';
+import { v4 as uuidv4 } from 'uuid';
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,7 +12,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Data root path not found' }, { status: 500 });
     }
     const imgRoot = join(dataRoot, 'images');
-
 
     const formData = await request.formData();
     const files = formData.getAll('files');

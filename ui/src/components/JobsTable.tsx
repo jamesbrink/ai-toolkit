@@ -95,7 +95,7 @@ export default function JobsTable({ onlyActive = false }: JobsTableProps) {
   const jobsDict = useMemo(() => {
     if (!isGPUInfoLoaded) return {};
     if (jobs.length === 0) return {};
-    let jd: { [key: string]: { name: string; jobs: Job[] } } = {};
+    const jd: { [key: string]: { name: string; jobs: Job[] } } = {};
     gpuList.forEach(gpu => {
       const key = gpu.isMps ? 'mps' : `${gpu.index}`;
       jd[key] = { name: `${gpu.name}`, jobs: [] };

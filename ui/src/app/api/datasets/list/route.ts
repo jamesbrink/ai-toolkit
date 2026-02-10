@@ -4,7 +4,7 @@ import { getDatasetsRoot } from '@/server/settings';
 
 export async function GET() {
   try {
-    let datasetsPath = await getDatasetsRoot();
+    const datasetsPath = await getDatasetsRoot();
 
     // if folder doesnt exist, create it
     if (!fs.existsSync(datasetsPath)) {
@@ -12,7 +12,7 @@ export async function GET() {
     }
 
     // find all the folders in the datasets folder
-    let folders = fs
+    const folders = fs
       .readdirSync(datasetsPath, { withFileTypes: true })
       .filter(dirent => dirent.isDirectory())
       .filter(dirent => !dirent.name.startsWith('.'))

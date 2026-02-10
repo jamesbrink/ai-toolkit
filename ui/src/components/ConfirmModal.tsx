@@ -70,7 +70,7 @@ export default function ConfirmModal() {
   };
 
   let Icon = FaExclamationTriangle;
-  let color = confirm?.type || 'danger';
+  const color = confirm?.type || 'danger';
 
   // Use conditional rendering for icon
   if (color === 'info') {
@@ -160,10 +160,12 @@ export default function ConfirmModal() {
                   <div className="mt-2">
                     <p className="text-sm text-gray-200">{confirm?.message}</p>
                     <div className={classNames('mt-4 w-full', { hidden: !confirm?.inputTitle })}>
-                      <form onSubmit={(e) => {
-                        e.preventDefault()
-                        onConfirm()
-                      }}>
+                      <form
+                        onSubmit={e => {
+                          e.preventDefault();
+                          onConfirm();
+                        }}
+                      >
                         <TextInput
                           value={inputValue}
                           ref={inputRef}

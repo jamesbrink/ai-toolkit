@@ -80,12 +80,18 @@ export default function JobActionBar({
         </Button>
       )}
       {!hideView && (
-        <Link href={`/jobs/${job.id}`} className="ml-1 p-2.5 rounded-lg hover:bg-gray-700 text-gray-200 hover:text-gray-100 flex items-center justify-center">
+        <Link
+          href={`/jobs/${job.id}`}
+          className="ml-1 p-2.5 rounded-lg hover:bg-gray-700 text-gray-200 hover:text-gray-100 flex items-center justify-center"
+        >
           <Eye className="w-5 h-5" />
         </Link>
       )}
       {canEdit && (
-        <Link href={`/jobs/new?id=${job.id}`} className="ml-1 p-2.5 rounded-lg hover:bg-gray-700 hover:text-gray-100 flex items-center justify-center">
+        <Link
+          href={`/jobs/new?id=${job.id}`}
+          className="ml-1 p-2.5 rounded-lg hover:bg-gray-700 hover:text-gray-100 flex items-center justify-center"
+        >
           <Pen className="w-5 h-5" />
         </Link>
       )}
@@ -138,7 +144,7 @@ export default function JobActionBar({
             <div
               className="cursor-pointer px-4 py-1 hover:bg-gray-800 rounded text-gray-200"
               onClick={() => {
-                let message = `Are you sure you want to mark this job as stopped? This will set the job status to 'stopped' if the status is hung. Only do this if you are 100% sure the job is stopped. This will NOT stop the job.`;
+                const message = `Are you sure you want to mark this job as stopped? This will set the job status to 'stopped' if the status is hung. Only do this if you are 100% sure the job is stopped. This will NOT stop the job.`;
                 openConfirm({
                   title: 'Mark Job as Stopped',
                   message: message,

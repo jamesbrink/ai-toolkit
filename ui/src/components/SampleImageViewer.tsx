@@ -193,21 +193,25 @@ export default function SampleImageViewer({
     pointerStart.current = { x: e.clientX, y: e.clientY };
   }, []);
 
-  const onPointerUp = useCallback((e: React.PointerEvent) => {
-    if (!pointerStart.current) return;
-    const dx = e.clientX - pointerStart.current.x;
-    const dy = e.clientY - pointerStart.current.y;
-    pointerStart.current = null;
+  const onPointerUp = useCallback(
+    (e: React.PointerEvent) => {
+      if (!pointerStart.current) return;
+      const dx = e.clientX - pointerStart.current.x;
+      const dy = e.clientY - pointerStart.current.y;
+      pointerStart.current = null;
 
-    const absDx = Math.abs(dx);
-    const absDy = Math.abs(dy);
+      const absDx = Math.abs(dx);
+      const absDy = Math.abs(dy);
 
-    // Threshold: 50px horizontal, must exceed vertical by 1.5x
-    if (absDx > 50 && absDx > absDy * 1.5) {
-      if (dx < 0) handleArrowRight(); // swipe left -> next
-      else handleArrowLeft(); // swipe right -> prev
-    }
-  }, [handleArrowLeft, handleArrowRight]);
+      // Threshold: 50px horizontal, must exceed vertical by 1.5x
+      if (absDx > 50 && absDx > absDy * 1.5) {
+        if (dx < 0)
+          handleArrowRight(); // swipe left -> next
+        else handleArrowLeft(); // swipe right -> prev
+      }
+    },
+    [handleArrowLeft, handleArrowRight],
+  );
 
   if (!mounted) return null;
 
@@ -298,7 +302,7 @@ export default function SampleImageViewer({
                     <div
                       className="cursor-pointer text-gray-200 hover:bg-gray-800 rounded px-2 py-1"
                       onClick={() => {
-                        let message = `Are you sure you want to delete this sample? This action cannot be undone.`;
+                        const message = `Are you sure you want to delete this sample? This action cannot be undone.`;
                         openConfirm({
                           title: 'Delete Sample',
                           message: message,

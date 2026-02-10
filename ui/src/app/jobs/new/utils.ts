@@ -2,10 +2,7 @@ import { GroupedSelectOption, JobConfig, SelectOption } from '@/types';
 import { modelArchs, ModelArch } from './options';
 import { objectCopy } from '@/utils/basic';
 
-const expandDatasetDefaults = (
-  defaults: { [key: string]: any },
-  numDatasets: number,
-): { [key: string]: any } => {
+const expandDatasetDefaults = (defaults: { [key: string]: any }, numDatasets: number): { [key: string]: any } => {
   // expands the defaults for datasets[x] to datasets[0], datasets[1], etc.
   const expandedDefaults: { [key: string]: any } = { ...defaults };
   for (const key in defaults) {
@@ -60,8 +57,8 @@ export const handleModelArchChange = (
 
   const numDatasets = jobConfig.config.process[0].datasets.length;
 
-  let currentDefaults = expandDatasetDefaults(currentArch.defaults || {}, numDatasets);
-  let newDefaults = expandDatasetDefaults(newArch?.defaults || {}, numDatasets);
+  const currentDefaults = expandDatasetDefaults(currentArch.defaults || {}, numDatasets);
+  const newDefaults = expandDatasetDefaults(newArch?.defaults || {}, numDatasets);
 
   // set new model
   setJobConfig(newArchName, 'config.process[0].model.arch');

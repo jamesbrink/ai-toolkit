@@ -110,7 +110,7 @@ export default function SimpleJob({
     if (!hasARA) {
       return quantizationOptions;
     }
-    let newQuantizationOptions = [
+    const newQuantizationOptions = [
       {
         label: 'Standard',
         options: [quantizationOptions[0], quantizationOptions[1]],
@@ -118,7 +118,7 @@ export default function SimpleJob({
     ];
 
     // add ARAs if they exist for the model
-    let ARAs: SelectOption[] = [];
+    const ARAs: SelectOption[] = [];
     if (modelArch.accuracyRecoveryAdapters) {
       for (const [label, value] of Object.entries(modelArch.accuracyRecoveryAdapters)) {
         ARAs.push({ value, label });
@@ -131,7 +131,7 @@ export default function SimpleJob({
       });
     }
 
-    let additionalQuantizationOptions: SelectOption[] = [];
+    const additionalQuantizationOptions: SelectOption[] = [];
     // add the quantization options if they are not already included
     for (let i = 2; i < quantizationOptions.length; i++) {
       const option = quantizationOptions[i];
@@ -713,7 +713,7 @@ export default function SimpleJob({
                   className="pt-1"
                   checked={jobConfig.config.process[0].train.do_differential_guidance || false}
                   onChange={value => {
-                    let newValue = value == false ? undefined : value;
+                    const newValue = value == false ? undefined : value;
                     setJobConfig(newValue, 'config.process[0].train.do_differential_guidance');
                     if (!newValue) {
                       setJobConfig(undefined, 'config.process[0].train.differential_guidance_scale');
@@ -1177,7 +1177,7 @@ export default function SimpleJob({
                               value = value.replace(/\D/g, '');
                               if (value === '') {
                                 // remove the key from the config if empty
-                                let newConfig = objectCopy(jobConfig);
+                                const newConfig = objectCopy(jobConfig);
                                 if (newConfig.config.process[0].sample.samples[i]) {
                                   delete newConfig.config.process[0].sample.samples[i].width;
                                   setJobConfig(
@@ -1204,7 +1204,7 @@ export default function SimpleJob({
                               value = value.replace(/\D/g, '');
                               if (value === '') {
                                 // remove the key from the config if empty
-                                let newConfig = objectCopy(jobConfig);
+                                const newConfig = objectCopy(jobConfig);
                                 if (newConfig.config.process[0].sample.samples[i]) {
                                   delete newConfig.config.process[0].sample.samples[i].height;
                                   setJobConfig(
@@ -1231,7 +1231,7 @@ export default function SimpleJob({
                               value = value.replace(/\D/g, '');
                               if (value === '') {
                                 // remove the key from the config if empty
-                                let newConfig = objectCopy(jobConfig);
+                                const newConfig = objectCopy(jobConfig);
                                 if (newConfig.config.process[0].sample.samples[i]) {
                                   delete newConfig.config.process[0].sample.samples[i].seed;
                                   setJobConfig(
@@ -1258,7 +1258,7 @@ export default function SimpleJob({
                               value = value.replace(/[^0-9.-]/g, '');
                               if (value === '') {
                                 // remove the key from the config if empty
-                                let newConfig = objectCopy(jobConfig);
+                                const newConfig = objectCopy(jobConfig);
                                 if (newConfig.config.process[0].sample.samples[i]) {
                                   delete newConfig.config.process[0].sample.samples[i].network_multiplier;
                                   setJobConfig(
@@ -1287,7 +1287,7 @@ export default function SimpleJob({
                                 src={sample[ctrlKey as keyof typeof sample] as string}
                                 onNewImageSelected={imagePath => {
                                   if (!imagePath) {
-                                    let newSamples = objectCopy(jobConfig.config.process[0].sample.samples);
+                                    const newSamples = objectCopy(jobConfig.config.process[0].sample.samples);
                                     delete newSamples[i][ctrlKey as keyof typeof sample];
                                     setJobConfig(newSamples, 'config.process[0].sample.samples');
                                   } else {
@@ -1305,7 +1305,7 @@ export default function SimpleJob({
                           src={sample.ctrl_img}
                           onNewImageSelected={imagePath => {
                             if (!imagePath) {
-                              let newSamples = objectCopy(jobConfig.config.process[0].sample.samples);
+                              const newSamples = objectCopy(jobConfig.config.process[0].sample.samples);
                               delete newSamples[i].ctrl_img;
                               setJobConfig(newSamples, 'config.process[0].sample.samples');
                             } else {
