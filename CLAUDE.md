@@ -1,6 +1,6 @@
-# CLAUDE.md
+# CLAUDE.md / AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to AI coding agents (Claude Code, Codex, etc.) when working with code in this repository.
 
 ## Project Overview
 
@@ -14,6 +14,12 @@ python run.py config/your_config.yaml
 ```
 Multiple configs can be chained: `python run.py config1.yaml config2.yaml`
 Use `-r` to continue on failure, `-n <name>` to replace `[name]` tags in config.
+
+### Nix dev environment (preferred)
+```bash
+nix develop  # Drops into a shell with Python 3.11 and all dependencies
+```
+A `flake.nix` is provided for reproducible development environments.
 
 ### Installation (Python 3.10+)
 ```bash
@@ -103,3 +109,9 @@ Extensions live in `extensions_built_in/` (shipped) and `extensions/` (user-crea
 - `DEBUG_TOOLKIT=1` — enables torch anomaly detection
 - `AI_TOOLKIT_AUTH` — auth password for the web UI (used in docker-compose)
 - Standard HuggingFace env vars (`HF_TOKEN`, etc.) for gated model access
+
+### MCP servers
+- **context7** — documentation and code example lookups for any library
+- **nixos** (`mcp-nixos`) — NixOS packages, options, Home Manager, and flake queries
+
+Configured in `.mcp.json`. Project-level agent permissions are in `.claude/settings.json`.
