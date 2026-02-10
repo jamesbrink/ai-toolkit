@@ -98,18 +98,13 @@ def create_dataset(*inputs):
 
 def run_captioning(images, concept_sentence, *captions):
     #Load internally to not consume resources for training
-    if torch.cuda.is_available():
-        device = "cuda"
-    elif torch.backends.mps.is_available():
-        device = "mps"
-    else:
-        device = "cpu"
-    torch_dtype = torch.float16
+    # Florence-2 is not MPS-compatible (causes trace trap), so use CUDA or CPU only
+    device = "cuda" if torch.cuda.is_available() else "cpu"
     florence_model_id = "multimodalart/Florence-2-large-no-flash-attn"
     florence_revision = "8db3793cf5b453b2ccfb3a4f613b403b2e6b7ca2"
     model = AutoModelForCausalLM.from_pretrained(
         florence_model_id,
-        torch_dtype=torch_dtype,
+        dtype=torch.float16,
         trust_remote_code=True,
         revision=florence_revision,
         attn_implementation="eager",
@@ -125,7 +120,7 @@ def run_captioning(images, concept_sentence, *captions):
             image = Image.open(image_path).convert("RGB")
 
         prompt = "<DETAILED_CAPTION>"
-        inputs = processor(text=prompt, images=image, return_tensors="pt").to(device, torch_dtype)
+        inputs = processor(text=prompt, images=image, return_tensors="pt").to(device, torch.float16)
 
         generated_ids = model.generate(
             input_ids=inputs["input_ids"], pixel_values=inputs["pixel_values"], max_new_tokens=1024, num_beams=3
