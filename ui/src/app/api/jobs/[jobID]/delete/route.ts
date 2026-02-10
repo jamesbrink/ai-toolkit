@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { getTrainingFolder } from '@/server/settings';
 import path from 'path';
 import fs from 'fs';
+import { killJobProcess } from '@/server/killJobProcess';
 
 const prisma = new PrismaClient();
 
@@ -19,6 +20,9 @@ export async function GET(request: NextRequest, { params }: { params: { jobID: s
 
   const trainingRoot = await getTrainingFolder();
   const trainingFolder = path.join(trainingRoot, job.name);
+
+  // Kill the running process BEFORE deleting the folder (which contains pid.txt)
+  killJobProcess(trainingFolder);
 
   if (fs.existsSync(trainingFolder)) {
     fs.rmSync(trainingFolder, { recursive: true });
