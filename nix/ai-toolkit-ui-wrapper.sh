@@ -33,8 +33,8 @@ export PRISMA_QUERY_ENGINE_LIBRARY="${PRISMA_ENGINES_PKG}/lib/libquery_engine.no
 export PRISMA_ENGINES_CHECKSUM_IGNORE_MISSING=1
 
 # --- Ensure DB schema is up to date ---
-cd "$UI_DIR"
-if ! npx prisma db push --schema ./prisma/schema.prisma --skip-generate 2>&1; then
+echo "Running prisma db push to ensure schema is up to date..."
+if ! node "$UI_DIR/node_modules/prisma/build/index.js" db push --schema "$UI_DIR/prisma/schema.prisma" --skip-generate; then
   echo "Warning: prisma db push failed, DB may need manual setup"
 fi
 

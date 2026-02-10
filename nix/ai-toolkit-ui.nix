@@ -25,7 +25,7 @@ buildNpmPackage {
         || baseName == "aitk_db.db" || baseName == ".turbo");
   };
 
-  npmDepsHash = "sha256-NBvuZhSNKN+YF4QeLxCftYWgOpgC2pSNJdtPkecjOf8=";
+  npmDepsHash = "sha256-ocfIcKwBA+flsuqnPo6zwOlD7np+quFaAAS/FGoNVSA=";
 
   nodejs = nodejs_22;
 
@@ -45,7 +45,7 @@ buildNpmPackage {
 
   # Prisma engine configuration — avoids network downloads in the sandbox.
   # NOTE: prisma-engines_6 version in nixpkgs must be compatible with the
-  # @prisma/client version in package.json (currently ^6.3.1).
+  # @prisma/client version in package.json (currently ^6.19.1).
   # If the build fails with a version mismatch, override prisma-engines_6.
   env = {
     PRISMA_SCHEMA_ENGINE_BINARY = "${prisma-engines_6}/bin/schema-engine";
