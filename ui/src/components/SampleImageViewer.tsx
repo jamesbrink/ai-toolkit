@@ -249,13 +249,13 @@ export default function SampleImageViewer({
                 ))}
             </div>
             {/* # make full width */}
-            <div className="bg-gray-950 text-sm flex justify-between items-center px-4 py-2">
+            <div className="bg-gray-900 text-sm flex justify-between items-center px-4 py-2">
               <div className="flex-1 relative h-10 min-w-0">
                 {sampleItem?.prompt && (
                   <div className="absolute inset-0 grid place-items-center overflow-auto mr-4">
                     <div className="w-full">
-                      <span className="text-gray-400 mr-1">Prompt:</span>
-                      <span className="whitespace-pre-wrap break-words">{sampleItem.prompt}</span>
+                      <span className="text-gray-300 mr-1 font-medium">Prompt:</span>
+                      <span className="text-gray-100 whitespace-pre-wrap break-words">{sampleItem.prompt}</span>
                     </div>
                   </div>
                 )}
@@ -273,21 +273,21 @@ export default function SampleImageViewer({
                 </div>
               )}
 
-              <div className="text-xs">
+              <div className="text-xs text-gray-100">
                 <div>
-                  <span className="text-gray-400">Step:</span> {imgInfo.step.toLocaleString()}
+                  <span className="text-gray-300 font-medium">Step:</span> {imgInfo.step.toLocaleString()}
                 </div>
                 <div>
-                  <span className="text-gray-400">Sample #:</span> {imgInfo.promptIdx + 1}
+                  <span className="text-gray-300 font-medium">Sample #:</span> {imgInfo.promptIdx + 1}
                 </div>
                 <div>
-                  <span className="text-gray-400">Seed:</span> {seed}
+                  <span className="text-gray-300 font-medium">Seed:</span> {seed}
                 </div>
               </div>
             </div>
             <div className="absolute top-2 right-2 bg-gray-900 rounded-full p-1 leading-[0px] opacity-50 hover:opacity-100">
               <Menu>
-                <MenuButton>
+                <MenuButton className="flex items-center justify-center">
                   <Cog />
                 </MenuButton>
                 <MenuItems

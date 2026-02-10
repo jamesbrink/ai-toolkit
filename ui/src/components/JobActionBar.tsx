@@ -30,7 +30,7 @@ export default function JobActionBar({
   if (!afterDelete) afterDelete = onRefresh;
 
   return (
-    <div className={`${className}`}>
+    <div className={`flex items-center ${className ?? ''}`}>
       {canStart && (
         <Button
           onClick={async () => {
@@ -42,7 +42,7 @@ export default function JobActionBar({
             }
             if (onRefresh) onRefresh();
           }}
-          className="ml-1 p-2.5 rounded-lg hover:bg-gray-700"
+          className="ml-1 p-2.5 rounded-lg hover:bg-gray-700 flex items-center justify-center"
         >
           <Play />
         </Button>
@@ -54,7 +54,7 @@ export default function JobActionBar({
             await markJobAsStopped(job.id);
             if (onRefresh) onRefresh();
           }}
-          className="ml-1 p-2.5 rounded-lg hover:bg-gray-700"
+          className="ml-1 p-2.5 rounded-lg hover:bg-gray-700 flex items-center justify-center"
         >
           <X />
         </Button>
@@ -74,18 +74,18 @@ export default function JobActionBar({
               },
             });
           }}
-          className="ml-1 p-2.5 rounded-lg hover:bg-gray-700"
+          className="ml-1 p-2.5 rounded-lg hover:bg-gray-700 flex items-center justify-center"
         >
           <Pause />
         </Button>
       )}
       {!hideView && (
-        <Link href={`/jobs/${job.id}`} className="ml-1 p-2.5 rounded-lg hover:bg-gray-700 text-gray-200 hover:text-gray-100 inline-block">
+        <Link href={`/jobs/${job.id}`} className="ml-1 p-2.5 rounded-lg hover:bg-gray-700 text-gray-200 hover:text-gray-100 inline-flex items-center justify-center">
           <Eye />
         </Link>
       )}
       {canEdit && (
-        <Link href={`/jobs/new?id=${job.id}`} className="ml-1 p-2.5 rounded-lg hover:bg-gray-700 hover:text-gray-100 inline-block">
+        <Link href={`/jobs/new?id=${job.id}`} className="ml-1 p-2.5 rounded-lg hover:bg-gray-700 hover:text-gray-100 inline-flex items-center justify-center">
           <Pen />
         </Link>
       )}
@@ -113,13 +113,13 @@ export default function JobActionBar({
             },
           });
         }}
-        className="ml-1 p-2.5 rounded-lg hover:bg-gray-700"
+        className="ml-1 p-2.5 rounded-lg hover:bg-gray-700 flex items-center justify-center"
       >
         <Trash2 />
       </Button>
-      <div className="border-r border-1 border-gray-700 ml-2 inline"></div>
+      <div className="border-r border-gray-700 ml-2 h-6"></div>
       <Menu>
-        <MenuButton className={'ml-2'}>
+        <MenuButton className="ml-1 p-2.5 rounded-lg hover:bg-gray-700 flex items-center justify-center">
           <Cog />
         </MenuButton>
         <MenuItems

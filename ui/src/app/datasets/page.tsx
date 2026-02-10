@@ -41,7 +41,7 @@ export default function Datasets() {
       className: 'w-20 text-right',
       render: row => (
         <button
-          className="text-gray-200 hover:bg-red-600 p-2 rounded-full transition-colors"
+          className="text-gray-200 hover:bg-red-600 p-2 rounded-full transition-colors flex items-center justify-center"
           onClick={() => handleDeleteDataset(row.name)}
         >
           <FaRegTrashAlt />

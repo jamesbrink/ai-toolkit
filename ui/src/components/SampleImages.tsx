@@ -48,14 +48,14 @@ export const SampleImagesMenu = ({ job }: SampleImagesMenuProps) => {
   return (
     <Button
       onClick={downloadZip}
-      className={classNames(`px-4 py-1 h-8 hover:bg-gray-200 dark:hover:bg-gray-700`, {
+      className={classNames(`px-4 py-1 h-8 hover:bg-gray-200 dark:hover:bg-gray-700 inline-flex items-center`, {
         'opacity-50 cursor-not-allowed': isZipping,
       })}
     >
       {isZipping ? (
-        <LuLoader className="animate-spin inline-block mr-2" />
+        <LuLoader className="animate-spin mr-2" />
       ) : (
-        <FaDownload className="inline-block mr-2" />
+        <FaDownload className="mr-2" />
       )}
       {isZipping ? 'Preparing' : 'Download'}
     </Button>
