@@ -283,7 +283,7 @@ h3{margin-top: 0}
 .tabitem{border: 0px}
 .group_padding{padding: .55em}
 """
-with gr.Blocks(theme=theme, css=css) as demo:
+with gr.Blocks() as demo:
     gr.Markdown(
         """# LoRA Ease for FLUX 🧞‍♂️
 ### Train a high quality FLUX LoRA in a breeze ༄ using [Ostris' AI Toolkit](https://github.com/ostris/ai-toolkit)"""
@@ -331,8 +331,6 @@ with gr.Blocks(theme=theme, css=css) as demo:
                                     interactive=False,
                                     scale=2,
                                     show_label=False,
-                                    show_share_button=False,
-                                    show_download_button=False,
                                 )
                                 locals()[f"caption_{i}"] = gr.Textbox(
                                     label=f"Caption {i}", scale=15, interactive=True
@@ -411,4 +409,4 @@ with gr.Blocks(theme=theme, css=css) as demo:
     do_captioning.click(fn=run_captioning, inputs=[images, concept_sentence] + caption_list, outputs=caption_list)
 
 if __name__ == "__main__":
-    demo.launch(share=True, show_error=True)
+    demo.launch(share=True, show_error=True, theme=theme, css=css)
