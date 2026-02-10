@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
 import './globals.css';
 import Sidebar from '@/components/Sidebar';
 import { ThemeProvider } from '@/components/ThemeProvider';
@@ -9,8 +8,6 @@ import AuthWrapper from '@/components/AuthWrapper';
 import DocModal from '@/components/DocModal';
 
 export const dynamic = 'force-dynamic';
-
-const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'Ostris - AI Toolkit',
@@ -26,7 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <meta name="apple-mobile-web-app-title" content="AI-Toolkit" />
       </head>
-      <body className={inter.className}>
+      <body className="font-sans">
         <ThemeProvider>
           <AuthWrapper authRequired={authRequired}>
             <div className="flex h-screen bg-gray-950">
