@@ -146,7 +146,7 @@ export default function Settings() {
                     onChange={handleChange}
                     className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent"
                   >
-                    <option value="">Sonnet (default)</option>
+                    <option value="">Sonnet 4.5 (default)</option>
                     <option value="claude-haiku-4-5-20251001">Haiku 4.5 (fast, low cost)</option>
                     <option value="claude-sonnet-4-5-20250929">Sonnet 4.5 (balanced)</option>
                     <option value="claude-opus-4-6">Opus 4.6 (most capable)</option>
@@ -167,7 +167,7 @@ export default function Settings() {
                     onChange={handleChange}
                     className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent"
                   >
-                    <option value="">Haiku (default)</option>
+                    <option value="">Haiku 4.5 (default)</option>
                     <option value="claude-haiku-4-5-20251001">Haiku 4.5 (fast, low cost)</option>
                     <option value="claude-sonnet-4-5-20250929">Sonnet 4.5 (balanced)</option>
                     <option value="claude-opus-4-6">Opus 4.6 (most capable)</option>

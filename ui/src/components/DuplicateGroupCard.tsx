@@ -52,7 +52,7 @@ export default function DuplicateGroupCard({
   if (dismissed) {
     return (
       <div className="rounded-lg border border-gray-700 bg-gray-800/50 p-3 opacity-50">
-        <div className="flex items-center gap-2 text-xs text-gray-500">
+        <div className="flex items-center gap-2 text-xs text-gray-400">
           <span>Group dismissed</span>
           <span>({imagePaths.length} images, {Math.round(maxSimilarity)}% similar)</span>
         </div>

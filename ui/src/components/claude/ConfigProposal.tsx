@@ -16,7 +16,7 @@ export default function ConfigProposal({ toolUseId, changes }: ConfigProposalPro
   const [submitted, setSubmitted] = useState(false);
 
   if (!changes || changes.length === 0) {
-    return <div className="text-gray-500 text-xs p-2">No changes proposed</div>;
+    return <div className="text-gray-400 text-xs p-2">No changes proposed</div>;
   }
 
   const handleDecision = (index: number, decision: 'accepted' | 'rejected') => {
@@ -72,7 +72,7 @@ export default function ConfigProposal({ toolUseId, changes }: ConfigProposalPro
                 <button
                   onClick={() => handleDecision(i, 'accepted')}
                   className={`p-1 rounded transition-colors ${
-                    decisions[i] === 'accepted' ? 'bg-green-700 text-white' : 'text-gray-500 hover:text-green-400'
+                    decisions[i] === 'accepted' ? 'bg-green-700 text-white' : 'text-gray-400 hover:text-green-400'
                   }`}
                   title="Accept"
                 >
@@ -81,7 +81,7 @@ export default function ConfigProposal({ toolUseId, changes }: ConfigProposalPro
                 <button
                   onClick={() => handleDecision(i, 'rejected')}
                   className={`p-1 rounded transition-colors ${
-                    decisions[i] === 'rejected' ? 'bg-red-700 text-white' : 'text-gray-500 hover:text-red-400'
+                    decisions[i] === 'rejected' ? 'bg-red-700 text-white' : 'text-gray-400 hover:text-red-400'
                   }`}
                   title="Reject"
                 >
@@ -101,7 +101,7 @@ export default function ConfigProposal({ toolUseId, changes }: ConfigProposalPro
         </button>
       )}
       {submitted && (
-        <div className="text-xs text-gray-500">Changes applied.</div>
+        <div className="text-xs text-gray-400">Changes applied.</div>
       )}
     </div>
   );

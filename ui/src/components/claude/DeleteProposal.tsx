@@ -23,7 +23,7 @@ export default function DeleteProposal({ toolUseId, imagePaths, reason }: Delete
   const [submitted, setSubmitted] = useState(false);
 
   if (!imagePaths || imagePaths.length === 0) {
-    return <div className="text-gray-500 text-xs p-2">No images proposed for deletion</div>;
+    return <div className="text-gray-400 text-xs p-2">No images proposed for deletion</div>;
   }
 
   const handleDecision = (index: number, decision: 'accepted' | 'rejected') => {
@@ -83,7 +83,7 @@ export default function DeleteProposal({ toolUseId, imagePaths, reason }: Delete
                 <button
                   onClick={() => handleDecision(i, 'accepted')}
                   className={`p-1 rounded transition-colors ${
-                    decisions[i] === 'accepted' ? 'bg-red-700 text-white' : 'text-gray-500 hover:text-red-400'
+                    decisions[i] === 'accepted' ? 'bg-red-700 text-white' : 'text-gray-400 hover:text-red-400'
                   }`}
                   title="Delete"
                 >
@@ -92,7 +92,7 @@ export default function DeleteProposal({ toolUseId, imagePaths, reason }: Delete
                 <button
                   onClick={() => handleDecision(i, 'rejected')}
                   className={`p-1 rounded transition-colors ${
-                    decisions[i] === 'rejected' ? 'bg-green-700 text-white' : 'text-gray-500 hover:text-green-400'
+                    decisions[i] === 'rejected' ? 'bg-green-700 text-white' : 'text-gray-400 hover:text-green-400'
                   }`}
                   title="Keep"
                 >
@@ -120,7 +120,7 @@ export default function DeleteProposal({ toolUseId, imagePaths, reason }: Delete
         </button>
       )}
       {submitted && (
-        <div className="text-xs text-gray-500">
+        <div className="text-xs text-gray-400">
           {acceptedCount > 0 ? `${acceptedCount} image${acceptedCount !== 1 ? 's' : ''} deleted.` : 'All deletions rejected.'}
         </div>
       )}

@@ -40,7 +40,7 @@ export default function ChatPanel() {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const isNearBottomRef = useRef(true);
   const [width, setWidth] = useState(loadWidth);
-  const isDraggingRef = useRef(false);
+  const [isDragging, setIsDragging] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
   // Track viewport to gate Dialog open state (prevents scroll-lock/focus-trap on desktop)
@@ -57,23 +57,23 @@ export default function ChatPanel() {
     try { localStorage.setItem(WIDTH_STORAGE_KEY, String(width)); } catch { /* ignore */ }
   }, [width]);
 
-  // Resize drag handlers
+  // Resize drag handlers — use refs to avoid stale closures
+  const dragStartRef = useRef({ x: 0, width: 0 });
+
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
-    isDraggingRef.current = true;
-    const startX = e.clientX;
-    const startWidth = width;
+    dragStartRef.current = { x: e.clientX, width };
+    setIsDragging(true);
 
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isDraggingRef.current) return;
+    const handleMouseMove = (ev: MouseEvent) => {
       // Dragging left edge — moving left increases width
-      const delta = startX - e.clientX;
-      const newWidth = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, startWidth + delta));
+      const delta = dragStartRef.current.x - ev.clientX;
+      const newWidth = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, dragStartRef.current.width + delta));
       setWidth(newWidth);
     };
 
     const handleMouseUp = () => {
-      isDraggingRef.current = false;
+      setIsDragging(false);
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
       document.body.style.cursor = '';
@@ -131,7 +131,7 @@ export default function ChatPanel() {
   const chatMessages = (
     <div ref={messagesContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto px-3 py-3">
       {messages.length === 0 && (
-        <div className="text-center text-gray-500 text-sm mt-8">
+        <div className="text-center text-gray-400 text-sm mt-8">
           <p>Ask me about training config, troubleshooting, or anything about diffusion model training.</p>
         </div>
       )}
@@ -189,11 +189,17 @@ export default function ChatPanel() {
           className="h-full flex flex-col bg-gray-900 shadow-2xl relative"
           style={{ width, minWidth: width }}
         >
-          {/* Resize handle */}
+          {/* Resize handle — wide hit area (12px), narrow visible indicator (2px) */}
           <div
             onMouseDown={handleMouseDown}
-            className="absolute left-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-500/40 transition-colors z-10"
-          />
+            className="absolute left-0 top-0 bottom-0 w-3 cursor-col-resize z-10 group flex items-stretch"
+          >
+            <div
+              className={`w-0.5 transition-colors ${
+                isDragging ? 'bg-blue-500' : 'bg-transparent group-hover:bg-blue-500/40'
+              }`}
+            />
+          </div>
           {chatHeader}
           {chatMessages}
           {chatInput}

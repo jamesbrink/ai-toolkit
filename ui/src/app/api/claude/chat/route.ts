@@ -58,7 +58,8 @@ export async function POST(req: NextRequest) {
   const { messages, context, tools: clientTools } = await req.json();
 
   const client = createAnthropicClient(auth);
-  const systemPrompt = await buildSystemPrompt(context);
+  const chatModel = await getClaudeChatModel();
+  const systemPrompt = await buildSystemPrompt(context, chatModel);
 
   // Merge server-side tools with any client-side tools
   const allTools = [...serverToolDefinitions, ...(clientTools || [])];
@@ -74,7 +75,7 @@ export async function POST(req: NextRequest) {
           iterations++;
 
           const response = await client.messages.create({
-            model: await getClaudeChatModel(),
+            model: chatModel,
             max_tokens: 4096,
             system: systemPrompt,
             messages: loopMessages,

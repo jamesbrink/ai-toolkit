@@ -174,7 +174,7 @@ export default function CaptionHelper({ isOpen, onClose, imagePaths, datasetName
                     />
                   </div>
                 )}
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-gray-400">
                   {imagePaths.length} image{imagePaths.length !== 1 ? 's' : ''} selected
                 </p>
                 <button
@@ -203,7 +203,7 @@ export default function CaptionHelper({ isOpen, onClose, imagePaths, datasetName
                     <button onClick={acceptAll} className="text-xs text-blue-400 hover:text-blue-300">
                       Accept all
                     </button>
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-gray-400">
                       {acceptedCount} of {results.length} accepted
                     </span>
                   </div>
@@ -228,12 +228,12 @@ export default function CaptionHelper({ isOpen, onClose, imagePaths, datasetName
                           <>
                             {result.oldCaption && (
                               <div>
-                                <span className="text-xs text-gray-500">Old: </span>
+                                <span className="text-xs text-gray-400">Old: </span>
                                 <span className="text-xs text-gray-400 line-through">{result.oldCaption}</span>
                               </div>
                             )}
                             <div>
-                              <span className="text-xs text-gray-500">New: </span>
+                              <span className="text-xs text-gray-400">New: </span>
                               <span className="text-xs text-gray-200">{result.caption}</span>
                             </div>
                           </>
@@ -243,7 +243,7 @@ export default function CaptionHelper({ isOpen, onClose, imagePaths, datasetName
                         <button
                           onClick={() => toggleAccept(i)}
                           className={`p-1.5 rounded shrink-0 transition-colors ${
-                            result.accepted ? 'bg-green-700 text-white' : 'text-gray-500 hover:text-green-400'
+                            result.accepted ? 'bg-green-700 text-white' : 'text-gray-400 hover:text-green-400'
                           }`}
                         >
                           <Check className="w-4 h-4" />

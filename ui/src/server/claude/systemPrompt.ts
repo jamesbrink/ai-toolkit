@@ -120,8 +120,12 @@ function buildPageContext(context: ChatContext): string {
   return parts.length > 0 ? '\n\nPage context:\n' + parts.join('\n\n') : '';
 }
 
-export async function buildSystemPrompt(context?: ChatContext): Promise<string> {
+export async function buildSystemPrompt(context?: ChatContext, modelId?: string): Promise<string> {
   let prompt = BASE_KNOWLEDGE;
+
+  if (modelId) {
+    prompt += `\n\nYou are running as model: ${modelId}.`;
+  }
 
   if (context?.deviceType === 'mps') {
     prompt += MPS_NOTES;
