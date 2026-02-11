@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
 import { getAnthropicAuth } from '@/server/settings';
+import { createAnthropicClient } from '@/server/claude/client';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -44,13 +44,7 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  const clientOptions: Record<string, unknown> = {};
-  if (auth.oauthToken) {
-    clientOptions.authToken = auth.oauthToken;
-  } else {
-    clientOptions.apiKey = auth.apiKey;
-  }
-  const client = new Anthropic(clientOptions as ConstructorParameters<typeof Anthropic>[0]);
+  const client = createAnthropicClient(auth);
   const prompt = stylePrompts[style] || stylePrompts.descriptive;
   const total = imagePaths.length;
 

@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
 import { getAnthropicAuth } from '@/server/settings';
+import { createAnthropicClient } from '@/server/claude/client';
 import { buildSystemPrompt } from '@/server/claude/systemPrompt';
 
 export async function POST(req: NextRequest) {
@@ -14,14 +14,7 @@ export async function POST(req: NextRequest) {
 
   const { messages, context, tools } = await req.json();
 
-  // Support both API key and OAuth token auth
-  const clientOptions: Record<string, unknown> = {};
-  if (auth.oauthToken) {
-    clientOptions.authToken = auth.oauthToken;
-  } else {
-    clientOptions.apiKey = auth.apiKey;
-  }
-  const client = new Anthropic(clientOptions as ConstructorParameters<typeof Anthropic>[0]);
+  const client = createAnthropicClient(auth);
   const systemPrompt = buildSystemPrompt(context);
 
   const stream = client.messages.stream({
