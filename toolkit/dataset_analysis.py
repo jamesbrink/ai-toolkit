@@ -51,7 +51,7 @@ def detect_faces(gray: np.ndarray) -> list[dict]:
     results = []
     if len(faces) > 0:
         for i, (x, y, w, h) in enumerate(faces):
-            confidence = float(weights[i][0]) if i < len(weights) else 0.0
+            confidence = float(weights[i]) if i < len(weights) else 0.0
             results.append({
                 "x": int(x),
                 "y": int(y),
