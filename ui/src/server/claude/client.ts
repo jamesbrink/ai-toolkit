@@ -14,7 +14,7 @@ export function createAnthropicClient(auth: AnthropicAuth): Anthropic {
   if (auth.oauthToken) {
     const token = auth.oauthToken;
     return new Anthropic({
-      apiKey: '', // required by constructor but overridden by custom fetch
+      apiKey: 'oauth-placeholder', // non-empty to pass SDK validation; removed by custom fetch below
       fetch: async (input: RequestInfo | URL, init?: RequestInit) => {
         const headers = new Headers(init?.headers);
 
