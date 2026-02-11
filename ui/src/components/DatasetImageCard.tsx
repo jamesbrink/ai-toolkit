@@ -51,6 +51,12 @@ const DatasetImageCard: React.FC<DatasetImageCardProps> = ({
         const data = await res.json();
         if (data.caption) {
           setCaption(data.caption);
+          // Auto-save the generated caption to disk
+          const trimmed = data.caption.trim();
+          apiClient
+            .post('/api/img/caption', { imgPath: imageUrl, caption: trimmed })
+            .then(() => setSavedCaption(trimmed))
+            .catch(err => console.error('Error auto-saving AI caption:', err));
         }
       }
     } catch (err) {

@@ -15,7 +15,13 @@ Key knowledge:
 - Datasets: folder of images + optional caption .txt files, automatic bucketing for mixed resolutions
 - loss_target: ~0.1 for LoRA is typical convergence
 
-When suggesting config changes, use the update_job_config tool to propose structured changes the user can accept or reject.`;
+When suggesting config changes, use the update_job_config tool to propose structured changes the user can accept or reject.
+
+You have access to file-reading tools:
+- read_file: Read file contents (training configs, source code, caption .txt files, dataset metadata). Provide an absolute path.
+- list_directory: List directory contents with optional suffix filter (e.g. ".yaml", ".png"). Provide an absolute path.
+
+These tools can access the toolkit source code, dataset folders, and training output directories. Use them proactively when the user asks about their data, configs, or training results.`;
 
 const MPS_NOTES = `
 Apple Silicon (MPS) constraints:
