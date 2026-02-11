@@ -60,7 +60,16 @@ node "$UI_DIR/server.js" &
 SERVER_PID=$!
 
 cleanup() {
+  # Send SIGTERM for graceful shutdown
   kill "$WORKER_PID" "$SERVER_PID" 2>/dev/null || true
+  # Give processes up to 3 seconds to exit
+  local i=0
+  while [ $i -lt 30 ] && (kill -0 "$WORKER_PID" 2>/dev/null || kill -0 "$SERVER_PID" 2>/dev/null); do
+    sleep 0.1
+    i=$((i + 1))
+  done
+  # Force kill anything still running
+  kill -9 "$WORKER_PID" "$SERVER_PID" 2>/dev/null || true
   wait "$WORKER_PID" "$SERVER_PID" 2>/dev/null || true
 }
 trap cleanup EXIT INT TERM
