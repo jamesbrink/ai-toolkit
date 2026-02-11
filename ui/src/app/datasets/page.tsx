@@ -6,7 +6,8 @@ import Link from 'next/link';
 import { TextInput } from '@/components/formInputs';
 import useDatasetList, { DatasetInfo } from '@/hooks/useDatasetList';
 import { Button } from '@headlessui/react';
-import { FaRegTrashAlt } from 'react-icons/fa';
+import { FaRegTrashAlt, FaPen } from 'react-icons/fa';
+import { Download } from 'lucide-react';
 import { openConfirm } from '@/components/ConfirmModal';
 import { TopBar, MainContent } from '@/components/layout';
 import UniversalTable, { TableColumn } from '@/components/UniversalTable';
@@ -40,6 +41,7 @@ export default function Datasets() {
   const { datasets, status, refreshDatasets } = useDatasetList();
   const [newDatasetName, setNewDatasetName] = useState('');
   const [isNewDatasetModalOpen, setIsNewDatasetModalOpen] = useState(false);
+  const [exportingDataset, setExportingDataset] = useState<string | null>(null);
 
   const columns: TableColumn[] = [
     {
@@ -93,14 +95,32 @@ export default function Datasets() {
     {
       title: '',
       key: 'actions',
-      className: 'w-12 text-right',
+      className: 'w-32 text-right',
       render: (row: DatasetInfo) => (
-        <button
-          className="text-gray-200 hover:bg-red-600 p-2 rounded-full transition-colors flex items-center justify-center"
-          onClick={() => handleDeleteDataset(row.name)}
-        >
-          <FaRegTrashAlt />
-        </button>
+        <div className="flex items-center justify-end gap-1">
+          <button
+            className="text-gray-400 hover:text-gray-200 p-2 rounded-full transition-colors disabled:opacity-40"
+            onClick={() => handleExportDataset(row.name)}
+            disabled={exportingDataset === row.name || row.imageCount === 0}
+            title="Export ZIP"
+          >
+            <Download className="w-4 h-4" />
+          </button>
+          <button
+            className="text-gray-400 hover:text-gray-200 p-2 rounded-full transition-colors"
+            onClick={() => handleRenameDataset(row.name)}
+            title="Rename"
+          >
+            <FaPen className="w-3 h-3" />
+          </button>
+          <button
+            className="text-gray-400 hover:text-red-400 p-2 rounded-full transition-colors"
+            onClick={() => handleDeleteDataset(row.name)}
+            title="Delete"
+          >
+            <FaRegTrashAlt className="w-3.5 h-3.5" />
+          </button>
+        </div>
       ),
     },
   ];
@@ -121,6 +141,53 @@ export default function Datasets() {
           .catch(error => {
             console.error('Error deleting dataset:', error);
           });
+      },
+    });
+  };
+
+  const handleExportDataset = async (datasetName: string) => {
+    setExportingDataset(datasetName);
+    try {
+      const token = localStorage.getItem('AI_TOOLKIT_AUTH');
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch('/api/datasets/export', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ datasetName, includeCaptions: true }),
+      });
+
+      if (!res.ok) throw new Error('Export failed');
+
+      const data = await res.json();
+      const link = document.createElement('a');
+      link.href = `/api/files/${encodeURIComponent(data.zipPath)}`;
+      link.download = data.fileName;
+      link.click();
+    } catch (err) {
+      console.error('Export failed:', err);
+    } finally {
+      setExportingDataset(null);
+    }
+  };
+
+  const handleRenameDataset = (datasetName: string) => {
+    openConfirm({
+      title: 'Rename Dataset',
+      message: `Enter a new name for "${datasetName}":`,
+      type: 'info',
+      confirmText: 'Rename',
+      inputTitle: 'New Name',
+      onConfirm: async (newName?: string) => {
+        if (!newName?.trim()) return;
+        try {
+          await apiClient.post('/api/datasets/rename', { oldName: datasetName, newName: newName.trim() });
+          refreshDatasets();
+        } catch (error: any) {
+          const msg = error?.response?.data?.error || 'Rename failed';
+          alert(msg);
+        }
       },
     });
   };
