@@ -196,6 +196,47 @@ Source filtering in both derivations excludes: `node_modules`, `venv`, `output`,
 - `ui/src/components/` — key UI components: `Sidebar.tsx` (responsive 3-mode nav), `SidebarContext.tsx` (drawer state), `Skeleton.tsx` (loading states), `formInputs.tsx` (form controls + react-select dark styles), `JobActionBar.tsx` (job controls), `SampleImages.tsx` (responsive image grid), `layout.tsx` (TopBar/MainContent with hamburger menu)
 - `nix/` — Nix packaging derivations and wrapper scripts
 
+## Claude AI Integration (Chat & Captions)
+
+### Architecture
+The web UI integrates Claude as a chat assistant and image captioner via the Anthropic SDK. Key files:
+- `ui/src/server/claude/client.ts` — SDK client factory with OAuth custom fetch interceptor
+- `ui/src/server/claude/serverTools.ts` — server-side tools (`read_file`, `list_directory`, `write_file`)
+- `ui/src/server/claude/systemPrompt.ts` — async system prompt builder (injects resolved paths)
+- `ui/src/app/api/claude/chat/route.ts` — chat API route (agentic tool loop)
+- `ui/src/app/api/claude/caption/route.ts` — single image caption route
+- `ui/src/app/api/claude/caption/batch/route.ts` — batch caption route (NDJSON streaming)
+
+### Model selection
+Two separate model settings (configurable in Settings UI):
+- `CLAUDE_CHAT_MODEL` — chat assistant (default: Sonnet)
+- `CLAUDE_CAPTION_MODEL` — image captioning (default: Haiku for speed/cost)
+
+Both fall back to `CLAUDE_MODEL` env var if DB setting is empty.
+
+### OAuth token support (Claude Code tokens)
+When using `CLAUDE_CODE_OAUTH_TOKEN` instead of an API key, the custom fetch in `client.ts` transforms every request to pass Anthropic's Claude Code identity validation. **All of these are required — removing any one causes a 400 rejection:**
+
+1. **System prompt must be an array, not a string.** The Claude Code prefix (`"You are Claude Code, Anthropic's official CLI for Claude."`) must be the first text block in its own array element. Our custom prompt goes in a second block. String concatenation (`prefix + "\n\n" + prompt`) fails because Anthropic checks that the first text block is *exactly* the prefix.
+   ```json
+   "system": [
+     {"type": "text", "text": "You are Claude Code, Anthropic's official CLI for Claude."},
+     {"type": "text", "text": "Your actual system prompt here..."}
+   ]
+   ```
+2. **Tool names must be prefixed with `mcp__`** — e.g. `read_file` → `mcp__read_file`. Anthropic validates tool names against an allowlist for OAuth. The prefix is stripped from responses via regex.
+3. **Beta headers** — both `oauth-2025-04-20` and `claude-code-20250219` must be in `anthropic-beta`.
+4. **Auth header swap** — `x-api-key` removed, replaced with `Authorization: Bearer <token>`.
+5. **User-Agent** — must be `claude-cli/2.1.2 (external, cli)`.
+6. **URL parameter** — `?beta=true` appended to `/v1/messages`.
+7. **Temperature must be absent** — `delete parsed.temperature` (not just default).
+
+### Server tools and path resolution
+- `serverTools.ts` uses async `getDatasetsRoot()` / `getTrainingFolder()` from `settings.ts` (checks Prisma DB, falls back to env/defaults). This ensures Settings UI overrides are respected.
+- Read roots: `TOOLKIT_ROOT` + datasets + training output. Write roots: datasets + training output only (TOOLKIT_ROOT excluded — may be read-only Nix store).
+- Blocked patterns: `.env`, `node_modules`, `.git`, `__pycache__`, `.pyc`.
+- `systemPrompt.ts` is async — it calls `getResolvedPaths()` and injects concrete directory paths into the prompt so the agent knows where to look.
+
 ## Environment variables
 - `HF_HUB_ENABLE_HF_TRANSFER=1` — set automatically in `run.py` for fast downloads
 - `AI_TOOLKIT_AUTH` — auth password for the web UI (used in docker-compose)
@@ -208,4 +249,6 @@ Source filtering in both derivations excludes: `node_modules`, `venv`, `output`,
 - `TRAINING_FOLDER` — override training output directory (default: `$AI_TOOLKIT_UI_DATA/output`)
 - `DATA_ROOT` — override general data directory (default: `$AI_TOOLKIT_UI_DATA/data`)
 - `PORT` — override UI port (default: `8675`)
+- `CLAUDE_CODE_OAUTH_TOKEN` — Claude Code OAuth token (fallback when no API key configured)
+- `CLAUDE_MODEL` — override default Claude model for all routes (fallback for per-task settings)
 - Standard HuggingFace env vars (`HF_TOKEN`, etc.) for gated model access
