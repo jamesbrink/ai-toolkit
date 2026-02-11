@@ -59,6 +59,10 @@
 
         in
         {
+          # Override the default pkgs so all perSystem modules (including devshell)
+          # get nixpkgs with allowUnfree = true (required for CUDA on Linux).
+          _module.args.pkgs = pkgs;
+
           # nix build / nix build .#default
           packages = {
             default = ai-toolkit-ui;
