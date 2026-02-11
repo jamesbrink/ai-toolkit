@@ -15,6 +15,7 @@ export interface ConfirmState {
   confirmText?: string;
   type?: 'danger' | 'warning' | 'info';
   inputTitle?: string;
+  defaultInputValue?: string;
   onConfirm?: (value?: string) => void | Promise<void>;
   onCancel?: () => void;
 }
@@ -42,7 +43,7 @@ export default function ConfirmModal() {
   useEffect(() => {
     if (confirm) {
       setIsOpen(true);
-      setInputValue('');
+      setInputValue(confirm.defaultInputValue ?? '');
     }
   }, [confirm]);
 

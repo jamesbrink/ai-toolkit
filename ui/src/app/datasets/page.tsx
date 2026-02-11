@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { TextInput } from '@/components/formInputs';
 import useDatasetList, { DatasetInfo } from '@/hooks/useDatasetList';
 import { Button } from '@headlessui/react';
-import { FaRegTrashAlt, FaPen } from 'react-icons/fa';
+import { FaRegTrashAlt, FaPen, FaCopy } from 'react-icons/fa';
 import { Download } from 'lucide-react';
 import { openConfirm } from '@/components/ConfirmModal';
 import { TopBar, MainContent } from '@/components/layout';
@@ -47,6 +47,7 @@ export default function Datasets() {
     {
       title: 'Dataset Name',
       key: 'name',
+      sortable: true,
       render: (row: DatasetInfo) => (
         <Link href={`/datasets/${row.name}`} className="text-gray-200 hover:text-gray-100 font-medium">
           {row.name}
@@ -56,6 +57,7 @@ export default function Datasets() {
     {
       title: 'Images',
       key: 'imageCount',
+      sortable: true,
       className: 'w-24 text-right tabular-nums',
       render: (row: DatasetInfo) => (
         <span className="text-gray-300">{row.imageCount.toLocaleString()}</span>
@@ -64,6 +66,7 @@ export default function Datasets() {
     {
       title: 'Captioned',
       key: 'captionCount',
+      sortable: true,
       className: 'w-28 text-right',
       render: (row: DatasetInfo) => {
         if (row.imageCount === 0) return <span className="text-gray-500">-</span>;
@@ -79,6 +82,7 @@ export default function Datasets() {
     {
       title: 'Size',
       key: 'totalSizeBytes',
+      sortable: true,
       className: 'w-24 text-right tabular-nums',
       render: (row: DatasetInfo) => (
         <span className="text-gray-400">{formatBytes(row.totalSizeBytes)}</span>
@@ -87,15 +91,16 @@ export default function Datasets() {
     {
       title: 'Modified',
       key: 'lastModified',
+      sortable: true,
       className: 'w-28 text-right',
       render: (row: DatasetInfo) => (
         <span className="text-gray-400">{formatRelativeTime(row.lastModified)}</span>
       ),
     },
     {
-      title: '',
+      title: 'Actions',
       key: 'actions',
-      className: 'w-32 text-right',
+      className: 'w-40 text-right',
       render: (row: DatasetInfo) => (
         <div className="flex items-center justify-end gap-1">
           <button
@@ -105,6 +110,13 @@ export default function Datasets() {
             title="Export ZIP"
           >
             <Download className="w-4 h-4" />
+          </button>
+          <button
+            className="text-gray-400 hover:text-gray-200 p-2 rounded-full transition-colors"
+            onClick={() => handleCopyDataset(row.name)}
+            title="Duplicate"
+          >
+            <FaCopy className="w-3.5 h-3.5" />
           </button>
           <button
             className="text-gray-400 hover:text-gray-200 p-2 rounded-full transition-colors"
@@ -170,6 +182,27 @@ export default function Datasets() {
     } finally {
       setExportingDataset(null);
     }
+  };
+
+  const handleCopyDataset = (datasetName: string) => {
+    openConfirm({
+      title: 'Duplicate Dataset',
+      message: `Enter a name for the copy of "${datasetName}":`,
+      type: 'info',
+      confirmText: 'Duplicate',
+      inputTitle: 'New Name',
+      defaultInputValue: `${datasetName}_copy`,
+      onConfirm: async (newName?: string) => {
+        if (!newName?.trim()) return;
+        try {
+          const res = await apiClient.post('/api/datasets/copy', { sourceName: datasetName, newName: newName.trim() });
+          router.push(`/datasets/${res.data.name}`);
+        } catch (error: any) {
+          const msg = error?.response?.data?.error || 'Copy failed';
+          alert(msg);
+        }
+      },
+    });
   };
 
   const handleRenameDataset = (datasetName: string) => {
@@ -254,6 +287,8 @@ export default function Datasets() {
           columns={columns}
           rows={datasets}
           isLoading={status === 'loading'}
+          defaultSortKey="name"
+          defaultSortDir="asc"
           onRefresh={refreshDatasets}
         />
       </MainContent>

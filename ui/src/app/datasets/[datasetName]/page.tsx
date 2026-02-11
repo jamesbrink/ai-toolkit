@@ -2,7 +2,7 @@
 
 import { useEffect, useState, use, useMemo } from 'react';
 import { LuImageOff, LuLoader, LuBan } from 'react-icons/lu';
-import { FaChevronLeft, FaPen } from 'react-icons/fa';
+import { FaChevronLeft, FaPen, FaCopy } from 'react-icons/fa';
 import { Sparkles, Search, Download } from 'lucide-react';
 import DatasetImageCard from '@/components/DatasetImageCard';
 import { Button } from '@headlessui/react';
@@ -16,6 +16,14 @@ import DatasetAnalysisPanel from '@/components/DatasetAnalysisPanel';
 import { useClaudeChat } from '@/components/claude/ClaudeChatContext';
 import { useRouter } from 'next/navigation';
 
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+  const value = bytes / Math.pow(1024, i);
+  return `${value < 10 ? value.toFixed(1) : Math.round(value)} ${units[i]}`;
+}
+
 export default function DatasetPage({ params }: { params: { datasetName: string } }) {
   const router = useRouter();
   const [imgList, setImgList] = useState<{ img_path: string }[]>([]);
@@ -25,6 +33,7 @@ export default function DatasetPage({ params }: { params: { datasetName: string 
   const [captionModalOpen, setCaptionModalOpen] = useState(false);
   const [analysisModalOpen, setAnalysisModalOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [datasetSize, setDatasetSize] = useState<number | null>(null);
   const { isConfigured, setContext } = useClaudeChat();
 
   // Set chat context so Claude knows which dataset the user is viewing
@@ -100,6 +109,40 @@ export default function DatasetPage({ params }: { params: { datasetName: string 
     } finally {
       setExporting(false);
     }
+  };
+
+  // Fetch dataset size info
+  useEffect(() => {
+    if (datasetName) {
+      apiClient.get('/api/datasets/list').then((res: any) => {
+        const ds = res.data.find((d: any) => d.name === datasetName);
+        if (ds) setDatasetSize(ds.totalSizeBytes);
+      }).catch(() => {});
+    }
+  }, [datasetName, imgList.length]);
+
+  const handleDuplicate = () => {
+    openConfirm({
+      title: 'Duplicate Dataset',
+      message: `Enter a name for the copy of "${datasetName}":`,
+      type: 'info',
+      confirmText: 'Duplicate',
+      inputTitle: 'New Name',
+      defaultInputValue: `${datasetName}_copy`,
+      onConfirm: async (newName?: string) => {
+        if (!newName?.trim()) return;
+        try {
+          const res = await apiClient.post('/api/datasets/copy', {
+            sourceName: datasetName,
+            newName: newName.trim(),
+          });
+          router.push(`/datasets/${res.data.name}`);
+        } catch (error: any) {
+          const msg = error?.response?.data?.error || 'Copy failed';
+          alert(msg);
+        }
+      },
+    });
   };
 
   const handleRename = () => {
@@ -193,6 +236,12 @@ export default function DatasetPage({ params }: { params: { datasetName: string 
           >
             <FaPen className="w-3 h-3" />
           </button>
+          {status === 'success' && (
+            <span className="text-sm text-gray-400 ml-1">
+              {imgList.length} image{imgList.length !== 1 ? 's' : ''}
+              {datasetSize !== null && ` · ${formatBytes(datasetSize)}`}
+            </span>
+          )}
         </div>
         <div className="flex-1"></div>
         {imgList.length > 0 && (
@@ -218,6 +267,15 @@ export default function DatasetPage({ params }: { params: { datasetName: string 
             </Button>
           </div>
         )}
+        <div className="mr-2">
+          <Button
+            className="text-gray-200 bg-gray-600 hover:bg-gray-500 px-3 py-1 rounded-md flex items-center gap-1.5 text-sm"
+            onClick={handleDuplicate}
+          >
+            <FaCopy className="w-3.5 h-3.5" />
+            Duplicate
+          </Button>
+        </div>
         {isConfigured && imgList.length > 0 && (
           <div className="mr-2">
             <Button
