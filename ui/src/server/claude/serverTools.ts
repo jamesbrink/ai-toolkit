@@ -3,7 +3,7 @@ import path from 'path';
 import { TOOLKIT_ROOT } from '@/paths';
 import { getDatasetsRoot, getTrainingFolder, getAnthropicAuth } from '@/server/settings';
 import { createAnthropicClient, getClaudeCaptionModel } from '@/server/claude/client';
-import { analyzeDataset, getStoredAnalysis } from '@/server/datasetAnalysis';
+import { analyzeDataset, getStoredAnalysis, deleteAnalyzedImages } from '@/server/datasetAnalysis';
 
 // Tool definitions sent to the Claude API
 export const serverToolDefinitions = [
@@ -99,6 +99,26 @@ export const serverToolDefinitions = [
         },
       },
       required: ['image_path'],
+    },
+  },
+  {
+    name: 'delete_dataset_images',
+    description:
+      'Delete images from a dataset. Also removes associated caption .txt files and analysis data. Use this to clean up duplicates and low-quality images. Paths must be under the datasets directory.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        image_paths: {
+          type: 'array' as const,
+          items: { type: 'string' as const },
+          description: 'Array of absolute paths to images to delete',
+        },
+        reason: {
+          type: 'string',
+          description: 'Brief explanation of why these images are being deleted (logged for the user)',
+        },
+      },
+      required: ['image_paths', 'reason'],
     },
   },
 ];
@@ -358,6 +378,40 @@ export async function executeServerTool(
         .join('');
     } catch (err) {
       return `Error viewing image: ${err instanceof Error ? err.message : String(err)}`;
+    }
+  }
+
+  if (name === 'delete_dataset_images') {
+    const imagePaths = input.image_paths as string[];
+    const reason = (input.reason as string) || 'No reason provided';
+
+    if (!imagePaths || !Array.isArray(imagePaths) || imagePaths.length === 0) {
+      return 'Error: image_paths array is required';
+    }
+
+    // Verify all paths are under allowed write roots (datasets/training output)
+    for (const imgPath of imagePaths) {
+      if (!(await isWriteAllowed(imgPath))) {
+        return `Error: access denied — "${imgPath}" is not in a writable directory (datasets or training output)`;
+      }
+    }
+
+    try {
+      const result = await deleteAnalyzedImages(imagePaths);
+      const summary = [
+        `Deletion reason: ${reason}`,
+        `Successfully deleted: ${result.deleted.length} image(s)`,
+      ];
+      if (result.errors.length > 0) {
+        summary.push(`Errors: ${result.errors.join('; ')}`);
+      }
+      // List what was deleted
+      for (const p of result.deleted) {
+        summary.push(`  - ${p}`);
+      }
+      return summary.join('\n');
+    } catch (err) {
+      return `Error deleting images: ${err instanceof Error ? err.message : String(err)}`;
     }
   }
 

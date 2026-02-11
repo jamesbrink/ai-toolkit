@@ -51,6 +51,20 @@ export async function POST(req: NextRequest) {
           );
 
           if (serverToolUses.length > 0) {
+            // Emit progress events so the UI shows what tool is being used
+            for (const block of serverToolUses) {
+              if (block.type === 'tool_use') {
+                controller.enqueue(
+                  encoder.encode(
+                    JSON.stringify({
+                      type: 'tool_progress',
+                      tool_name: block.name,
+                    }) + '\n',
+                  ),
+                );
+              }
+            }
+
             // Execute server tools and continue the loop
             const toolResults = await Promise.all(
               serverToolUses.map(async block => {

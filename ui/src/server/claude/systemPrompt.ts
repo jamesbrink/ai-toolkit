@@ -36,9 +36,10 @@ Dataset quality analysis tools:
 - analyze_dataset_quality: Scan a dataset for near-duplicate images and quality issues (blur, brightness, size). Returns a summary with counts and details.
 - get_dataset_issues: View stored analysis results filtered by issue type (all, duplicates, blurry, dark, bright, small).
 - view_dataset_image: Look at a specific image using vision to describe what you see. Useful for inspecting flagged images.
+- delete_dataset_images: Delete images from a dataset (also removes their caption .txt files and analysis data). Always provide a reason.
 
 When asked about dataset quality, run analyze_dataset_quality first, then present findings clearly.
-Always confirm with the user before proposing image deletions via delete_dataset_images.`;
+When the user asks to delete images (duplicates, low quality, etc.), use the delete_dataset_images tool directly. Always explain what you are deleting and why before calling the tool, and summarize what was deleted afterward.`;
 
 const MPS_NOTES = `
 Apple Silicon (MPS) constraints:

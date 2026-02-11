@@ -11,6 +11,7 @@ interface ClaudeChatState {
   isOpen: boolean;
   isConfigured: boolean;
   isStreaming: boolean;
+  activeToolName: string | null;
   messages: ChatMessage[];
   togglePanel: () => void;
   openPanel: () => void;
@@ -53,6 +54,7 @@ export function ClaudeChatProvider({ children }: { children: React.ReactNode }) 
   const [isStreaming, setIsStreaming] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [tools, setTools] = useState<unknown[]>([]);
+  const [activeToolName, setActiveToolName] = useState<string | null>(null);
   const contextRef = useRef<ChatCtx | undefined>(undefined);
   const toolHandlerRef = useRef<ToolHandler | null>(null);
   const messagesInitialized = useRef(false);
@@ -104,6 +106,7 @@ export function ClaudeChatProvider({ children }: { children: React.ReactNode }) 
   const processStream = useCallback(
     (apiMessages: ChatMessage[], currentMessages: ChatMessage[]) => {
       setIsStreaming(true);
+      setActiveToolName(null);
       let assistantText = '';
       const contentBlocks: ContentBlock[] = [];
       let currentBlockIndex = -1;
@@ -113,6 +116,16 @@ export function ClaudeChatProvider({ children }: { children: React.ReactNode }) 
         contextRef.current,
         tools.length > 0 ? tools : undefined,
         (event: StreamEvent) => {
+          if (event.type === 'tool_progress' && event.tool_name) {
+            setActiveToolName(event.tool_name);
+            return;
+          }
+
+          // Clear tool progress when we start getting content
+          if (event.type === 'content_block_start') {
+            setActiveToolName(null);
+          }
+
           if (event.type === 'content_block_start' && event.content_block) {
             currentBlockIndex = event.index ?? contentBlocks.length;
             contentBlocks[currentBlockIndex] = event.content_block;
@@ -188,10 +201,12 @@ export function ClaudeChatProvider({ children }: { children: React.ReactNode }) 
         },
         () => {
           setIsStreaming(false);
+          setActiveToolName(null);
         },
         (error: string) => {
           setMessages([...currentMessages, { role: 'assistant', content: `Error: ${error}` }]);
           setIsStreaming(false);
+          setActiveToolName(null);
         },
       );
     },
@@ -244,6 +259,7 @@ export function ClaudeChatProvider({ children }: { children: React.ReactNode }) 
         isOpen,
         isConfigured,
         isStreaming,
+        activeToolName,
         messages,
         togglePanel,
         openPanel,

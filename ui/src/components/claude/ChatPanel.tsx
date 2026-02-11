@@ -1,13 +1,23 @@
 'use client';
 
 import { useRef, useEffect } from 'react';
-import { X, Trash2 } from 'lucide-react';
+import { X, Trash2, Loader2 } from 'lucide-react';
 import { useClaudeChat } from './ClaudeChatContext';
 import MessageBubble from './MessageBubble';
 import ChatInput from './ChatInput';
 
+const TOOL_LABELS: Record<string, string> = {
+  read_file: 'Reading file...',
+  list_directory: 'Listing directory...',
+  write_file: 'Writing file...',
+  analyze_dataset_quality: 'Analyzing dataset quality...',
+  get_dataset_issues: 'Checking dataset issues...',
+  view_dataset_image: 'Viewing image...',
+  delete_dataset_images: 'Deleting images...',
+};
+
 export default function ChatPanel() {
-  const { isOpen, closePanel, messages, isStreaming, sendMessage, clearMessages } = useClaudeChat();
+  const { isOpen, closePanel, messages, isStreaming, activeToolName, sendMessage, clearMessages } = useClaudeChat();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -56,6 +66,14 @@ export default function ChatPanel() {
             isStreaming={isStreaming && i === messages.length - 1 && msg.role === 'assistant'}
           />
         ))}
+        {isStreaming && activeToolName && (
+          <div className="flex justify-start mb-3">
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-800 text-gray-400 text-xs">
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              {TOOL_LABELS[activeToolName] || `Running ${activeToolName}...`}
+            </div>
+          </div>
+        )}
         <div ref={messagesEndRef} />
       </div>
 

@@ -55,9 +55,10 @@ export interface ChatSession {
 }
 
 export interface StreamEvent {
-  type: 'content_block_delta' | 'content_block_start' | 'content_block_stop' | 'message_stop' | 'error';
+  type: 'content_block_delta' | 'content_block_start' | 'content_block_stop' | 'message_stop' | 'error' | 'tool_progress';
   delta?: { type: string; text?: string };
   content_block?: ContentBlock;
   index?: number;
   error?: string;
+  tool_name?: string;
 }
