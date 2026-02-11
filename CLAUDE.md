@@ -12,11 +12,11 @@ AI Toolkit (by Ostris) is a training suite for diffusion models supporting image
 
 ### Nix build and run (preferred)
 ```bash
-nix build                                    # Build ai-toolkit Python package
-nix build .#ui                               # Build Next.js web UI
+nix build                                    # Build Next.js web UI (default target)
+nix build .#ai-toolkit                       # Build Python training package
 nix build .#docker                           # Build Docker image (Linux only)
-nix run . -- config/your_config.yaml         # Run training
-nix run .#ui                                 # Start web UI on port 8675
+nix run                                      # Start web UI on port 8675 (default target)
+nix run .#train -- config/your_config.yaml   # Run training
 nix run .#gradio                             # Start Gradio UI
 nix develop                                  # Dev shell with Python 3.12, Node 22
 ```
@@ -31,7 +31,7 @@ Use `-r` to continue on failure, `-n <name>` to replace `[name]` tags in config.
 ### MPS training (Apple Silicon)
 ```bash
 PYTORCH_ENABLE_MPS_FALLBACK=1 PYTORCH_MPS_HIGH_WATERMARK_RATIO=0.0 \
-  nix run . -- config/your_config.yaml
+  nix run .#train -- config/your_config.yaml
 ```
 Set `device: mps` in config YAML. Use `low_vram: true` and `quantize_te: true` for FLUX on 48GB.
 
@@ -183,8 +183,8 @@ Job flow: UI creates Job with status "queued" → cron worker polls for queued j
 
 ### Rebuilding after changes
 ```bash
+nix build                      # Rebuild UI (default target, picks up ui/ changes)
 nix build .#ai-toolkit         # Rebuild Python package (picks up toolkit/ changes)
-nix build .#ui                 # Rebuild UI (picks up ui/ changes)
 ```
 Source filtering in both derivations excludes: `node_modules`, `venv`, `output`, `.git`, `__pycache__`, `.pyc`
 
@@ -247,7 +247,7 @@ Four server tools for dataset quality analysis, executed in the agentic tool loo
 - **`view_dataset_image`** — reads an image file, base64-encodes it, and makes a secondary Claude vision call (using the caption model) to describe the image. Lets the agent "see" specific images.
 - **`delete_dataset_images`** — deletes images from a dataset (also removes caption .txt files and analysis data). Validates paths are under writable roots before deleting. Provides a reason and per-file deletion summary.
 
-The `delete_dataset_images` tool also exists as a client-side tool definition in `datasetTools.ts`, registered via `setTools` on the dataset page. If the agent emits it as a client tool use, `DeleteProposal` renders a confirmation UI with thumbnails and per-image accept/reject toggles. However, when it executes as a server tool (which takes priority in the agentic loop), it deletes directly.
+`delete_dataset_images` executes as a server tool directly in the agentic loop. A `DeleteProposal` UI component exists for potential future client-side confirmation flow but is not currently active (the `datasetTools` array is empty).
 
 ### Tool progress indicator
 The chat route (`route.ts`) emits `tool_progress` events during the agentic tool loop, before each server tool executes. The `ClaudeChatContext` exposes `activeToolName` state, and `ChatPanel` renders a spinner with a human-readable label (e.g., "Analyzing dataset quality...", "Deleting images...") from the `TOOL_LABELS` map. The indicator clears when content blocks start arriving or the stream ends.
@@ -299,8 +299,7 @@ The orchestrator (`datasetAnalysis.ts`) checks `fileModifiedAt` against stored `
 - `get_dataset_issues` server tool returns stored results filtered by issue type
 - `view_dataset_image` server tool makes a vision API call to describe a specific image
 - `delete_dataset_images` server tool deletes images directly (validates paths under writable roots)
-- `delete_dataset_images` client tool (registered on dataset page via `setTools`) renders `DeleteProposal` with per-image accept/reject toggles as an alternative confirmation flow
-- Dataset page registers `datasetTools` and sets chat context (`datasetName`, `imageList`) via `useClaudeChat`
+- Dataset page sets chat context (`datasetName`, `imageList`) via `useClaudeChat`
 - System prompt (`systemPrompt.ts`) includes analysis tool descriptions and context about available results
 - Tool progress events show spinner indicators in ChatPanel during server-side tool execution
 

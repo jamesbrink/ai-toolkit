@@ -288,6 +288,83 @@ $env:AI_TOOLKIT_AUTH="super_secure_password"; npm run build_and_start
 ```
 
 
+## Nix Installation (Alternative)
+
+If you have [Nix](https://nixos.org/) with flakes enabled, you can build and run the entire toolkit without manual dependency management. Nix handles Python, Node.js, CUDA (Linux), and Metal/MPS (macOS) automatically.
+
+### Quick start
+
+```bash
+# Clone and run the web UI (default target)
+git clone https://github.com/ostris/ai-toolkit.git
+cd ai-toolkit
+nix run                    # Starts web UI on http://localhost:8675
+```
+
+### Available targets
+
+```bash
+nix build                  # Build the web UI (default)
+nix build .#ai-toolkit     # Build the Python training package
+nix build .#docker         # Build Docker image (Linux only)
+
+nix run                    # Start web UI on port 8675 (default)
+nix run .#train -- config/your_config.yaml   # Run training directly
+nix run .#gradio           # Start Gradio UI
+
+nix develop                # Dev shell with Python 3.12, Node 22, and all dependencies
+```
+
+### Apple Silicon (MPS) training via Nix
+
+```bash
+PYTORCH_ENABLE_MPS_FALLBACK=1 PYTORCH_MPS_HIGH_WATERMARK_RATIO=0.0 \
+  nix run .#train -- config/your_config.yaml
+```
+
+Set `device: mps` in your config YAML. Use `low_vram: true` and `quantize_te: true` for FLUX on 48GB unified memory.
+
+### Data directory
+
+The Nix UI wrapper stores all writable data (datasets, training output, SQLite DB) under `~/.local/share/ai-toolkit/`. Override with the `AI_TOOLKIT_UI_DATA` environment variable.
+
+### Docker (NVIDIA GPU)
+
+```bash
+docker compose up          # Start UI with NVIDIA GPU passthrough
+```
+
+Set `AI_TOOLKIT_AUTH` in the environment for web UI password protection. See `docker-compose.yml` for volume mounts and configuration.
+
+---
+
+## Claude AI Integration
+
+The web UI includes an integrated Claude AI assistant that can help with training configuration, dataset management, and image captioning. It uses the Anthropic SDK and supports both API keys and Claude Code OAuth tokens.
+
+### Features
+
+- **Chat assistant** — Ask questions about training config, troubleshoot issues, get suggestions for improvement. Claude can read and write files in your datasets and training output directories.
+- **Image captioning** — Generate captions for dataset images using Claude's vision capabilities. Supports single image and batch captioning with NDJSON streaming.
+- **Dataset quality analysis** — Claude can analyze datasets for near-duplicate images (perceptual hashing), blurry/dark/bright/small images, and propose deletions with explanations.
+- **Tool use** — The assistant has access to file tools (read, write, list directory), dataset analysis tools, and image viewing via vision API calls.
+
+### Setup
+
+1. Go to **Settings** in the web UI
+2. Enter your Anthropic API key (or set `CLAUDE_CODE_OAUTH_TOKEN` environment variable for Claude Code OAuth)
+3. Optionally configure separate models for chat (default: Sonnet) and captioning (default: Haiku)
+
+### Model selection
+
+Two separate model settings are available in the Settings UI:
+- **Chat model** — Used for the assistant (default: Claude Sonnet)
+- **Caption model** — Used for image captioning (default: Claude Haiku for speed/cost)
+
+Both fall back to the `CLAUDE_MODEL` environment variable if no DB setting is configured.
+
+---
+
 ## FLUX.1 Training
 
 ### Tutorial
