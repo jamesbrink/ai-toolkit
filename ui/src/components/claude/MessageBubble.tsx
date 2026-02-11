@@ -2,6 +2,7 @@
 
 import React from 'react';
 import ReactMarkdown, { Components } from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { ChatMessage, ContentBlock } from '@/types/claude';
 import ConfigProposal from './ConfigProposal';
 import DeleteProposal from './DeleteProposal';
@@ -43,8 +44,8 @@ const markdownComponents: Components = {
   ),
   hr: () => <hr className="border-gray-700 my-3" />,
   table: ({ children }) => (
-    <div className="overflow-x-auto my-2">
-      <table className="text-xs border-collapse">{children}</table>
+    <div className="overflow-x-auto my-2 chat-scrollbar">
+      <table className="text-xs border-collapse w-full">{children}</table>
     </div>
   ),
   th: ({ children }) => <th className="border border-gray-700 px-2 py-1 text-left font-semibold">{children}</th>,
@@ -52,7 +53,7 @@ const markdownComponents: Components = {
 };
 
 function renderText(text: string): React.ReactNode {
-  return <ReactMarkdown components={markdownComponents}>{text}</ReactMarkdown>;
+  return <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{text}</ReactMarkdown>;
 }
 
 function renderContentBlocks(blocks: ContentBlock[]): React.ReactNode {
@@ -95,7 +96,7 @@ export default function MessageBubble({ message, isStreaming }: MessageBubblePro
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-3`}>
       <div
-        className={`max-w-[85%] px-3 py-2 rounded-lg text-sm ${
+        className={`max-w-[85%] min-w-0 px-3 py-2 rounded-lg text-sm overflow-hidden ${
           isUser ? 'bg-gray-700 text-gray-100' : 'bg-gray-800 text-gray-100'
         }`}
       >

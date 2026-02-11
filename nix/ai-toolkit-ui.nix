@@ -25,7 +25,7 @@ buildNpmPackage {
         || baseName == "aitk_db.db" || baseName == ".turbo");
   };
 
-  npmDepsHash = "sha256-O2qXJ01Gz8iDpHhRYK6h4IIpzom+xyp5/MBPEB3RIvY=";
+  npmDepsHash = "sha256-VGq5iB27CRV3Q9quu2BCGEwG3S2KKgU9lDfNCjhbHAk=";
 
   nodejs = nodejs_22;
 

@@ -31,6 +31,7 @@
     "react-markdown": "^10.1.0",
     "react-select": "^5.10.1",
     "recharts": "^3.6.0",
+    "remark-gfm": "^4.0.1",
     "sqlite3": "^5.1.7",
     "systeminformation": "^5.27.11",
     "uuid": "^11.1.0",

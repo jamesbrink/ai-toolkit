@@ -130,7 +130,7 @@ export default function ChatPanel() {
   );
 
   const chatMessages = (
-    <div ref={messagesContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto px-3 py-3">
+    <div ref={messagesContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-3 chat-scrollbar">
       {messages.length === 0 && (
         <div className="text-center text-gray-400 text-sm mt-8">
           <p>Ask me about training config, troubleshooting, or anything about diffusion model training.</p>
