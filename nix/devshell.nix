@@ -154,8 +154,14 @@
             ])}"''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
           ''}
 
-          # Set DATABASE_URL for Prisma (Next.js server + cron worker + prisma CLI)
+          # Mirror env vars from nix/ai-toolkit-ui-wrapper.sh for local dev
+          export TOOLKIT_ROOT="$(pwd)"
           export DATABASE_URL="file:$(pwd)/aitk_db.db"
+          export DATASETS_FOLDER="''${DATASETS_FOLDER:-$(pwd)/datasets}"
+          export TRAINING_FOLDER="''${TRAINING_FOLDER:-$(pwd)/output}"
+          export DATA_ROOT="''${DATA_ROOT:-$(pwd)/data}"
+          export PORT="''${PORT:-8675}"
+          mkdir -p "$DATASETS_FOLDER" "$TRAINING_FOLDER" "$DATA_ROOT"
 
           if [ ! -d "venv" ]; then
             echo "Creating Python virtual environment..."
