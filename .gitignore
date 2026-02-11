@@ -187,6 +187,9 @@ aitk_db.db
 # Gradio
 .gradio/
 
+# Playwright MCP artifacts
+.playwright-mcp/
+
 # Nix build output
 result
 result-*
