@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState, ReactNode, KeyboardEvent } from 'react';
 import { FaTrashAlt, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { Sparkles, Loader2 } from 'lucide-react';
 import { openConfirm } from './ConfirmModal';
 import classNames from 'classnames';
 import { apiClient } from '@/utils/api';
@@ -12,6 +13,7 @@ interface DatasetImageCardProps {
   children?: ReactNode;
   className?: string;
   onDelete?: () => void;
+  showAiCaption?: boolean;
 }
 
 const DatasetImageCard: React.FC<DatasetImageCardProps> = ({
@@ -20,6 +22,7 @@ const DatasetImageCard: React.FC<DatasetImageCardProps> = ({
   children,
   className = '',
   onDelete = () => {},
+  showAiCaption = false,
 }) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState<boolean>(false);
@@ -29,6 +32,33 @@ const DatasetImageCard: React.FC<DatasetImageCardProps> = ({
   const [caption, setCaption] = useState<string>('');
   const [savedCaption, setSavedCaption] = useState<string>('');
   const isGettingCaption = useRef<boolean>(false);
+  const [isGeneratingAiCaption, setIsGeneratingAiCaption] = useState(false);
+
+  const generateAiCaption = async () => {
+    if (isGeneratingAiCaption) return;
+    setIsGeneratingAiCaption(true);
+    try {
+      const token = localStorage.getItem('AI_TOOLKIT_AUTH');
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch('/api/claude/caption', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ imagePath: imageUrl, style: 'descriptive' }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.caption) {
+          setCaption(data.caption);
+        }
+      }
+    } catch (err) {
+      console.error('Error generating AI caption:', err);
+    } finally {
+      setIsGeneratingAiCaption(false);
+    }
+  };
 
   const fetchCaption = async () => {
     if (isGettingCaption.current || isCaptionLoaded) return;
@@ -173,6 +203,16 @@ const DatasetImageCard: React.FC<DatasetImageCardProps> = ({
           )}
           {children && <div className="absolute inset-0 flex items-center justify-center">{children}</div>}
           <div className="absolute top-1 right-1 flex space-x-2 z-10">
+            {showAiCaption && isItImage && (
+              <button
+                className="bg-gray-800 rounded-full p-2 text-purple-400 hover:text-purple-300 transition-colors"
+                onClick={generateAiCaption}
+                disabled={isGeneratingAiCaption}
+                title="Generate caption with Claude"
+              >
+                {isGeneratingAiCaption ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+              </button>
+            )}
             <button
               className="bg-gray-800 rounded-full p-2"
               onClick={() => {

@@ -19,6 +19,8 @@ import SimpleJob from './SimpleJob';
 import AdvancedJob from './AdvancedJob';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { apiClient } from '@/utils/api';
+import { useClaudeChat } from '@/components/claude/ClaudeChatContext';
+import { configTools } from '@/components/claude/tools/configTools';
 
 const isDev = process.env.NODE_ENV === 'development';
 
@@ -36,6 +38,31 @@ export default function TrainingForm() {
 
   const [jobConfig, setJobConfig] = useNestedState<JobConfig>(objectCopy(defaultJobConfig));
   const [status, setStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
+  const { setContext, setTools, isConfigured } = useClaudeChat();
+
+  // Provide config tools and page context to Claude chat
+  useEffect(() => {
+    if (isConfigured) {
+      setTools(configTools);
+      return () => setTools([]);
+    }
+  }, [isConfigured, setTools]);
+
+  useEffect(() => {
+    if (isConfigured) {
+      setContext({ page: '/jobs/new', jobConfig, deviceType });
+    }
+  }, [jobConfig, deviceType, isConfigured, setContext]);
+
+  // Listen for config changes from Claude's ConfigProposal
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { path, value } = (e as CustomEvent).detail;
+      setJobConfig(value, path);
+    };
+    window.addEventListener('claude-config-change', handler);
+    return () => window.removeEventListener('claude-config-change', handler);
+  }, [setJobConfig]);
 
   useEffect(() => {
     if (!isSettingsLoaded) return;

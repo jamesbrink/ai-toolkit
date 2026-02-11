@@ -67,6 +67,44 @@ export const getHFToken = async () => {
   return token;
 };
 
+export interface AnthropicAuth {
+  apiKey?: string;
+  oauthToken?: string;
+}
+
+export const getAnthropicAuth = async (): Promise<AnthropicAuth> => {
+  // 1. Check for API key in DB settings
+  const key = 'ANTHROPIC_API_KEY';
+  let apiKey = myCache.get(key) as string;
+  if (!apiKey) {
+    const row = await prisma.settings.findFirst({
+      where: { key },
+    });
+    apiKey = row?.value && row.value !== '' ? row.value : '';
+    myCache.set(key, apiKey);
+  }
+  if (apiKey) {
+    return { apiKey };
+  }
+
+  // 2. Fallback to ANTHROPIC_API_KEY env var
+  if (process.env.ANTHROPIC_API_KEY) {
+    return { apiKey: process.env.ANTHROPIC_API_KEY };
+  }
+
+  // 3. Fallback to CLAUDE_CODE_OAUTH_TOKEN env var
+  if (process.env.CLAUDE_CODE_OAUTH_TOKEN) {
+    return { oauthToken: process.env.CLAUDE_CODE_OAUTH_TOKEN };
+  }
+
+  return {};
+};
+
+export const getAnthropicApiKey = async (): Promise<string> => {
+  const auth = await getAnthropicAuth();
+  return auth.apiKey || auth.oauthToken || '';
+};
+
 export const getDataRoot = async () => {
   const key = 'DATA_ROOT';
   let dataRoot = myCache.get(key) as string;

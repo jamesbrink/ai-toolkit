@@ -1,8 +1,9 @@
 'use client';
 
 import classNames from 'classnames';
-import { Menu } from 'lucide-react';
+import { Menu, Bot } from 'lucide-react';
 import { useSidebar } from './SidebarContext';
+import { useClaudeChat } from './claude/ClaudeChatContext';
 
 interface Props {
   className?: string;
@@ -11,6 +12,7 @@ interface Props {
 
 export const TopBar: React.FC<Props> = ({ children, className }) => {
   const { toggle } = useSidebar();
+  const { isConfigured, togglePanel, isOpen } = useClaudeChat();
 
   return (
     <div
@@ -24,6 +26,19 @@ export const TopBar: React.FC<Props> = ({ children, className }) => {
         <Menu className="w-5 h-5" />
       </button>
       {children ? children : null}
+      {isConfigured && (
+        <button
+          onClick={togglePanel}
+          className={classNames(
+            'ml-auto p-2 rounded-lg transition-colors',
+            isOpen ? 'text-blue-400 bg-gray-800' : 'text-gray-400 hover:text-gray-200',
+          )}
+          aria-label="Toggle Claude assistant"
+          title="Claude Assistant"
+        >
+          <Bot className="w-5 h-5" />
+        </button>
+      )}
     </div>
   );
 };

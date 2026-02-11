@@ -1,0 +1,271 @@
+'use client';
+
+import React, { createContext, useContext, useState, useRef, useCallback, useEffect } from 'react';
+import { ChatMessage, ChatContext as ChatCtx, ContentBlock, StreamEvent } from '@/types/claude';
+import { streamClaude } from '@/utils/claudeStream';
+import { apiClient } from '@/utils/api';
+
+type ToolHandler = (toolName: string, input: Record<string, unknown>) => void;
+
+interface ClaudeChatState {
+  isOpen: boolean;
+  isConfigured: boolean;
+  isStreaming: boolean;
+  messages: ChatMessage[];
+  togglePanel: () => void;
+  openPanel: () => void;
+  closePanel: () => void;
+  sendMessage: (text: string) => void;
+  sendToolResult: (toolUseId: string, content: string) => void;
+  setContext: (ctx: ChatCtx) => void;
+  registerToolHandler: (handler: ToolHandler) => void;
+  clearMessages: () => void;
+  tools: unknown[];
+  setTools: (tools: unknown[]) => void;
+}
+
+const ClaudeChatContext = createContext<ClaudeChatState | null>(null);
+
+const STORAGE_KEY = 'claude_chat_messages';
+
+function loadMessages(): ChatMessage[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveMessages(messages: ChatMessage[]) {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+  } catch {
+    // storage full, ignore
+  }
+}
+
+export function ClaudeChatProvider({ children }: { children: React.ReactNode }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isConfigured, setIsConfigured] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [tools, setTools] = useState<unknown[]>([]);
+  const contextRef = useRef<ChatCtx | undefined>(undefined);
+  const toolHandlerRef = useRef<ToolHandler | null>(null);
+  const messagesInitialized = useRef(false);
+
+  // Load messages from localStorage on mount
+  useEffect(() => {
+    if (!messagesInitialized.current) {
+      setMessages(loadMessages());
+      messagesInitialized.current = true;
+    }
+  }, []);
+
+  // Persist messages to localStorage
+  useEffect(() => {
+    if (messagesInitialized.current) {
+      saveMessages(messages);
+    }
+  }, [messages]);
+
+  // Check if Claude is configured on mount
+  useEffect(() => {
+    apiClient
+      .get('/api/claude/status')
+      .then(res => {
+        setIsConfigured(res.data.configured);
+      })
+      .catch(() => {
+        setIsConfigured(false);
+      });
+  }, []);
+
+  const togglePanel = useCallback(() => setIsOpen(prev => !prev), []);
+  const openPanel = useCallback(() => setIsOpen(true), []);
+  const closePanel = useCallback(() => setIsOpen(false), []);
+
+  const setContext = useCallback((ctx: ChatCtx) => {
+    contextRef.current = ctx;
+  }, []);
+
+  const registerToolHandler = useCallback((handler: ToolHandler) => {
+    toolHandlerRef.current = handler;
+  }, []);
+
+  const clearMessages = useCallback(() => {
+    setMessages([]);
+    saveMessages([]);
+  }, []);
+
+  const processStream = useCallback(
+    (apiMessages: ChatMessage[], currentMessages: ChatMessage[]) => {
+      setIsStreaming(true);
+      let assistantText = '';
+      const contentBlocks: ContentBlock[] = [];
+      let currentBlockIndex = -1;
+
+      streamClaude(
+        apiMessages,
+        contextRef.current,
+        tools.length > 0 ? tools : undefined,
+        (event: StreamEvent) => {
+          if (event.type === 'content_block_start' && event.content_block) {
+            currentBlockIndex = event.index ?? contentBlocks.length;
+            contentBlocks[currentBlockIndex] = event.content_block;
+
+            if (event.content_block.type === 'tool_use' && event.content_block.name && event.content_block.id) {
+              // tool_use block started — we'll accumulate input via deltas
+            }
+          }
+
+          if (event.type === 'content_block_delta' && event.delta) {
+            if (event.delta.type === 'text_delta' && event.delta.text) {
+              assistantText += event.delta.text;
+              setMessages([...currentMessages, { role: 'assistant', content: assistantText }]);
+            }
+            if (event.delta.type === 'input_json_delta' && event.delta.text) {
+              // Accumulate JSON for tool input
+              const block = contentBlocks[event.index ?? currentBlockIndex];
+              if (block && block.type === 'tool_use') {
+                block.input = block.input || {};
+                // We'll reconstruct after block stop by parsing accumulated JSON
+                if (!block.content) block.content = '';
+                block.content += event.delta.text;
+              }
+            }
+          }
+
+          if (event.type === 'content_block_stop') {
+            const block = contentBlocks[event.index ?? currentBlockIndex];
+            if (block && block.type === 'tool_use' && block.content) {
+              try {
+                block.input = JSON.parse(block.content);
+              } catch {
+                // partial JSON
+              }
+              delete block.content;
+            }
+          }
+
+          if (event.type === 'message_stop') {
+            // Check if there are tool_use blocks
+            const toolBlocks = contentBlocks.filter(b => b.type === 'tool_use');
+            if (toolBlocks.length > 0) {
+              // Build final message with content blocks
+              const finalBlocks: ContentBlock[] = [];
+              if (assistantText) {
+                finalBlocks.push({ type: 'text', text: assistantText });
+              }
+              finalBlocks.push(...toolBlocks);
+
+              const finalMessages: ChatMessage[] = [
+                ...currentMessages,
+                { role: 'assistant', content: finalBlocks },
+              ];
+              setMessages(finalMessages);
+
+              // Notify tool handler
+              for (const block of toolBlocks) {
+                if (toolHandlerRef.current && block.name && block.input) {
+                  toolHandlerRef.current(block.name, block.input);
+                }
+              }
+            } else {
+              setMessages([...currentMessages, { role: 'assistant', content: assistantText }]);
+            }
+          }
+
+          if (event.type === 'error') {
+            setMessages([
+              ...currentMessages,
+              { role: 'assistant', content: `Error: ${event.error}` },
+            ]);
+          }
+        },
+        () => {
+          setIsStreaming(false);
+        },
+        (error: string) => {
+          setMessages([...currentMessages, { role: 'assistant', content: `Error: ${error}` }]);
+          setIsStreaming(false);
+        },
+      );
+    },
+    [tools],
+  );
+
+  const sendMessage = useCallback(
+    (text: string) => {
+      if (isStreaming) return;
+
+      const userMessage: ChatMessage = { role: 'user', content: text };
+      const updated = [...messages, userMessage];
+      setMessages(updated);
+
+      // Build API messages (flatten content blocks to strings for simple messages)
+      const apiMessages = updated.map(m => ({
+        role: m.role,
+        content: m.content,
+      }));
+
+      processStream(apiMessages, updated);
+    },
+    [messages, isStreaming, processStream],
+  );
+
+  const sendToolResult = useCallback(
+    (toolUseId: string, content: string) => {
+      if (isStreaming) return;
+
+      const toolResultMessage: ChatMessage = {
+        role: 'user',
+        content: [{ type: 'tool_result', tool_use_id: toolUseId, content }],
+      };
+      const updated = [...messages, toolResultMessage];
+      setMessages(updated);
+
+      const apiMessages = updated.map(m => ({
+        role: m.role,
+        content: m.content,
+      }));
+
+      processStream(apiMessages, updated);
+    },
+    [messages, isStreaming, processStream],
+  );
+
+  return (
+    <ClaudeChatContext.Provider
+      value={{
+        isOpen,
+        isConfigured,
+        isStreaming,
+        messages,
+        togglePanel,
+        openPanel,
+        closePanel,
+        sendMessage,
+        sendToolResult,
+        setContext,
+        registerToolHandler,
+        clearMessages,
+        tools,
+        setTools,
+      }}
+    >
+      {children}
+    </ClaudeChatContext.Provider>
+  );
+}
+
+export function useClaudeChat() {
+  const ctx = useContext(ClaudeChatContext);
+  if (!ctx) {
+    throw new Error('useClaudeChat must be used within ClaudeChatProvider');
+  }
+  return ctx;
+}

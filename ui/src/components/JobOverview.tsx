@@ -5,9 +5,10 @@ import GPUWidget from '@/components/GPUWidget';
 import CPUWidget from '@/components/CPUWidget';
 import FilesWidget from '@/components/FilesWidget';
 import { getTotalSteps } from '@/utils/jobs';
-import { Cpu, HardDrive, Info, Gauge } from 'lucide-react';
+import { Cpu, HardDrive, Info, Gauge, Bot } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import useJobLog from '@/hooks/useJobLog';
+import { useClaudeChat } from '@/components/claude/ClaudeChatContext';
 
 interface JobOverviewProps {
   job: Job;
@@ -23,6 +24,32 @@ export default function JobOverview({ job }: JobOverviewProps) {
 
   const { gpuList, isGPUInfoLoaded } = useGPUInfo(gpuIds, 5000);
   const { cpuInfo, isCPUInfoLoaded } = useCPUInfo(5000);
+  const { isConfigured, openPanel, sendMessage, setContext } = useClaudeChat();
+
+  // Provide job context to Claude when log updates
+  useEffect(() => {
+    if (isConfigured && log) {
+      const logLines = log.split(/\n|\r\n/).slice(-200).join('\n');
+      setContext({
+        page: `/jobs/${job.id}`,
+        jobData: { name: job.name, status: job.status, step: job.step, gpu_ids: job.gpu_ids },
+        logTail: logLines,
+      });
+    }
+  }, [isConfigured, log, job, setContext]);
+
+  const handleAnalyze = () => {
+    const logTail = log.split(/\n|\r\n/).slice(-200).join('\n');
+    setContext({
+      page: `/jobs/${job.id}`,
+      jobData: { name: job.name, status: job.status, step: job.step, gpu_ids: job.gpu_ids },
+      logTail,
+    });
+    openPanel();
+    sendMessage(
+      `Analyze this training job. The job "${job.name}" is ${job.status} at step ${job.step}. Look at the recent log output and tell me: 1) Is training progressing normally? 2) Any errors or warnings? 3) Suggestions for improvement.`,
+    );
+  };
   const totalSteps = getTotalSteps(job);
   const progress = (job.step / totalSteps) * 100;
   const isStopping = job.stop && job.status === 'running';
@@ -139,6 +166,16 @@ export default function JobOverview({ job }: JobOverviewProps) {
 
           {/* Log - Now using flex-grow to fill remaining space */}
           <div className="bg-gray-950 rounded-lg p-4 relative flex-grow min-h-60">
+            {isConfigured && (
+              <button
+                onClick={handleAnalyze}
+                className="absolute top-2 right-2 z-10 flex items-center gap-1.5 px-2.5 py-1 text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-gray-100 rounded-md transition-colors border border-gray-700"
+                title="Analyze logs with Claude"
+              >
+                <Bot className="w-3.5 h-3.5" />
+                Analyze
+              </button>
+            )}
             <div
               ref={logRef}
               className="text-xs text-gray-300 absolute inset-0 p-4 overflow-y-auto"

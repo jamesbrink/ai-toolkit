@@ -108,6 +108,29 @@ export default function Settings() {
                     placeholder="Enter datasets folder path"
                   />
                 </div>
+
+                <div>
+                  <label htmlFor="ANTHROPIC_API_KEY" className="block text-sm font-medium mb-2">
+                    Anthropic API Key
+                    <div className="text-gray-400 text-sm ml-1">
+                      Enable the Claude AI assistant for config help, log analysis, and dataset captioning.
+                      Get a key from{' '}
+                      <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noreferrer">
+                        console.anthropic.com
+                      </a>
+                      .
+                    </div>
+                  </label>
+                  <input
+                    type="password"
+                    id="ANTHROPIC_API_KEY"
+                    name="ANTHROPIC_API_KEY"
+                    value={settings.ANTHROPIC_API_KEY}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent"
+                    placeholder="Enter your Anthropic API key"
+                  />
+                </div>
               </div>
             </div>
           </div>

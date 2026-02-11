@@ -3,18 +3,23 @@
 import { useEffect, useState, use, useMemo } from 'react';
 import { LuImageOff, LuLoader, LuBan } from 'react-icons/lu';
 import { FaChevronLeft } from 'react-icons/fa';
+import { Sparkles } from 'lucide-react';
 import DatasetImageCard from '@/components/DatasetImageCard';
 import { Button } from '@headlessui/react';
 import AddImagesModal, { openImagesModal } from '@/components/AddImagesModal';
 import { TopBar, MainContent } from '@/components/layout';
 import { apiClient } from '@/utils/api';
 import FullscreenDropOverlay from '@/components/FullscreenDropOverlay';
+import CaptionHelper from '@/components/claude/CaptionHelper';
+import { useClaudeChat } from '@/components/claude/ClaudeChatContext';
 
 export default function DatasetPage({ params }: { params: { datasetName: string } }) {
   const [imgList, setImgList] = useState<{ img_path: string }[]>([]);
   const usableParams = use(params as any) as { datasetName: string };
   const datasetName = usableParams.datasetName;
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [captionModalOpen, setCaptionModalOpen] = useState(false);
+  const { isConfigured } = useClaudeChat();
 
   const refreshImageList = (dbName: string) => {
     setStatus('loading');
@@ -103,6 +108,17 @@ export default function DatasetPage({ params }: { params: { datasetName: string 
           <h1 className="text-lg">Dataset: {datasetName}</h1>
         </div>
         <div className="flex-1"></div>
+        {isConfigured && imgList.length > 0 && (
+          <div className="mr-2">
+            <Button
+              className="text-gray-200 bg-purple-700 hover:bg-purple-600 px-3 py-1 rounded-md flex items-center gap-1.5 text-sm"
+              onClick={() => setCaptionModalOpen(true)}
+            >
+              <Sparkles className="w-4 h-4" />
+              Caption with Claude
+            </Button>
+          </div>
+        )}
         <div>
           <Button
             className="text-gray-200 bg-slate-600 px-3 py-1 rounded-md"
@@ -122,6 +138,7 @@ export default function DatasetPage({ params }: { params: { datasetName: string 
                 alt="image"
                 imageUrl={img.img_path}
                 onDelete={() => refreshImageList(datasetName)}
+                showAiCaption={isConfigured}
               />
             ))}
           </div>
@@ -129,6 +146,15 @@ export default function DatasetPage({ params }: { params: { datasetName: string 
       </MainContent>
       <AddImagesModal />
       <FullscreenDropOverlay datasetName={datasetName} onComplete={() => refreshImageList(datasetName)} />
+      {isConfigured && (
+        <CaptionHelper
+          isOpen={captionModalOpen}
+          onClose={() => setCaptionModalOpen(false)}
+          imagePaths={imgList.map(img => img.img_path)}
+          datasetName={datasetName}
+          onCaptionsApplied={() => refreshImageList(datasetName)}
+        />
+      )}
     </>
   );
 }

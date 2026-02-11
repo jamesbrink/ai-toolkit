@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, use } from 'react';
+import { useState, use, useEffect } from 'react';
 import { FaChevronLeft } from 'react-icons/fa';
 import { Button } from '@headlessui/react';
 import { TopBar, MainContent } from '@/components/layout';
@@ -13,6 +13,7 @@ import JobConfigViewer from '@/components/JobConfigViewer';
 import JobLossGraph from '@/components/JobLossGraph';
 import { JobOverviewSkeleton } from '@/components/Skeleton';
 import { Job } from '@prisma/client';
+import { useClaudeChat } from '@/components/claude/ClaudeChatContext';
 
 type PageKey = 'overview' | 'samples' | 'config' | 'loss_log';
 
@@ -57,6 +58,16 @@ export default function JobPage({ params }: { params: { jobID: string } }) {
   const jobID = usableParams.jobID;
   const { job, status, refreshJob } = useJob(jobID, 5000);
   const [pageKey, setPageKey] = useState<PageKey>('overview');
+  const { setContext, isConfigured } = useClaudeChat();
+
+  useEffect(() => {
+    if (isConfigured && job) {
+      setContext({
+        page: `/jobs/${jobID}`,
+        jobData: { name: job.name, status: job.status, step: job.step, gpu_ids: job.gpu_ids },
+      });
+    }
+  }, [isConfigured, job, jobID, setContext]);
 
   const page = pages.find(p => p.value === pageKey);
 

@@ -7,6 +7,8 @@ import ConfirmModal from '@/components/ConfirmModal';
 import { Suspense } from 'react';
 import AuthWrapper from '@/components/AuthWrapper';
 import DocModal from '@/components/DocModal';
+import { ClaudeChatProvider } from '@/components/claude/ClaudeChatContext';
+import ChatPanel from '@/components/claude/ChatPanel';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,12 +31,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProvider>
           <AuthWrapper authRequired={authRequired}>
             <SidebarProvider>
-              <div className="flex h-dvh bg-gray-950">
-                <Sidebar />
-                <main className="flex-1 min-w-0 overflow-auto bg-gray-950 text-gray-100 relative">
-                  <Suspense>{children}</Suspense>
-                </main>
-              </div>
+              <ClaudeChatProvider>
+                <div className="flex h-dvh bg-gray-950">
+                  <Sidebar />
+                  <main className="flex-1 min-w-0 overflow-auto bg-gray-950 text-gray-100 relative">
+                    <Suspense>{children}</Suspense>
+                  </main>
+                </div>
+                <ChatPanel />
+              </ClaudeChatProvider>
             </SidebarProvider>
           </AuthWrapper>
         </ThemeProvider>

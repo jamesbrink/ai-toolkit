@@ -12,6 +12,7 @@
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,css,scss}\""
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.74.0",
     "@headlessui/react": "^2.2.0",
     "@monaco-editor/react": "^4.7.0",
     "@prisma/client": "^6.19.1",
