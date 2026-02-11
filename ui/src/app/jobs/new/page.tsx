@@ -68,7 +68,7 @@ export default function TrainingForm() {
     if (!isSettingsLoaded) return;
     if (datasetFetchStatus !== 'success') return;
 
-    const datasetOptions = datasets.map(name => ({ value: path.join(settings.DATASETS_FOLDER, name), label: name }));
+    const datasetOptions = datasets.map(d => ({ value: path.join(settings.DATASETS_FOLDER, d.name), label: d.name }));
     setDatasetOptions(datasetOptions);
     const defaultDatasetPath = defaultDatasetConfig.folder_path;
 

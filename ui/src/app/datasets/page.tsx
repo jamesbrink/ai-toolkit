@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Modal } from '@/components/Modal';
 import Link from 'next/link';
 import { TextInput } from '@/components/formInputs';
-import useDatasetList from '@/hooks/useDatasetList';
+import useDatasetList, { DatasetInfo } from '@/hooks/useDatasetList';
 import { Button } from '@headlessui/react';
 import { FaRegTrashAlt } from 'react-icons/fa';
 import { openConfirm } from '@/components/ConfirmModal';
@@ -13,33 +13,88 @@ import UniversalTable, { TableColumn } from '@/components/UniversalTable';
 import { apiClient } from '@/utils/api';
 import { useRouter } from 'next/navigation';
 
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+  const value = bytes / Math.pow(1024, i);
+  return `${value < 10 ? value.toFixed(1) : Math.round(value)} ${units[i]}`;
+}
+
+function formatRelativeTime(epochMs: number | null): string {
+  if (!epochMs) return '-';
+  const seconds = Math.floor((Date.now() - epochMs) / 1000);
+  if (seconds < 60) return 'just now';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}d ago`;
+  const months = Math.floor(days / 30);
+  return `${months}mo ago`;
+}
+
 export default function Datasets() {
   const router = useRouter();
   const { datasets, status, refreshDatasets } = useDatasetList();
   const [newDatasetName, setNewDatasetName] = useState('');
   const [isNewDatasetModalOpen, setIsNewDatasetModalOpen] = useState(false);
 
-  // Transform datasets array into rows with objects
-  const tableRows = datasets.map(dataset => ({
-    name: dataset,
-    actions: dataset, // Pass full dataset name for actions
-  }));
-
   const columns: TableColumn[] = [
     {
       title: 'Dataset Name',
       key: 'name',
-      render: row => (
-        <Link href={`/datasets/${row.name}`} className="text-gray-200 hover:text-gray-100">
+      render: (row: DatasetInfo) => (
+        <Link href={`/datasets/${row.name}`} className="text-gray-200 hover:text-gray-100 font-medium">
           {row.name}
         </Link>
       ),
     },
     {
-      title: 'Actions',
+      title: 'Images',
+      key: 'imageCount',
+      className: 'w-24 text-right tabular-nums',
+      render: (row: DatasetInfo) => (
+        <span className="text-gray-300">{row.imageCount.toLocaleString()}</span>
+      ),
+    },
+    {
+      title: 'Captioned',
+      key: 'captionCount',
+      className: 'w-28 text-right',
+      render: (row: DatasetInfo) => {
+        if (row.imageCount === 0) return <span className="text-gray-500">-</span>;
+        const pct = Math.round((row.captionCount / row.imageCount) * 100);
+        const color = pct === 100 ? 'text-green-400' : pct > 0 ? 'text-yellow-400' : 'text-gray-500';
+        return (
+          <span className={`tabular-nums ${color}`}>
+            {row.captionCount}/{row.imageCount}
+          </span>
+        );
+      },
+    },
+    {
+      title: 'Size',
+      key: 'totalSizeBytes',
+      className: 'w-24 text-right tabular-nums',
+      render: (row: DatasetInfo) => (
+        <span className="text-gray-400">{formatBytes(row.totalSizeBytes)}</span>
+      ),
+    },
+    {
+      title: 'Modified',
+      key: 'lastModified',
+      className: 'w-28 text-right',
+      render: (row: DatasetInfo) => (
+        <span className="text-gray-400">{formatRelativeTime(row.lastModified)}</span>
+      ),
+    },
+    {
+      title: '',
       key: 'actions',
-      className: 'w-20 text-right',
-      render: row => (
+      className: 'w-12 text-right',
+      render: (row: DatasetInfo) => (
         <button
           className="text-gray-200 hover:bg-red-600 p-2 rounded-full transition-colors flex items-center justify-center"
           onClick={() => handleDeleteDataset(row.name)}
@@ -130,7 +185,7 @@ export default function Datasets() {
       <MainContent>
         <UniversalTable
           columns={columns}
-          rows={tableRows}
+          rows={datasets}
           isLoading={status === 'loading'}
           onRefresh={refreshDatasets}
         />
