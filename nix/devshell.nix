@@ -16,8 +16,8 @@
           # — development —
           {
             name = "dev";
-            command = "cd ui && npm run dev";
-            help = "Start Next.js dev server with hot reload on :3000";
+            command = "cd ui && PORT=8675 npm run dev";
+            help = "Start Next.js dev server with hot reload on :8675";
             category = "development";
           }
           {
