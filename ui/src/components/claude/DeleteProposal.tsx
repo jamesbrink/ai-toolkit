@@ -12,17 +12,18 @@ interface DeleteProposalProps {
 
 export default function DeleteProposal({ toolUseId, imagePaths, reason }: DeleteProposalProps) {
   const { sendToolResult } = useClaudeChat();
+  const safePaths = Array.isArray(imagePaths) ? imagePaths : [];
   const [decisions, setDecisions] = useState<Record<number, 'accepted' | 'rejected'>>(() => {
     // Default all to accepted for deletions
     const initial: Record<number, 'accepted' | 'rejected'> = {};
-    imagePaths.forEach((_, i) => {
+    safePaths.forEach((_, i) => {
       initial[i] = 'accepted';
     });
     return initial;
   });
   const [submitted, setSubmitted] = useState(false);
 
-  if (!imagePaths || imagePaths.length === 0) {
+  if (safePaths.length === 0) {
     return <div className="text-gray-400 text-xs p-2">No images proposed for deletion</div>;
   }
 
@@ -31,7 +32,7 @@ export default function DeleteProposal({ toolUseId, imagePaths, reason }: Delete
   };
 
   const handleSubmit = async () => {
-    const acceptedPaths = imagePaths.filter((_, i) => decisions[i] === 'accepted');
+    const acceptedPaths = safePaths.filter((_, i) => decisions[i] === 'accepted');
 
     if (acceptedPaths.length > 0) {
       await fetch('/api/datasets/analysis/delete-images', {
@@ -42,21 +43,21 @@ export default function DeleteProposal({ toolUseId, imagePaths, reason }: Delete
     }
 
     const summary = acceptedPaths.length > 0
-      ? `${acceptedPaths.length} of ${imagePaths.length} images deleted.`
+      ? `${acceptedPaths.length} of ${safePaths.length} images deleted.`
       : 'All deletions were rejected.';
 
     sendToolResult(toolUseId, summary);
     setSubmitted(true);
   };
 
-  const allDecided = imagePaths.every((_, i) => decisions[i]);
+  const allDecided = safePaths.every((_, i) => decisions[i]);
   const acceptedCount = Object.values(decisions).filter(d => d === 'accepted').length;
 
   return (
     <div className="my-2 space-y-2">
       <div className="text-xs text-gray-400 font-medium">Proposed image deletions:</div>
       <div className="text-xs text-gray-400 mb-1">{reason}</div>
-      {imagePaths.map((imgPath, i) => (
+      {safePaths.map((imgPath, i) => (
         <div
           key={i}
           className={`rounded-lg border text-xs p-2 ${

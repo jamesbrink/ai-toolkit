@@ -15,7 +15,7 @@ export default function ConfigProposal({ toolUseId, changes }: ConfigProposalPro
   const [decisions, setDecisions] = useState<Record<number, 'accepted' | 'rejected'>>({});
   const [submitted, setSubmitted] = useState(false);
 
-  if (!changes || changes.length === 0) {
+  if (!Array.isArray(changes) || changes.length === 0) {
     return <div className="text-gray-400 text-xs p-2">No changes proposed</div>;
   }
 
