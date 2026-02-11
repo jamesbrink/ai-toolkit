@@ -180,29 +180,32 @@ export default function ChatPanel() {
 
       {/* Desktop: Push layout (>=768px) */}
       <div
-        className={`hidden md:block shrink-0 h-dvh overflow-hidden transition-all duration-300 ease-in-out ${
-          isOpen ? 'border-l border-gray-700' : ''
+        className={`hidden md:block shrink-0 h-dvh overflow-hidden ${
+          isDragging ? '' : 'transition-all duration-300 ease-in-out'
         }`}
         style={{ width: isOpen ? width : 0 }}
       >
         <div
-          className="h-full flex flex-col bg-gray-900 shadow-2xl relative"
+          className="h-full flex bg-gray-900 shadow-2xl"
           style={{ width, minWidth: width }}
         >
-          {/* Resize handle — wide hit area (12px), narrow visible indicator (2px) */}
+          {/* Resize handle — wider hit area around the visible border line */}
           <div
             onMouseDown={handleMouseDown}
-            className="absolute left-0 top-0 bottom-0 w-3 cursor-col-resize z-10 group flex items-stretch"
+            className="shrink-0 w-3 cursor-col-resize group flex items-stretch justify-start"
           >
             <div
-              className={`w-0.5 transition-colors ${
-                isDragging ? 'bg-blue-500' : 'bg-transparent group-hover:bg-blue-500/40'
+              className={`w-px transition-colors ${
+                isDragging ? 'bg-blue-500 w-1' : 'bg-gray-700 group-hover:bg-blue-400'
               }`}
             />
           </div>
-          {chatHeader}
-          {chatMessages}
-          {chatInput}
+          {/* Chat content */}
+          <div className="flex-1 min-w-0 flex flex-col h-full">
+            {chatHeader}
+            {chatMessages}
+            {chatInput}
+          </div>
         </div>
       </div>
     </>
