@@ -42,9 +42,10 @@ export default function DeleteProposal({ toolUseId, imagePaths, reason }: Delete
       });
     }
 
-    const summary = acceptedPaths.length > 0
-      ? `${acceptedPaths.length} of ${safePaths.length} images deleted.`
-      : 'All deletions were rejected.';
+    const summary =
+      acceptedPaths.length > 0
+        ? `${acceptedPaths.length} of ${safePaths.length} images deleted.`
+        : 'All deletions were rejected.';
 
     sendToolResult(toolUseId, summary);
     setSubmitted(true);
@@ -75,9 +76,7 @@ export default function DeleteProposal({ toolUseId, imagePaths, reason }: Delete
                 alt={imgPath.split('/').pop() || ''}
                 className="w-16 h-16 object-cover rounded shrink-0"
               />
-              <div className="font-mono text-gray-300 truncate">
-                {imgPath.split('/').pop()}
-              </div>
+              <div className="font-mono text-gray-300 truncate">{imgPath.split('/').pop()}</div>
             </div>
             {!submitted && (
               <div className="flex gap-1 shrink-0">
@@ -122,7 +121,9 @@ export default function DeleteProposal({ toolUseId, imagePaths, reason }: Delete
       )}
       {submitted && (
         <div className="text-xs text-gray-400">
-          {acceptedCount > 0 ? `${acceptedCount} image${acceptedCount !== 1 ? 's' : ''} deleted.` : 'All deletions rejected.'}
+          {acceptedCount > 0
+            ? `${acceptedCount} image${acceptedCount !== 1 ? 's' : ''} deleted.`
+            : 'All deletions rejected.'}
         </div>
       )}
     </div>

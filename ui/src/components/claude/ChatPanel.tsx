@@ -31,12 +31,15 @@ function loadWidth(): number {
       const n = parseInt(stored, 10);
       if (n >= MIN_WIDTH && n <= MAX_WIDTH) return n;
     }
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   return DEFAULT_WIDTH;
 }
 
 export default function ChatPanel() {
-  const { isOpen, closePanel, messages, isStreaming, activeToolName, sendMessage, clearMessages, stopStreaming } = useClaudeChat();
+  const { isOpen, closePanel, messages, isStreaming, activeToolName, sendMessage, clearMessages, stopStreaming } =
+    useClaudeChat();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const isNearBottomRef = useRef(true);
@@ -55,37 +58,44 @@ export default function ChatPanel() {
 
   // Persist width to localStorage
   useEffect(() => {
-    try { localStorage.setItem(WIDTH_STORAGE_KEY, String(width)); } catch { /* ignore */ }
+    try {
+      localStorage.setItem(WIDTH_STORAGE_KEY, String(width));
+    } catch {
+      /* ignore */
+    }
   }, [width]);
 
   // Resize drag handlers — use refs to avoid stale closures
   const dragStartRef = useRef({ x: 0, width: 0 });
 
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    dragStartRef.current = { x: e.clientX, width };
-    setIsDragging(true);
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      dragStartRef.current = { x: e.clientX, width };
+      setIsDragging(true);
 
-    const handleMouseMove = (ev: MouseEvent) => {
-      // Dragging left edge — moving left increases width
-      const delta = dragStartRef.current.x - ev.clientX;
-      const newWidth = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, dragStartRef.current.width + delta));
-      setWidth(newWidth);
-    };
+      const handleMouseMove = (ev: MouseEvent) => {
+        // Dragging left edge — moving left increases width
+        const delta = dragStartRef.current.x - ev.clientX;
+        const newWidth = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, dragStartRef.current.width + delta));
+        setWidth(newWidth);
+      };
 
-    const handleMouseUp = () => {
-      setIsDragging(false);
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-    };
+      const handleMouseUp = () => {
+        setIsDragging(false);
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      };
 
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  }, [width]);
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    },
+    [width],
+  );
 
   const handleScroll = useCallback(() => {
     const el = messagesContainerRef.current;
@@ -130,7 +140,11 @@ export default function ChatPanel() {
   );
 
   const chatMessages = (
-    <div ref={messagesContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-3 chat-scrollbar">
+    <div
+      ref={messagesContainerRef}
+      onScroll={handleScroll}
+      className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-3 chat-scrollbar"
+    >
       {messages.length === 0 && (
         <div className="text-center text-gray-400 text-sm mt-8">
           <p>Ask me about training config, troubleshooting, or anything about diffusion model training.</p>
@@ -186,10 +200,7 @@ export default function ChatPanel() {
         }`}
         style={{ width: isOpen ? width : 0 }}
       >
-        <div
-          className="h-full flex bg-gray-900 shadow-2xl"
-          style={{ width, minWidth: width }}
-        >
+        <div className="h-full flex bg-gray-900 shadow-2xl" style={{ width, minWidth: width }}>
           {/* Resize handle — wider hit area around the visible border line */}
           <div
             onMouseDown={handleMouseDown}

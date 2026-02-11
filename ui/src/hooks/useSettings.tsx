@@ -10,6 +10,7 @@ export interface Settings {
   ANTHROPIC_API_KEY: string;
   CLAUDE_CHAT_MODEL: string;
   CLAUDE_CAPTION_MODEL: string;
+  MDNS_ENABLED: string;
 }
 
 export default function useSettings() {
@@ -20,6 +21,7 @@ export default function useSettings() {
     ANTHROPIC_API_KEY: '',
     CLAUDE_CHAT_MODEL: '',
     CLAUDE_CAPTION_MODEL: '',
+    MDNS_ENABLED: 'true',
   });
   const [isSettingsLoaded, setIsLoaded] = useState(false);
   useEffect(() => {
@@ -35,6 +37,7 @@ export default function useSettings() {
           ANTHROPIC_API_KEY: data.ANTHROPIC_API_KEY || '',
           CLAUDE_CHAT_MODEL: data.CLAUDE_CHAT_MODEL || '',
           CLAUDE_CAPTION_MODEL: data.CLAUDE_CAPTION_MODEL || '',
+          MDNS_ENABLED: data.MDNS_ENABLED ?? 'true',
         });
         setIsLoaded(true);
       })

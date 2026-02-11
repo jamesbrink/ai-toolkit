@@ -82,3 +82,23 @@ model DuplicateGroup {
 
   @@index([datasetName])
 }
+
+model Host {
+  id          String   @id @default(uuid())
+  name        String
+  address     String
+  port        Int      @default(8675)
+  authToken   String   @default("")
+  instanceId  String   @unique
+  source      String   @default("manual") // "mdns" | "manual"
+  isOnline    Boolean  @default(false)
+  isHidden    Boolean  @default(false)
+  deviceType  String   @default("none") // "nvidia" | "mps" | "cpu" | "none"
+  gpuSummary  String   @default("") // JSON: GPU names/counts
+  lastSeen    DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([address, port])
+  @@index([isOnline])
+}

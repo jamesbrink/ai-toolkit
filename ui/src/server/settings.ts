@@ -113,7 +113,7 @@ export const getClaudeChatModel = async (): Promise<string> => {
   let model = myCache.get(key) as string;
   if (model) return model;
   const row = await prisma.settings.findFirst({ where: { key } });
-  model = row?.value && row.value !== '' ? row.value : (process.env.CLAUDE_MODEL || DEFAULT_CHAT_MODEL);
+  model = row?.value && row.value !== '' ? row.value : process.env.CLAUDE_MODEL || DEFAULT_CHAT_MODEL;
   myCache.set(key, model);
   return model;
 };
@@ -123,7 +123,7 @@ export const getClaudeCaptionModel = async (): Promise<string> => {
   let model = myCache.get(key) as string;
   if (model) return model;
   const row = await prisma.settings.findFirst({ where: { key } });
-  model = row?.value && row.value !== '' ? row.value : (process.env.CLAUDE_MODEL || DEFAULT_CAPTION_MODEL);
+  model = row?.value && row.value !== '' ? row.value : process.env.CLAUDE_MODEL || DEFAULT_CAPTION_MODEL;
   myCache.set(key, model);
   return model;
 };

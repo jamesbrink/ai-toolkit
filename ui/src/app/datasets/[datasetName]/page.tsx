@@ -114,10 +114,13 @@ export default function DatasetPage({ params }: { params: { datasetName: string 
   // Fetch dataset size info
   useEffect(() => {
     if (datasetName) {
-      apiClient.get('/api/datasets/list').then((res: any) => {
-        const ds = res.data.find((d: any) => d.name === datasetName);
-        if (ds) setDatasetSize(ds.totalSizeBytes);
-      }).catch(() => {});
+      apiClient
+        .get('/api/datasets/list')
+        .then((res: any) => {
+          const ds = res.data.find((d: any) => d.name === datasetName);
+          if (ds) setDatasetSize(ds.totalSizeBytes);
+        })
+        .catch(() => {});
     }
   }, [datasetName, imgList.length]);
 

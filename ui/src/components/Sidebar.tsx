@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
-import { Home, Settings, BrainCircuit, Images, Plus, X } from 'lucide-react';
+import { Home, Settings, BrainCircuit, Images, Plus, X, Network } from 'lucide-react';
 import { FaXTwitter, FaDiscord, FaYoutube } from 'react-icons/fa6';
 import { Dialog, DialogBackdrop, DialogPanel } from '@headlessui/react';
 import { useSidebar } from './SidebarContext';
@@ -13,6 +13,7 @@ const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: Home },
   { name: 'New Job', href: '/jobs/new', icon: Plus },
   { name: 'Training Queue', href: '/jobs', icon: BrainCircuit },
+  { name: 'Hosts', href: '/hosts', icon: Network },
   { name: 'Datasets', href: '/datasets', icon: Images },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];

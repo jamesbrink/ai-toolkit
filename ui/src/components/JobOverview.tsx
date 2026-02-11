@@ -29,7 +29,10 @@ export default function JobOverview({ job }: JobOverviewProps) {
   // Provide job context to Claude when log updates
   useEffect(() => {
     if (isConfigured && log) {
-      const logLines = log.split(/\n|\r\n/).slice(-200).join('\n');
+      const logLines = log
+        .split(/\n|\r\n/)
+        .slice(-200)
+        .join('\n');
       setContext({
         page: `/jobs/${job.id}`,
         jobData: { name: job.name, status: job.status, step: job.step, gpu_ids: job.gpu_ids },
@@ -39,7 +42,10 @@ export default function JobOverview({ job }: JobOverviewProps) {
   }, [isConfigured, log, job, setContext]);
 
   const handleAnalyze = () => {
-    const logTail = log.split(/\n|\r\n/).slice(-200).join('\n');
+    const logTail = log
+      .split(/\n|\r\n/)
+      .slice(-200)
+      .join('\n');
     setContext({
       page: `/jobs/${job.id}`,
       jobData: { name: job.name, status: job.status, step: job.step, gpu_ids: job.gpu_ids },

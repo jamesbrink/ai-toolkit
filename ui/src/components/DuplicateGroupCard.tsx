@@ -54,7 +54,9 @@ export default function DuplicateGroupCard({
       <div className="rounded-lg border border-gray-700 bg-gray-800/50 p-3 opacity-50">
         <div className="flex items-center gap-2 text-xs text-gray-400">
           <span>Group dismissed</span>
-          <span>({imagePaths.length} images, {Math.round(maxSimilarity)}% similar)</span>
+          <span>
+            ({imagePaths.length} images, {Math.round(maxSimilarity)}% similar)
+          </span>
         </div>
       </div>
     );
@@ -68,21 +70,13 @@ export default function DuplicateGroupCard({
           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-900/50 text-amber-300 border border-amber-700">
             {Math.round(maxSimilarity)}% similar
           </span>
-          <span className="text-xs text-gray-400">
-            {imagePaths.length} images
-          </span>
+          <span className="text-xs text-gray-400">{imagePaths.length} images</span>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={selectAllExceptFirst}
-            className="text-xs text-blue-400 hover:text-blue-300"
-          >
+          <button onClick={selectAllExceptFirst} className="text-xs text-blue-400 hover:text-blue-300">
             Keep First
           </button>
-          <button
-            onClick={() => onDismiss(groupId)}
-            className="text-xs text-gray-400 hover:text-gray-200"
-          >
+          <button onClick={() => onDismiss(groupId)} className="text-xs text-gray-400 hover:text-gray-200">
             Dismiss
           </button>
         </div>
@@ -97,9 +91,7 @@ export default function DuplicateGroupCard({
             <div
               key={imgPath}
               className={`relative cursor-pointer rounded-lg border-2 transition-colors ${
-                isSelected
-                  ? 'border-red-500 bg-red-950/20'
-                  : 'border-gray-600 hover:border-gray-500'
+                isSelected ? 'border-red-500 bg-red-950/20' : 'border-gray-600 hover:border-gray-500'
               }`}
               onClick={() => toggleSelect(imgPath)}
               title={filename}
@@ -108,12 +100,12 @@ export default function DuplicateGroupCard({
                 src={`/api/img/${encodeURIComponent(imgPath)}`}
                 alt={filename}
                 className="w-20 h-20 object-cover rounded-md bg-gray-700"
-                onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                onError={e => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
               />
               {i === 0 && !isSelected && (
-                <span className="absolute top-0.5 left-0.5 bg-green-700 text-white text-[10px] px-1 rounded">
-                  Best
-                </span>
+                <span className="absolute top-0.5 left-0.5 bg-green-700 text-white text-[10px] px-1 rounded">Best</span>
               )}
               {isSelected && (
                 <div className="absolute inset-0 flex items-center justify-center bg-red-900/40 rounded-md">
@@ -139,9 +131,7 @@ export default function DuplicateGroupCard({
       {/* Actions */}
       {selected.size > 0 && (
         <div className="flex items-center justify-between pt-2 border-t border-gray-700">
-          <span className="text-xs text-gray-400">
-            {selected.size} selected for deletion
-          </span>
+          <span className="text-xs text-gray-400">{selected.size} selected for deletion</span>
           <button
             onClick={handleDelete}
             className="px-3 py-1 text-xs bg-red-700 hover:bg-red-600 text-white rounded-lg transition-colors"

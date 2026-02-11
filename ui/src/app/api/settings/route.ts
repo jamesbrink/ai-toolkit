@@ -30,8 +30,13 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const {
-      HF_TOKEN, TRAINING_FOLDER, DATASETS_FOLDER, ANTHROPIC_API_KEY,
-      CLAUDE_CHAT_MODEL, CLAUDE_CAPTION_MODEL,
+      HF_TOKEN,
+      TRAINING_FOLDER,
+      DATASETS_FOLDER,
+      ANTHROPIC_API_KEY,
+      CLAUDE_CHAT_MODEL,
+      CLAUDE_CAPTION_MODEL,
+      MDNS_ENABLED,
     } = body;
 
     // Upsert all settings
@@ -49,6 +54,7 @@ export async function POST(request: Request) {
       upsert('ANTHROPIC_API_KEY', ANTHROPIC_API_KEY),
       upsert('CLAUDE_CHAT_MODEL', CLAUDE_CHAT_MODEL),
       upsert('CLAUDE_CAPTION_MODEL', CLAUDE_CAPTION_MODEL),
+      upsert('MDNS_ENABLED', MDNS_ENABLED),
     ]);
 
     flushCache();

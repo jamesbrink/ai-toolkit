@@ -128,22 +128,27 @@ export async function analyzeDataset(
   if (pathsToAnalyze.length > 0) {
     // Run Python OpenCV analysis for quality metrics + face detection
     const progressOffset = cachedByPath.size;
-    await runPythonAnalysis('analyze', pathsToAnalyze, {}, {
-      onResult: (result) => {
-        pythonResultsByPath.set(result.filePath as string, result);
+    await runPythonAnalysis(
+      'analyze',
+      pathsToAnalyze,
+      {},
+      {
+        onResult: result => {
+          pythonResultsByPath.set(result.filePath as string, result);
+        },
+        onProgress: (current, _total) => {
+          options?.onProgress?.({
+            type: 'progress',
+            current: progressOffset + current,
+            total,
+            imagePath: pathsToAnalyze[current - 1] || '',
+          });
+        },
+        onError: (error, filePath) => {
+          console.error(`Python analysis error for ${filePath}: ${error}`);
+        },
       },
-      onProgress: (current, _total) => {
-        options?.onProgress?.({
-          type: 'progress',
-          current: progressOffset + current,
-          total,
-          imagePath: pathsToAnalyze[current - 1] || '',
-        });
-      },
-      onError: (error, filePath) => {
-        console.error(`Python analysis error for ${filePath}: ${error}`);
-      },
-    });
+    );
   }
 
   // Build final metrics: merge pHash (Node.js) with quality data (Python)
@@ -256,9 +261,7 @@ export async function analyzeDataset(
     where: { datasetName },
     select: { filePath: true },
   });
-  const staleToDelete = staleEntries
-    .filter(e => !currentPaths.has(e.filePath))
-    .map(e => e.filePath);
+  const staleToDelete = staleEntries.filter(e => !currentPaths.has(e.filePath)).map(e => e.filePath);
   if (staleToDelete.length > 0) {
     await prisma.imageAnalysis.deleteMany({
       where: { filePath: { in: staleToDelete } },
@@ -405,9 +408,7 @@ function buildResult(
   const tooSmall = metrics.filter(m => m.isTooSmall).map(m => m.filePath);
   const lowContrast = metrics.filter(m => m.isLowContrast).map(m => m.filePath);
   const withFaces = metrics.filter(m => m.hasFaces);
-  const avgScore = metrics.length > 0
-    ? metrics.reduce((sum, m) => sum + m.qualityScore, 0) / metrics.length
-    : 100;
+  const avgScore = metrics.length > 0 ? metrics.reduce((sum, m) => sum + m.qualityScore, 0) / metrics.length : 100;
 
   return {
     datasetName,

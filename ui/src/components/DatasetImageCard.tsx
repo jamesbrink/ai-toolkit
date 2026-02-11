@@ -216,7 +216,11 @@ const DatasetImageCard: React.FC<DatasetImageCardProps> = ({
                 disabled={isGeneratingAiCaption}
                 title="Generate caption with Claude"
               >
-                {isGeneratingAiCaption ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                {isGeneratingAiCaption ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Sparkles className="w-4 h-4" />
+                )}
               </button>
             )}
             <button

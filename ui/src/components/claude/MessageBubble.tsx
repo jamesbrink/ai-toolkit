@@ -53,7 +53,11 @@ const markdownComponents: Components = {
 };
 
 function renderText(text: string): React.ReactNode {
-  return <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{text}</ReactMarkdown>;
+  return (
+    <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+      {text}
+    </ReactMarkdown>
+  );
 }
 
 function renderContentBlocks(blocks: ContentBlock[]): React.ReactNode {
@@ -65,7 +69,14 @@ function renderContentBlocks(blocks: ContentBlock[]): React.ReactNode {
       return <ConfigProposal key={i} toolUseId={block.id!} changes={block.input?.changes as any[]} />;
     }
     if (block.type === 'tool_use' && block.name === 'delete_dataset_images') {
-      return <DeleteProposal key={i} toolUseId={block.id!} imagePaths={block.input?.image_paths as string[]} reason={block.input?.reason as string} />;
+      return (
+        <DeleteProposal
+          key={i}
+          toolUseId={block.id!}
+          imagePaths={block.input?.image_paths as string[]}
+          reason={block.input?.reason as string}
+        />
+      );
     }
     if (block.type === 'tool_use') {
       return (
@@ -101,9 +112,7 @@ export default function MessageBubble({ message, isStreaming }: MessageBubblePro
         }`}
       >
         {content}
-        {isStreaming && !isUser && (
-          <span className="inline-block w-2 h-4 bg-gray-400 animate-pulse ml-0.5" />
-        )}
+        {isStreaming && !isUser && <span className="inline-block w-2 h-4 bg-gray-400 animate-pulse ml-0.5" />}
       </div>
     </div>
   );

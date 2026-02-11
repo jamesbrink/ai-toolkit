@@ -189,10 +189,7 @@ export function ClaudeChatProvider({ children }: { children: React.ReactNode }) 
               }
               finalBlocks.push(...toolBlocks);
 
-              const finalMessages: ChatMessage[] = [
-                ...currentMessages,
-                { role: 'assistant', content: finalBlocks },
-              ];
+              const finalMessages: ChatMessage[] = [...currentMessages, { role: 'assistant', content: finalBlocks }];
               setMessages(finalMessages);
 
               // Notify tool handler
@@ -207,10 +204,7 @@ export function ClaudeChatProvider({ children }: { children: React.ReactNode }) 
           }
 
           if (event.type === 'error') {
-            setMessages([
-              ...currentMessages,
-              { role: 'assistant', content: `Error: ${event.error}` },
-            ]);
+            setMessages([...currentMessages, { role: 'assistant', content: `Error: ${event.error}` }]);
           }
         },
         () => {

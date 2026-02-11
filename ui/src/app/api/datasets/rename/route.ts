@@ -43,9 +43,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, name: trimmed });
   } catch (err) {
     console.error('Rename error:', err);
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Rename failed' },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: err instanceof Error ? err.message : 'Rename failed' }, { status: 500 });
   }
 }

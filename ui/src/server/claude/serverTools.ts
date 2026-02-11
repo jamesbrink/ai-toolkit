@@ -71,8 +71,7 @@ export const serverToolDefinitions = [
   },
   {
     name: 'get_dataset_issues',
-    description:
-      'Get stored quality analysis results for a dataset, optionally filtered by issue type.',
+    description: 'Get stored quality analysis results for a dataset, optionally filtered by issue type.',
     input_schema: {
       type: 'object' as const,
       properties: {
@@ -165,27 +164,14 @@ function isUnderRoots(filePath: string, roots: string[]): boolean {
 }
 
 async function getReadRoots(): Promise<string[]> {
-  const [datasetsRoot, trainingFolder] = await Promise.all([
-    getDatasetsRoot(),
-    getTrainingFolder(),
-  ]);
-  return [
-    path.resolve(TOOLKIT_ROOT),
-    path.resolve(datasetsRoot),
-    path.resolve(trainingFolder),
-  ];
+  const [datasetsRoot, trainingFolder] = await Promise.all([getDatasetsRoot(), getTrainingFolder()]);
+  return [path.resolve(TOOLKIT_ROOT), path.resolve(datasetsRoot), path.resolve(trainingFolder)];
 }
 
 async function getWriteRoots(): Promise<string[]> {
-  const [datasetsRoot, trainingFolder] = await Promise.all([
-    getDatasetsRoot(),
-    getTrainingFolder(),
-  ]);
+  const [datasetsRoot, trainingFolder] = await Promise.all([getDatasetsRoot(), getTrainingFolder()]);
   // TOOLKIT_ROOT is excluded — it may be a read-only Nix store path
-  return [
-    path.resolve(datasetsRoot),
-    path.resolve(trainingFolder),
-  ];
+  return [path.resolve(datasetsRoot), path.resolve(trainingFolder)];
 }
 
 export async function isReadAllowed(filePath: string): Promise<boolean> {
@@ -202,10 +188,7 @@ export async function getResolvedPaths(): Promise<{
   datasetsRoot: string;
   trainingFolder: string;
 }> {
-  const [datasetsRoot, trainingFolder] = await Promise.all([
-    getDatasetsRoot(),
-    getTrainingFolder(),
-  ]);
+  const [datasetsRoot, trainingFolder] = await Promise.all([getDatasetsRoot(), getTrainingFolder()]);
   return {
     toolkitRoot: path.resolve(TOOLKIT_ROOT),
     datasetsRoot: path.resolve(datasetsRoot),
@@ -213,23 +196,21 @@ export async function getResolvedPaths(): Promise<{
   };
 }
 
-export async function executeServerTool(
-  name: string,
-  input: Record<string, unknown>,
-): Promise<string> {
+export async function executeServerTool(name: string, input: Record<string, unknown>): Promise<string> {
   if (name === 'read_file') {
     const filePath = input.path as string;
     const maxLines = (input.max_lines as number) || 200;
 
     if (!filePath) return 'Error: path is required';
-    if (!(await isReadAllowed(filePath)))
-      return `Error: access denied — path not in allowed directories`;
+    if (!(await isReadAllowed(filePath))) return `Error: access denied — path not in allowed directories`;
 
     try {
       const content = await fs.readFile(filePath, 'utf-8');
       const lines = content.split('\n');
       if (lines.length > maxLines) {
-        return lines.slice(0, maxLines).join('\n') + `\n\n... (truncated, showing ${maxLines} of ${lines.length} lines)`;
+        return (
+          lines.slice(0, maxLines).join('\n') + `\n\n... (truncated, showing ${maxLines} of ${lines.length} lines)`
+        );
       }
       return content;
     } catch (err) {
@@ -242,8 +223,7 @@ export async function executeServerTool(
     const pattern = input.pattern as string | undefined;
 
     if (!dirPath) return 'Error: path is required';
-    if (!(await isReadAllowed(dirPath)))
-      return `Error: access denied — path not in allowed directories`;
+    if (!(await isReadAllowed(dirPath))) return `Error: access denied — path not in allowed directories`;
 
     try {
       const entries = await fs.readdir(dirPath, { withFileTypes: true });
@@ -358,8 +338,7 @@ export async function executeServerTool(
     const question = (input.question as string) || 'Describe this image in detail.';
 
     if (!imagePath) return 'Error: image_path is required';
-    if (!(await isReadAllowed(imagePath)))
-      return `Error: access denied — path not in allowed directories`;
+    if (!(await isReadAllowed(imagePath))) return `Error: access denied — path not in allowed directories`;
 
     type MediaType = 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif';
     const ext = path.extname(imagePath).toLowerCase();
@@ -474,10 +453,7 @@ export async function executeServerTool(
 
     try {
       const result = await deleteAnalyzedImages(imagePaths);
-      const summary = [
-        `Deletion reason: ${reason}`,
-        `Successfully deleted: ${result.deleted.length} image(s)`,
-      ];
+      const summary = [`Deletion reason: ${reason}`, `Successfully deleted: ${result.deleted.length} image(s)`];
       if (result.errors.length > 0) {
         summary.push(`Errors: ${result.errors.join('; ')}`);
       }

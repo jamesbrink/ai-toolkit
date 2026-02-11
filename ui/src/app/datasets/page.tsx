@@ -59,9 +59,7 @@ export default function Datasets() {
       key: 'imageCount',
       sortable: true,
       className: 'w-24 text-right tabular-nums',
-      render: (row: DatasetInfo) => (
-        <span className="text-gray-300">{row.imageCount.toLocaleString()}</span>
-      ),
+      render: (row: DatasetInfo) => <span className="text-gray-300">{row.imageCount.toLocaleString()}</span>,
     },
     {
       title: 'Captioned',
@@ -84,18 +82,14 @@ export default function Datasets() {
       key: 'totalSizeBytes',
       sortable: true,
       className: 'w-24 text-right tabular-nums',
-      render: (row: DatasetInfo) => (
-        <span className="text-gray-400">{formatBytes(row.totalSizeBytes)}</span>
-      ),
+      render: (row: DatasetInfo) => <span className="text-gray-400">{formatBytes(row.totalSizeBytes)}</span>,
     },
     {
       title: 'Modified',
       key: 'lastModified',
       sortable: true,
       className: 'w-28 text-right',
-      render: (row: DatasetInfo) => (
-        <span className="text-gray-400">{formatRelativeTime(row.lastModified)}</span>
-      ),
+      render: (row: DatasetInfo) => <span className="text-gray-400">{formatRelativeTime(row.lastModified)}</span>,
     },
     {
       title: 'Actions',

@@ -113,8 +113,8 @@ export default function Settings() {
                   <label htmlFor="ANTHROPIC_API_KEY" className="block text-sm font-medium mb-2">
                     Anthropic API Key
                     <div className="text-gray-400 text-sm ml-1">
-                      Enable the Claude AI assistant for config help, log analysis, and dataset captioning.
-                      Get a key from{' '}
+                      Enable the Claude AI assistant for config help, log analysis, and dataset captioning. Get a key
+                      from{' '}
                       <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noreferrer">
                         console.anthropic.com
                       </a>
@@ -157,7 +157,8 @@ export default function Settings() {
                   <label htmlFor="CLAUDE_CAPTION_MODEL" className="block text-sm font-medium mb-2">
                     Claude Caption Model
                     <div className="text-gray-400 text-sm ml-1">
-                      Model used for generating image captions. Haiku is recommended for speed and cost when captioning many images.
+                      Model used for generating image captions. Haiku is recommended for speed and cost when captioning
+                      many images.
                     </div>
                   </label>
                   <select
@@ -172,6 +173,29 @@ export default function Settings() {
                     <option value="claude-sonnet-4-5-20250929">Sonnet 4.5 (balanced)</option>
                     <option value="claude-opus-4-6">Opus 4.6 (most capable)</option>
                   </select>
+                </div>
+
+                {/* Network Section */}
+                <div className="pt-4 border-t border-gray-700">
+                  <h2 className="text-sm font-semibold text-gray-300 uppercase tracking-wide mb-4">Network</h2>
+                  <div>
+                    <label htmlFor="MDNS_ENABLED" className="block text-sm font-medium mb-2">
+                      mDNS Discovery
+                      <div className="text-gray-400 text-sm ml-1">
+                        Automatically discover other AI Toolkit instances on your local network.
+                      </div>
+                    </label>
+                    <select
+                      id="MDNS_ENABLED"
+                      name="MDNS_ENABLED"
+                      value={settings.MDNS_ENABLED}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent"
+                    >
+                      <option value="true">Enabled</option>
+                      <option value="false">Disabled</option>
+                    </select>
+                  </div>
                 </div>
               </div>
             </div>

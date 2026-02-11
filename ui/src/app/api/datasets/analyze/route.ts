@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
         try {
           const result = await analyzeDataset(datasetName, {
             force: force ?? false,
-            onProgress: (progress) => {
+            onProgress: progress => {
               controller.enqueue(
                 encoder.encode(
                   JSON.stringify({
@@ -32,14 +32,10 @@ export async function POST(req: NextRequest) {
             },
           });
 
-          controller.enqueue(
-            encoder.encode(JSON.stringify({ type: 'complete', result }) + '\n'),
-          );
+          controller.enqueue(encoder.encode(JSON.stringify({ type: 'complete', result }) + '\n'));
         } catch (err) {
           const message = err instanceof Error ? err.message : 'Unknown error';
-          controller.enqueue(
-            encoder.encode(JSON.stringify({ type: 'error', error: message }) + '\n'),
-          );
+          controller.enqueue(encoder.encode(JSON.stringify({ type: 'error', error: message }) + '\n'));
         } finally {
           controller.close();
         }

@@ -93,9 +93,6 @@ export async function POST(req: NextRequest) {
     });
   } catch (err) {
     console.error('Export error:', err);
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Export failed' },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: err instanceof Error ? err.message : 'Export failed' }, { status: 500 });
   }
 }

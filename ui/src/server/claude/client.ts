@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { AnthropicAuth } from '@/server/settings';
 
-const CLAUDE_CODE_SYSTEM_PREFIX = 'You are Claude Code, Anthropic\'s official CLI for Claude.';
+const CLAUDE_CODE_SYSTEM_PREFIX = "You are Claude Code, Anthropic's official CLI for Claude.";
 const CLAUDE_CODE_USER_AGENT = 'claude-cli/2.1.2 (external, cli)';
 const TOOL_PREFIX = 'mcp__';
 
@@ -80,12 +80,10 @@ export function createAnthropicClient(auth: AnthropicAuth): Anthropic {
 
             // Prefix tool names with mcp__ so they pass OAuth tool validation
             if (Array.isArray(parsed.tools)) {
-              parsed.tools = parsed.tools.map(
-                (tool: { name: string; [k: string]: unknown }) => ({
-                  ...tool,
-                  name: tool.name.startsWith(TOOL_PREFIX) ? tool.name : `${TOOL_PREFIX}${tool.name}`,
-                }),
-              );
+              parsed.tools = parsed.tools.map((tool: { name: string; [k: string]: unknown }) => ({
+                ...tool,
+                name: tool.name.startsWith(TOOL_PREFIX) ? tool.name : `${TOOL_PREFIX}${tool.name}`,
+              }));
             }
 
             // Prefix tool_use names in messages (prior tool calls in conversation history)

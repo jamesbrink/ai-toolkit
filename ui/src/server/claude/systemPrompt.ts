@@ -76,10 +76,10 @@ function truncateJson(data: unknown, maxChars: number): string {
 }
 
 // Max characters for each context section (roughly: 4 chars ≈ 1 token)
-const MAX_LOG_CHARS = 8000;       // ~2K tokens
+const MAX_LOG_CHARS = 8000; // ~2K tokens
 const MAX_JOB_CONFIG_CHARS = 6000; // ~1.5K tokens
-const MAX_JOB_DATA_CHARS = 4000;   // ~1K tokens
-const MAX_LOSS_DATA_CHARS = 4000;  // ~1K tokens
+const MAX_JOB_DATA_CHARS = 4000; // ~1K tokens
+const MAX_LOSS_DATA_CHARS = 4000; // ~1K tokens
 
 function buildPageContext(context: ChatContext): string {
   const parts: string[] = [];
@@ -89,7 +89,9 @@ function buildPageContext(context: ChatContext): string {
   }
 
   if (context.jobConfig) {
-    parts.push(`Current job configuration:\n\`\`\`json\n${truncateJson(context.jobConfig, MAX_JOB_CONFIG_CHARS)}\n\`\`\``);
+    parts.push(
+      `Current job configuration:\n\`\`\`json\n${truncateJson(context.jobConfig, MAX_JOB_CONFIG_CHARS)}\n\`\`\``,
+    );
   }
 
   if (context.jobData) {
@@ -115,7 +117,7 @@ function buildPageContext(context: ChatContext): string {
   if (context.analysisAvailable && context.analysisSummary) {
     const s = context.analysisSummary;
     parts.push(
-      `Dataset quality analysis available: ${s.totalImages} images analyzed, ${s.duplicateGroupCount} duplicate groups, ${s.blurryCount} blurry, ${s.darkCount} dark, ${s.brightCount} bright, ${s.lowContrastCount ?? 0} low contrast, ${s.tooSmallCount} too small, ${s.facesCount ?? 0} with faces`
+      `Dataset quality analysis available: ${s.totalImages} images analyzed, ${s.duplicateGroupCount} duplicate groups, ${s.blurryCount} blurry, ${s.darkCount} dark, ${s.brightCount} bright, ${s.lowContrastCount ?? 0} low contrast, ${s.tooSmallCount} too small, ${s.facesCount ?? 0} with faces`,
     );
   }
 

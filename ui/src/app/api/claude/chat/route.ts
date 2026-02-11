@@ -2,11 +2,7 @@ import { NextRequest } from 'next/server';
 import { getAnthropicAuth } from '@/server/settings';
 import { createAnthropicClient, getClaudeChatModel } from '@/server/claude/client';
 import { buildSystemPrompt } from '@/server/claude/systemPrompt';
-import {
-  serverToolDefinitions,
-  SERVER_TOOL_NAMES,
-  executeServerTool,
-} from '@/server/claude/serverTools';
+import { serverToolDefinitions, SERVER_TOOL_NAMES, executeServerTool } from '@/server/claude/serverTools';
 
 const MAX_TOOL_LOOPS = 10;
 // Reserve tokens for system prompt (~3K) + response (4K) + tools (~2K)
@@ -83,9 +79,7 @@ export async function POST(req: NextRequest) {
           });
 
           // Check if any content blocks are server-side tool uses
-          const serverToolUses = response.content.filter(
-            b => b.type === 'tool_use' && SERVER_TOOL_NAMES.has(b.name),
-          );
+          const serverToolUses = response.content.filter(b => b.type === 'tool_use' && SERVER_TOOL_NAMES.has(b.name));
 
           if (serverToolUses.length > 0) {
             // Emit progress events so the UI shows what tool is being used
@@ -106,10 +100,7 @@ export async function POST(req: NextRequest) {
             const toolResults = await Promise.all(
               serverToolUses.map(async block => {
                 if (block.type !== 'tool_use') return null;
-                const result = await executeServerTool(
-                  block.name,
-                  block.input as Record<string, unknown>,
-                );
+                const result = await executeServerTool(block.name, block.input as Record<string, unknown>);
                 return { type: 'tool_result' as const, tool_use_id: block.id, content: result };
               }),
             );
@@ -164,9 +155,7 @@ export async function POST(req: NextRequest) {
                 ),
               );
               controller.enqueue(
-                encoder.encode(
-                  JSON.stringify({ type: 'content_block_stop', index: blockIndex }) + '\n',
-                ),
+                encoder.encode(JSON.stringify({ type: 'content_block_stop', index: blockIndex }) + '\n'),
               );
             } else if (block.type === 'tool_use') {
               // Client-side tool use — emit so the client can handle it
@@ -189,9 +178,7 @@ export async function POST(req: NextRequest) {
                 ),
               );
               controller.enqueue(
-                encoder.encode(
-                  JSON.stringify({ type: 'content_block_stop', index: blockIndex }) + '\n',
-                ),
+                encoder.encode(JSON.stringify({ type: 'content_block_stop', index: blockIndex }) + '\n'),
               );
             }
             blockIndex++;
@@ -204,9 +191,7 @@ export async function POST(req: NextRequest) {
         controller.close();
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Unknown error';
-        controller.enqueue(
-          encoder.encode(JSON.stringify({ type: 'error', error: message }) + '\n'),
-        );
+        controller.enqueue(encoder.encode(JSON.stringify({ type: 'error', error: message }) + '\n'));
         controller.close();
       }
     },

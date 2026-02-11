@@ -100,10 +100,7 @@ export async function computePerceptualHash(filePath: string): Promise<string> {
   // Compute median
   const sorted = [...lowFreq].sort((a, b) => a - b);
   const mid = Math.floor(sorted.length / 2);
-  const median =
-    sorted.length % 2 === 0
-      ? (sorted[mid - 1] + sorted[mid]) / 2
-      : sorted[mid];
+  const median = sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
 
   // Build 64-bit binary string (DC component is always 1 as the first bit)
   let bits = '1';
@@ -126,9 +123,7 @@ export async function computePerceptualHash(filePath: string): Promise<string> {
  */
 export function hammingDistance(hash1: string, hash2: string): number {
   if (hash1.length !== hash2.length) {
-    throw new Error(
-      `Hash length mismatch: ${hash1.length} vs ${hash2.length}`
-    );
+    throw new Error(`Hash length mismatch: ${hash1.length} vs ${hash2.length}`);
   }
 
   let distance = 0;
@@ -154,10 +149,7 @@ export function hammingDistance(hash1: string, hash2: string): number {
  * @param threshold - Maximum hamming distance to consider as duplicates (default: 10)
  * @returns Array of duplicate groups with member paths and similarity scores
  */
-export function findDuplicateGroups(
-  analyses: ImageMetrics[],
-  threshold: number = 10
-): DuplicateGroupResult[] {
+export function findDuplicateGroups(analyses: ImageMetrics[], threshold: number = 10): DuplicateGroupResult[] {
   const n = analyses.length;
   if (n < 2) return [];
 
@@ -189,26 +181,14 @@ export function findDuplicateGroups(
     // Union by rank
     if (rank[ra] < rank[rb]) {
       parent[ra] = rb;
-      maxHammingInGroup[rb] = Math.max(
-        maxHammingInGroup[rb],
-        maxHammingInGroup[ra],
-        dist
-      );
+      maxHammingInGroup[rb] = Math.max(maxHammingInGroup[rb], maxHammingInGroup[ra], dist);
     } else if (rank[ra] > rank[rb]) {
       parent[rb] = ra;
-      maxHammingInGroup[ra] = Math.max(
-        maxHammingInGroup[ra],
-        maxHammingInGroup[rb],
-        dist
-      );
+      maxHammingInGroup[ra] = Math.max(maxHammingInGroup[ra], maxHammingInGroup[rb], dist);
     } else {
       parent[rb] = ra;
       rank[ra]++;
-      maxHammingInGroup[ra] = Math.max(
-        maxHammingInGroup[ra],
-        maxHammingInGroup[rb],
-        dist
-      );
+      maxHammingInGroup[ra] = Math.max(maxHammingInGroup[ra], maxHammingInGroup[rb], dist);
     }
   }
 
@@ -237,7 +217,7 @@ export function findDuplicateGroups(
   for (const [root, members] of groups) {
     if (members.length < 2) continue;
 
-    const imagePaths = members.map((idx) => analyses[idx].filePath);
+    const imagePaths = members.map(idx => analyses[idx].filePath);
     const maxDist = maxHammingInGroup[root];
     const maxSimilarity = ((64 - maxDist) / 64) * 100;
 

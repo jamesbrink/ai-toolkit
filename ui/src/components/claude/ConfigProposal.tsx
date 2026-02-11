@@ -24,20 +24,17 @@ export default function ConfigProposal({ toolUseId, changes }: ConfigProposalPro
   };
 
   const handleSubmit = () => {
-    const accepted = changes
-      .filter((_, i) => decisions[i] === 'accepted')
-      .map(c => ({ path: c.path, value: c.value }));
+    const accepted = changes.filter((_, i) => decisions[i] === 'accepted').map(c => ({ path: c.path, value: c.value }));
 
     // Dispatch accepted changes via window event (picked up by job page)
     for (const change of accepted) {
-      window.dispatchEvent(
-        new CustomEvent('claude-config-change', { detail: change }),
-      );
+      window.dispatchEvent(new CustomEvent('claude-config-change', { detail: change }));
     }
 
-    const summary = accepted.length > 0
-      ? `Accepted ${accepted.length} of ${changes.length} changes: ${accepted.map(a => a.path).join(', ')}`
-      : 'All changes were rejected.';
+    const summary =
+      accepted.length > 0
+        ? `Accepted ${accepted.length} of ${changes.length} changes: ${accepted.map(a => a.path).join(', ')}`
+        : 'All changes were rejected.';
 
     sendToolResult(toolUseId, summary);
     setSubmitted(true);
@@ -63,9 +60,7 @@ export default function ConfigProposal({ toolUseId, changes }: ConfigProposalPro
             <div className="flex-1 min-w-0">
               <div className="font-mono text-gray-300 truncate">{change.path}</div>
               <div className="text-gray-400 mt-0.5">{change.reason}</div>
-              <div className="mt-1 font-mono text-blue-400">
-                {JSON.stringify(change.value)}
-              </div>
+              <div className="mt-1 font-mono text-blue-400">{JSON.stringify(change.value)}</div>
             </div>
             {!submitted && (
               <div className="flex gap-1 shrink-0">
@@ -100,9 +95,7 @@ export default function ConfigProposal({ toolUseId, changes }: ConfigProposalPro
           Apply {Object.values(decisions).filter(d => d === 'accepted').length} change(s)
         </button>
       )}
-      {submitted && (
-        <div className="text-xs text-gray-400">Changes applied.</div>
-      )}
+      {submitted && <div className="text-xs text-gray-400">Changes applied.</div>}
     </div>
   );
 }

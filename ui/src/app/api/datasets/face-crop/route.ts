@@ -56,40 +56,31 @@ export async function POST(req: NextRequest) {
     const readable = new ReadableStream({
       async start(controller) {
         try {
-          const summary = await runPythonAnalysis('face-crop', imagePaths, {
-            outputDir,
-            trainingResolution: trainingResolution || 512,
-            padding: padding || 1.8,
-          }, {
-            onProgress: (current, total) => {
-              controller.enqueue(
-                encoder.encode(
-                  JSON.stringify({ type: 'progress', current, total }) + '\n',
-                ),
-              );
+          const summary = await runPythonAnalysis(
+            'face-crop',
+            imagePaths,
+            {
+              outputDir,
+              trainingResolution: trainingResolution || 512,
+              padding: padding || 1.8,
             },
-            onResult: (result) => {
-              controller.enqueue(
-                encoder.encode(JSON.stringify(result) + '\n'),
-              );
+            {
+              onProgress: (current, total) => {
+                controller.enqueue(encoder.encode(JSON.stringify({ type: 'progress', current, total }) + '\n'));
+              },
+              onResult: result => {
+                controller.enqueue(encoder.encode(JSON.stringify(result) + '\n'));
+              },
+              onError: (error, filePath) => {
+                controller.enqueue(encoder.encode(JSON.stringify({ type: 'error', error, filePath }) + '\n'));
+              },
             },
-            onError: (error, filePath) => {
-              controller.enqueue(
-                encoder.encode(
-                  JSON.stringify({ type: 'error', error, filePath }) + '\n',
-                ),
-              );
-            },
-          });
-
-          controller.enqueue(
-            encoder.encode(JSON.stringify(summary) + '\n'),
           );
+
+          controller.enqueue(encoder.encode(JSON.stringify(summary) + '\n'));
         } catch (err) {
           const message = err instanceof Error ? err.message : 'Unknown error';
-          controller.enqueue(
-            encoder.encode(JSON.stringify({ type: 'error', error: message }) + '\n'),
-          );
+          controller.enqueue(encoder.encode(JSON.stringify({ type: 'error', error: message }) + '\n'));
         } finally {
           controller.close();
         }

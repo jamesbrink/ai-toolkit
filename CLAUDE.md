@@ -163,12 +163,13 @@ Python discovery in worker: `PYTHON_PATH` env var → `.venv/bin/python` → `ve
 Path config: `TOOLKIT_ROOT` env var → `ui/cron/paths.ts` fallback
 
 ### UI job lifecycle (Prisma SQLite)
-Five models in `ui/prisma/schema.prisma`:
-- **Settings** — key-value store for app configuration
+Six models in `ui/prisma/schema.prisma`:
+- **Settings** — key-value store for app configuration (includes `INSTANCE_ID` for mDNS identity, `MDNS_ENABLED` toggle)
 - **Queue** — one row per GPU set (`gpu_ids` unique), `is_running` flag tracks if a job is active on that queue
 - **Job** — stores `job_config` (JSON string of training YAML), tracks `status` ("stopped", "queued", "running", "completed", "error"), `step`, `speed_string`, `queue_position`
 - **ImageAnalysis** — per-image quality metrics: pHash, laplacianVariance, brightness, contrast, boolean flags (isBlurry, isDark, isBright, isLowContrast, isTooSmall, hasFaces), faceCount, facesJson, composite qualityScore (0-100). Keyed by `filePath` (unique), indexed by `datasetName`, `pHash`, `qualityScore`, `hasFaces`
 - **DuplicateGroup** — groups of near-duplicate images: `imagePaths` (JSON array), `maxSimilarity` (float), `dismissed` flag. Keyed by `groupHash` (unique, sorted paths joined by `|`)
+- **Host** — remote AI Toolkit instances: `name`, `address`, `port`, `authToken`, `instanceId` (unique, for dedup), `source` ("mdns"/"manual"), `isOnline`, `isHidden`, `deviceType`, `gpuSummary` (JSON), `lastSeen`. Indexed by `[address, port]` and `[isOnline]`
 
 Job flow: UI creates Job with status "queued" → cron worker polls for queued jobs → finds free Queue (matching `gpu_ids`, `is_running=false`) → spawns `python run.py <config>` → sets `is_running=true` → monitors process → on exit sets status and `is_running=false`. The `stop` flag signals graceful stop; `return_to_queue` re-queues instead of stopping.
 
@@ -198,6 +199,8 @@ Source filtering in both derivations excludes: `node_modules`, `venv`, `output`,
 - `ui/` — Next.js web UI (Tailwind 4.1, Prisma 6, HeadlessUI)
 - `ui/src/components/` — key UI components: `Sidebar.tsx` (responsive 3-mode nav), `SidebarContext.tsx` (drawer state), `Skeleton.tsx` (loading states), `formInputs.tsx` (form controls + react-select dark styles), `JobActionBar.tsx` (job controls), `SampleImages.tsx` (responsive image grid), `layout.tsx` (TopBar/MainContent with hamburger menu), `DatasetAnalysisPanel.tsx` (quality analysis modal with Summary/Duplicates/Faces/Quality Issues tabs, bulk actions), `DuplicateGroupCard.tsx` (duplicate group thumbnails with select/dismiss, `bg-gray-700` fallback + `onError` for broken images)
 - `ui/src/components/claude/` — Claude integration components: `CaptionHelper.tsx` (batch caption modal with style selector, accept/reject per-image, "Apply All" button), `ChatPanel.tsx` (chat UI), `ClaudeChatContext.tsx` (chat state), `DeleteProposal.tsx` (deletion confirmation UI)
+- `ui/cron/mdns.ts` — mDNS advertise + discover module (bonjour-service)
+- `ui/cron/actions/checkHosts.ts` — periodic host health checker
 - `nix/` — Nix packaging derivations and wrapper scripts
 
 ## Claude AI Integration (Chat & Captions)
@@ -340,6 +343,69 @@ The orchestrator (`datasetAnalysis.ts`) checks `fileModifiedAt` against stored `
 ### Hooks
 - **`useDatasetAnalysis`** — returns `{ status, result, progress, error, startAnalysis, getStoredResults, dismissGroup, dismissAllGroups, deleteImages, cropFaces, exportDataset }`
 - **`useDatasetList`** — returns `{ datasets: DatasetInfo[], setDatasets, status, refreshDatasets }`. Exports `DatasetInfo` interface with `{ name, imageCount, captionCount, totalSizeBytes, lastModified }`
+- **`useHostList`** — polls `/api/hosts` every 10s. Returns `{ hosts: HostInfo[], status, refreshHosts }`. Exports `HostInfo` interface with `{ id, name, address, port, instanceId, source, isOnline, deviceType, gpuSummary, lastSeen }`
+- **`useRemoteGPUInfo`** — polls remote GPU data via proxy (3s interval). Returns `{ gpuList, status, deviceType, refreshGpuInfo }`
+- **`useRemoteJobs`** — polls remote jobs via proxy (5s interval). Returns `{ jobs, status, refreshJobs }`
+- **`useRemoteQueue`** — fetches remote queue status via proxy. Returns `{ queue, status, refreshQueue }`
+
+## Multi-Host Management
+
+### Architecture
+Each AI Toolkit instance can discover and manage other instances on the LAN. The "hub" instance proxies all API calls server-side (no CORS, auth tokens stay server-side). Each instance keeps its own SQLite DB — no shared database.
+
+```
+                         LAN (mDNS: _ai-toolkit._tcp)
+    ┌─────────────────────────────────────────────────────┐
+    │  ┌──────────────┐    ┌──────────────┐    ┌────────┐ │
+    │  │ Hub Instance │    │ Worker Host  │    │ Host N │ │
+    │  │ (this UI)    │◄──►│ (discovered) │    │(manual)│ │
+    │  │ port 8675    │    │ port 8675    │    │        │ │
+    │  └──────┬───────┘    └──────────────┘    └────────┘ │
+    │         │                                           │
+    │    SQLite (Host table)                              │
+    │    Proxy: /api/hosts/{id}/proxy/* → remote /api/*   │
+    └─────────────────────────────────────────────────────┘
+```
+
+### mDNS Discovery
+- **`ui/cron/mdns.ts`** — advertises via Bonjour/mDNS (type `ai-toolkit`) and browses for other instances
+- Uses `bonjour-service` (pure JS, no native deps, Nix-safe)
+- `INSTANCE_ID` stored in Settings table (UUID, created on first run) for dedup across mDNS + manual add
+- Self-skip by comparing instanceId in TXT record
+- Controlled by `AI_TOOLKIT_MDNS` env var and `MDNS_ENABLED` Settings key
+- Service up → upsert Host (source: 'mdns', isOnline: true); service down → mark offline
+
+### Host Health Checker
+- **`ui/cron/actions/checkHosts.ts`** — runs every ~30s (counter-based in worker loop)
+- Fetches `/api/hosts/identify` from each non-hidden host with 5s timeout
+- Tracks consecutive failures in-memory; marks offline after 3 consecutive failures
+- Sends stored `authToken` as Bearer header
+
+### Worker Integration
+- **`ui/cron/worker.ts`** — calls `startMdns()` on startup (fire-and-forget), `stopMdns()` on shutdown
+- `hostCheckCounter` increments each 1s loop iteration, triggers `checkHosts()` every 30 iterations
+
+### API Routes
+- **`/api/hosts/identify`** (GET) — returns `{ instanceId, hostname, version, deviceType, port }`. Used by health checker and manual host addition.
+- **`/api/hosts`** (GET) — list non-hidden hosts. (POST) — create manual host, probes remote identity first.
+- **`/api/hosts/[hostId]`** (GET/PATCH/DELETE) — single host CRUD. PATCH accepts `{ name?, authToken?, isHidden? }`.
+- **`/api/hosts/[hostId]/proxy/[...path]`** (GET/POST/PATCH/DELETE) — forwards to `http://{host.address}:{host.port}/api/{...path}`. 10s timeout, auth token injection, binary response passthrough. Blocks `.env`, `node_modules`, `.git`, `__pycache__`, `.pyc` paths.
+- **`/api/hosts/aggregate`** (GET) — fetches `/api/gpu` + `/api/jobs` from all online hosts in parallel, returns aggregated summary.
+
+### UI Components
+- **Sidebar** — "Hosts" nav item with `Network` icon between Training Queue and Datasets
+- **`HostCard.tsx`** — card with name, address:port, online/offline status, source badge (mDNS/Manual), device type, GPU summary, actions (edit/hide/remove)
+- **`HostSummaryCard.tsx`** — compact card for dashboard network overview
+- **Hosts page** (`/hosts`) — grid of HostCards, "Add Host" button (address:port input via ConfirmModal), empty state
+- **Host detail page** (`/hosts/[hostId]`) — connection info, online status, back navigation
+- **Dashboard** — network section shows HostSummaryCards (only when hosts exist)
+- **Settings** — mDNS enabled/disabled toggle in Network section
+- **`remoteApi.ts`** — utility wrapping `apiClient` for proxy routes: `remoteApi.get(hostId, path)`, `remoteApi.post(hostId, path, data)`
+
+### Known Limitations
+- mDNS only works on same subnet (Docker needs `--network=host` or macvlan)
+- Auth token exchange is manual (copy-paste in host edit)
+- Each instance maintains its own SQLite — no shared state
 
 ## Environment variables
 - `HF_HUB_ENABLE_HF_TRANSFER=1` — set automatically in `run.py` for fast downloads
@@ -355,4 +421,5 @@ The orchestrator (`datasetAnalysis.ts`) checks `fileModifiedAt` against stored `
 - `PORT` — override UI port (default: `8675`)
 - `CLAUDE_CODE_OAUTH_TOKEN` — Claude Code OAuth token (fallback when no API key configured)
 - `CLAUDE_MODEL` — override default Claude model for all routes (fallback for per-task settings)
+- `AI_TOOLKIT_MDNS` — set to `false` to disable mDNS discovery/advertising (default: enabled). Also controllable via Settings UI (`MDNS_ENABLED` key)
 - Standard HuggingFace env vars (`HF_TOKEN`, etc.) for gated model access

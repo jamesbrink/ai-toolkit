@@ -17,9 +17,7 @@ function getPythonPath(): string {
   for (const dir of venvDirs) {
     const venvPath = path.join(TOOLKIT_ROOT, dir);
     if (fs.existsSync(venvPath)) {
-      return isWindows
-        ? path.join(venvPath, 'Scripts', 'python.exe')
-        : path.join(venvPath, 'bin', 'python');
+      return isWindows ? path.join(venvPath, 'Scripts', 'python.exe') : path.join(venvPath, 'bin', 'python');
     }
   }
   return 'python';
@@ -115,9 +113,13 @@ export async function runPythonAnalysis(
       stderrBuffer += chunk.toString('utf-8');
     });
 
-    proc.on('close', async (code) => {
+    proc.on('close', async code => {
       // Clean up temp file
-      try { await fsp.unlink(tmpFile); } catch { /* ignore */ }
+      try {
+        await fsp.unlink(tmpFile);
+      } catch {
+        /* ignore */
+      }
 
       if (code !== 0) {
         reject(new Error(`Python analysis exited with code ${code}: ${stderrBuffer.slice(-500)}`));
@@ -129,14 +131,20 @@ export async function runPythonAnalysis(
         try {
           const data = JSON.parse(buffer.trim()) as PythonAnalysisResult;
           if (data.type === 'summary') summary = data;
-        } catch { /* ignore */ }
+        } catch {
+          /* ignore */
+        }
       }
 
       resolve(summary || { type: 'summary', total: 0 });
     });
 
-    proc.on('error', async (err) => {
-      try { await fsp.unlink(tmpFile); } catch { /* ignore */ }
+    proc.on('error', async err => {
+      try {
+        await fsp.unlink(tmpFile);
+      } catch {
+        /* ignore */
+      }
       reject(new Error(`Failed to spawn Python: ${err.message}`));
     });
   });

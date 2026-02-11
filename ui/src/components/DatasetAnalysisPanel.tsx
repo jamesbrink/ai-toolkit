@@ -20,8 +20,16 @@ export default function DatasetAnalysisPanel({
   onImagesDeleted,
 }: DatasetAnalysisPanelProps) {
   const {
-    status, result, progress, error,
-    startAnalysis, getStoredResults, dismissGroup, dismissAllGroups, deleteImages, cropFaces,
+    status,
+    result,
+    progress,
+    error,
+    startAnalysis,
+    getStoredResults,
+    dismissGroup,
+    dismissAllGroups,
+    deleteImages,
+    cropFaces,
   } = useDatasetAnalysis(datasetName);
   const [selectedQualityImages, setSelectedQualityImages] = useState<Set<string>>(new Set());
   const [bulkAction, setBulkAction] = useState<'idle' | 'confirm-keep-first' | 'deleting'>('idle');
@@ -103,13 +111,15 @@ export default function DatasetAnalysisPanel({
   };
 
   const allIssueImages = result
-    ? [...new Set([
-        ...result.issues.blurry,
-        ...result.issues.dark,
-        ...result.issues.bright,
-        ...result.issues.tooSmall,
-        ...result.issues.lowContrast,
-      ])]
+    ? [
+        ...new Set([
+          ...result.issues.blurry,
+          ...result.issues.dark,
+          ...result.issues.bright,
+          ...result.issues.tooSmall,
+          ...result.issues.lowContrast,
+        ]),
+      ]
     : [];
 
   const tabLabels = ['Summary', 'Duplicates', 'Faces', 'Quality Issues'];
@@ -140,9 +150,7 @@ export default function DatasetAnalysisPanel({
                 >
                   {result ? 'Re-analyze Dataset' : 'Analyze Dataset'}
                 </button>
-                {error && (
-                  <span className="text-sm text-red-400">{error}</span>
-                )}
+                {error && <span className="text-sm text-red-400">{error}</span>}
               </div>
             )}
 
@@ -355,7 +363,8 @@ export default function DatasetAnalysisPanel({
                       <>
                         <div className="flex items-center justify-between bg-gray-800 rounded-lg p-3 border border-gray-700">
                           <span className="text-sm text-gray-300">
-                            {result.summary.facesCount} image{result.summary.facesCount !== 1 ? 's' : ''} with detected faces
+                            {result.summary.facesCount} image{result.summary.facesCount !== 1 ? 's' : ''} with detected
+                            faces
                           </span>
                           <button
                             onClick={() => {
@@ -371,7 +380,8 @@ export default function DatasetAnalysisPanel({
                         </div>
                         <p className="text-xs text-gray-400">
                           Face detection uses OpenCV YuNet DNN. &quot;Crop Faces&quot; will create a new sibling dataset
-                          with square face crops padded to include head, hair, neck, and shoulders — ideal for LoRA person training.
+                          with square face crops padded to include head, hair, neck, and shoulders — ideal for LoRA
+                          person training.
                         </p>
                       </>
                     )}
@@ -413,9 +423,7 @@ export default function DatasetAnalysisPanel({
                               <div
                                 key={imgPath}
                                 className={`relative rounded-lg border-2 cursor-pointer transition-colors ${
-                                  isSelected
-                                    ? 'border-red-500 bg-red-950/20'
-                                    : 'border-gray-700 hover:border-gray-600'
+                                  isSelected ? 'border-red-500 bg-red-950/20' : 'border-gray-700 hover:border-gray-600'
                                 }`}
                                 onClick={() => toggleQualitySelect(imgPath)}
                               >
@@ -461,7 +469,9 @@ export default function DatasetAnalysisPanel({
               <div className="flex flex-col items-center justify-center py-16 text-gray-400">
                 <AlertTriangle className="w-10 h-10 mb-3 opacity-40" />
                 <p className="text-sm">No analysis results yet</p>
-                <p className="text-xs mt-1 text-gray-400">Click &quot;Analyze Dataset&quot; to scan for quality issues</p>
+                <p className="text-xs mt-1 text-gray-400">
+                  Click &quot;Analyze Dataset&quot; to scan for quality issues
+                </p>
               </div>
             )}
           </div>

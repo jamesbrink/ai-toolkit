@@ -21,7 +21,13 @@ interface CaptionHelperProps {
   onCaptionsApplied?: () => void;
 }
 
-export default function CaptionHelper({ isOpen, onClose, imagePaths, datasetName, onCaptionsApplied }: CaptionHelperProps) {
+export default function CaptionHelper({
+  isOpen,
+  onClose,
+  imagePaths,
+  datasetName,
+  onCaptionsApplied,
+}: CaptionHelperProps) {
   const [style, setStyle] = useState<'descriptive' | 'booru' | 'natural' | 'trigger'>('descriptive');
   const [triggerWord, setTriggerWord] = useState('');
   const [results, setResults] = useState<CaptionResult[]>([]);
@@ -148,9 +154,7 @@ export default function CaptionHelper({ isOpen, onClose, imagePaths, datasetName
       <div className="fixed inset-0 flex items-center justify-center p-4">
         <DialogPanel className="w-full max-w-4xl max-h-[85vh] bg-gray-900 rounded-xl border border-gray-700 flex flex-col">
           <div className="flex items-center justify-between px-5 py-4 border-b border-gray-700 shrink-0">
-            <DialogTitle className="text-lg font-medium text-gray-100">
-              Caption with Claude — {datasetName}
-            </DialogTitle>
+            <DialogTitle className="text-lg font-medium text-gray-100">Caption with Claude — {datasetName}</DialogTitle>
             <button onClick={onClose} className="text-gray-400 hover:text-gray-200">
               <X className="w-5 h-5" />
             </button>

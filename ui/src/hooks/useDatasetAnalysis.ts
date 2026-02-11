@@ -45,77 +45,80 @@ export function useDatasetAnalysis(datasetName: string) {
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const [error, setError] = useState<string | null>(null);
 
-  const startAnalysis = useCallback(async (force?: boolean) => {
-    setStatus('analyzing');
-    setProgress({ current: 0, total: 0 });
-    setError(null);
+  const startAnalysis = useCallback(
+    async (force?: boolean) => {
+      setStatus('analyzing');
+      setProgress({ current: 0, total: 0 });
+      setError(null);
 
-    try {
-      const token = localStorage.getItem('AI_TOOLKIT_AUTH');
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
+      try {
+        const token = localStorage.getItem('AI_TOOLKIT_AUTH');
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const res = await fetch('/api/datasets/analyze', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ datasetName, force }),
-      });
+        const res = await fetch('/api/datasets/analyze', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ datasetName, force }),
+        });
 
-      if (!res.ok) {
-        throw new Error(`Analysis failed: ${res.statusText}`);
-      }
+        if (!res.ok) {
+          throw new Error(`Analysis failed: ${res.statusText}`);
+        }
 
-      const reader = res.body?.getReader();
-      if (!reader) throw new Error('No response body');
+        const reader = res.body?.getReader();
+        if (!reader) throw new Error('No response body');
 
-      const decoder = new TextDecoder();
-      let buffer = '';
+        const decoder = new TextDecoder();
+        let buffer = '';
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
 
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
 
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (!trimmed) continue;
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed) continue;
+            try {
+              const data = JSON.parse(trimmed);
+              if (data.type === 'progress') {
+                setProgress({ current: data.current, total: data.total });
+              } else if (data.type === 'complete') {
+                setResult(data.result);
+                setStatus('complete');
+              } else if (data.type === 'error') {
+                setError(data.error);
+                setStatus('error');
+              }
+            } catch {
+              // skip invalid JSON
+            }
+          }
+        }
+
+        // If we didn't get a complete event, check remaining buffer
+        if (buffer.trim()) {
           try {
-            const data = JSON.parse(trimmed);
-            if (data.type === 'progress') {
-              setProgress({ current: data.current, total: data.total });
-            } else if (data.type === 'complete') {
+            const data = JSON.parse(buffer.trim());
+            if (data.type === 'complete') {
               setResult(data.result);
               setStatus('complete');
-            } else if (data.type === 'error') {
-              setError(data.error);
-              setStatus('error');
             }
           } catch {
-            // skip invalid JSON
+            // ignore
           }
         }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unknown error');
+        setStatus('error');
       }
-
-      // If we didn't get a complete event, check remaining buffer
-      if (buffer.trim()) {
-        try {
-          const data = JSON.parse(buffer.trim());
-          if (data.type === 'complete') {
-            setResult(data.result);
-            setStatus('complete');
-          }
-        } catch {
-          // ignore
-        }
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
-      setStatus('error');
-    }
-  }, [datasetName]);
+    },
+    [datasetName],
+  );
 
   const getStoredResults = useCallback(async () => {
     try {
@@ -158,9 +161,7 @@ export function useDatasetAnalysis(datasetName: string) {
         if (!prev) return prev;
         return {
           ...prev,
-          duplicateGroups: prev.duplicateGroups.map(g =>
-            g.id === groupId ? { ...g, dismissed: true } : g,
-          ),
+          duplicateGroups: prev.duplicateGroups.map(g => (g.id === groupId ? { ...g, dismissed: true } : g)),
           summary: {
             ...prev.summary,
             duplicateGroupCount: prev.summary.duplicateGroupCount - 1,
@@ -255,82 +256,92 @@ export function useDatasetAnalysis(datasetName: string) {
     }
   }, []);
 
-  const cropFaces = useCallback(async (opts: {
-    outputDatasetName?: string;
-    trainingResolution?: number;
-    padding?: number;
-  } = {}) => {
-    const token = localStorage.getItem('AI_TOOLKIT_AUTH');
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
+  const cropFaces = useCallback(
+    async (
+      opts: {
+        outputDatasetName?: string;
+        trainingResolution?: number;
+        padding?: number;
+      } = {},
+    ) => {
+      const token = localStorage.getItem('AI_TOOLKIT_AUTH');
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
 
-    const res = await fetch('/api/datasets/face-crop', {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({
-        datasetName,
-        outputDatasetName: opts.outputDatasetName,
-        trainingResolution: opts.trainingResolution,
-        padding: opts.padding,
-      }),
-    });
+      const res = await fetch('/api/datasets/face-crop', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          datasetName,
+          outputDatasetName: opts.outputDatasetName,
+          trainingResolution: opts.trainingResolution,
+          padding: opts.padding,
+        }),
+      });
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: res.statusText }));
-      throw new Error(err.error || 'Face crop failed');
-    }
-
-    // Stream NDJSON progress
-    const reader = res.body?.getReader();
-    if (!reader) throw new Error('No response body');
-
-    const decoder = new TextDecoder();
-    let buffer = '';
-    let summary: Record<string, unknown> | null = null;
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
-      buffer = lines.pop() || '';
-
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (!trimmed) continue;
-        try {
-          const data = JSON.parse(trimmed);
-          if (data.type === 'progress') {
-            setProgress({ current: data.current, total: data.total });
-          } else if (data.type === 'summary') {
-            summary = data;
-          }
-        } catch { /* skip */ }
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: res.statusText }));
+        throw new Error(err.error || 'Face crop failed');
       }
-    }
 
-    return summary;
-  }, [datasetName]);
+      // Stream NDJSON progress
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error('No response body');
 
-  const exportDataset = useCallback(async (includeCaptions: boolean = true) => {
-    const token = localStorage.getItem('AI_TOOLKIT_AUTH');
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let summary: Record<string, unknown> | null = null;
 
-    const res = await fetch('/api/datasets/export', {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ datasetName, includeCaptions }),
-    });
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: res.statusText }));
-      throw new Error(err.error || 'Export failed');
-    }
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
 
-    return await res.json() as { zipPath: string; fileName: string };
-  }, [datasetName]);
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed) continue;
+          try {
+            const data = JSON.parse(trimmed);
+            if (data.type === 'progress') {
+              setProgress({ current: data.current, total: data.total });
+            } else if (data.type === 'summary') {
+              summary = data;
+            }
+          } catch {
+            /* skip */
+          }
+        }
+      }
+
+      return summary;
+    },
+    [datasetName],
+  );
+
+  const exportDataset = useCallback(
+    async (includeCaptions: boolean = true) => {
+      const token = localStorage.getItem('AI_TOOLKIT_AUTH');
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch('/api/datasets/export', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ datasetName, includeCaptions }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: res.statusText }));
+        throw new Error(err.error || 'Export failed');
+      }
+
+      return (await res.json()) as { zipPath: string; fileName: string };
+    },
+    [datasetName],
+  );
 
   return {
     status,
