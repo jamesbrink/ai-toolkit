@@ -4,10 +4,17 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     flake-parts.url = "github:hercules-ci/flake-parts";
+    devshell.url = "github:numtide/devshell";
+    devshell.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs = inputs:
     inputs.flake-parts.lib.mkFlake { inherit inputs; } {
+      imports = [
+        inputs.devshell.flakeModule
+        ./nix/devshell.nix
+      ];
+
       systems = [
         "x86_64-linux"
         "aarch64-linux"
@@ -50,42 +57,6 @@
             inherit ai-toolkit ai-toolkit-ui;
           };
 
-          # === Dev shell dependencies ===
-          buildTools = with pkgs; [
-            cmake
-            pkg-config
-            ninja
-          ];
-
-          commonLibs = with pkgs; [
-            ffmpeg-full
-            libjpeg
-            libpng
-            zlib
-            libtiff
-            libwebp
-            openssl
-            sqlite
-          ];
-
-          runtimes = with pkgs; [
-            python312
-            nodejs_22
-            git
-          ];
-
-          darwinDeps = lib.optionals isDarwin [
-            pkgs.libiconv
-          ];
-
-          linuxDeps = lib.optionals isLinux (with pkgs; [
-            cudaPackages.cudatoolkit
-            cudaPackages.cudnn
-            libGL
-            glib
-            stdenv.cc.cc.lib
-            xorg.libX11
-          ]);
         in
         {
           # nix build / nix build .#default
@@ -121,48 +92,7 @@
             };
           };
 
-          # nix develop
-          devShells.default = pkgs.mkShell {
-            packages = buildTools ++ commonLibs ++ runtimes ++ darwinDeps ++ linuxDeps;
-
-            env = lib.optionalAttrs isLinux {
-              CUDA_HOME = "${pkgs.cudaPackages.cudatoolkit}";
-            };
-
-            shellHook = ''
-              ${lib.optionalString isLinux ''
-                export LD_LIBRARY_PATH="${lib.makeLibraryPath [
-                  pkgs.stdenv.cc.cc.lib
-                  pkgs.libGL
-                  pkgs.glib
-                  pkgs.cudaPackages.cudatoolkit
-                  pkgs.cudaPackages.cudnn
-                ]}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
-              ''}
-
-              if [ ! -d "venv" ]; then
-                echo "Creating Python virtual environment..."
-                python3 -m venv venv
-              fi
-              source venv/bin/activate
-
-              echo ""
-              echo "AI Toolkit dev shell"
-              echo "  Python: $(python3 --version)"
-              echo "  Node:   $(node --version)"
-              echo ""
-              echo "Quick start:"
-              echo "  pip install -r requirements.txt   # first time only"
-              echo "  python run.py config/your_config.yaml"
-              echo ""
-              echo "Nix package targets:"
-              echo "  nix build              # build Next.js web UI"
-              echo "  nix build .#ai-toolkit # build Python training package"
-              echo "  nix run                # start web UI on port 8675"
-              echo "  nix run .#train -- config/your_config.yaml  # run training"
-              ${lib.optionalString isLinux ''echo "  nix build .#docker  # build Docker image"''}
-            '';
-          };
+          # nix develop — provided by ./nix/devshell.nix
         };
     };
 }
