@@ -19,7 +19,7 @@ const TOOL_LABELS: Record<string, string> = {
 };
 
 const MIN_WIDTH = 320;
-const MAX_WIDTH = 640;
+const MAX_WIDTH = 480;
 const DEFAULT_WIDTH = 384; // 24rem = w-96
 const WIDTH_STORAGE_KEY = 'claude_chat_width';
 
