@@ -53,3 +53,9 @@ export function createAnthropicClient(auth: AnthropicAuth): Anthropic {
 
   return new Anthropic({ apiKey: auth.apiKey });
 }
+
+const DEFAULT_MODEL = 'claude-sonnet-4-5-20250929';
+
+export function getClaudeModel(): string {
+  return process.env.CLAUDE_MODEL || DEFAULT_MODEL;
+}

@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { getAnthropicAuth } from '@/server/settings';
-import { createAnthropicClient } from '@/server/claude/client';
+import { createAnthropicClient, getClaudeModel } from '@/server/claude/client';
 import { buildSystemPrompt } from '@/server/claude/systemPrompt';
 
 export async function POST(req: NextRequest) {
@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
   const systemPrompt = buildSystemPrompt(context);
 
   const stream = client.messages.stream({
-    model: 'claude-sonnet-4-5-20250929',
+    model: getClaudeModel(),
     max_tokens: 4096,
     system: systemPrompt,
     messages,

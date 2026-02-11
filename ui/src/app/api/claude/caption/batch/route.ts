@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { getAnthropicAuth } from '@/server/settings';
-import { createAnthropicClient } from '@/server/claude/client';
+import { createAnthropicClient, getClaudeModel } from '@/server/claude/client';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
         try {
           const imageData = await fs.readFile(imagePath);
           const response = await client.messages.create({
-            model: 'claude-sonnet-4-5-20250929',
+            model: getClaudeModel(),
             max_tokens: 500,
             messages: [
               {
