@@ -1,7 +1,9 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { TOOLKIT_ROOT } from '@/paths';
-import { getDatasetsRoot, getTrainingFolder } from '@/server/settings';
+import { getDatasetsRoot, getTrainingFolder, getAnthropicAuth } from '@/server/settings';
+import { createAnthropicClient, getClaudeCaptionModel } from '@/server/claude/client';
+import { analyzeDataset, getStoredAnalysis } from '@/server/datasetAnalysis';
 
 // Tool definitions sent to the Claude API
 export const serverToolDefinitions = [
@@ -50,6 +52,55 @@ export const serverToolDefinitions = [
       required: ['path', 'content'],
     },
   },
+  {
+    name: 'analyze_dataset_quality',
+    description:
+      'Analyze a dataset for image quality issues and near-duplicate images. Scans all images and returns a summary of duplicates, blurry, dark, bright, and too-small images with quality scores.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        dataset_name: { type: 'string', description: 'Name of the dataset to analyze' },
+        force: {
+          type: 'boolean',
+          description: 'Force re-analysis of all images even if unchanged',
+        },
+      },
+      required: ['dataset_name'],
+    },
+  },
+  {
+    name: 'get_dataset_issues',
+    description:
+      'Get stored quality analysis results for a dataset, optionally filtered by issue type.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        dataset_name: { type: 'string', description: 'Name of the dataset' },
+        issue_type: {
+          type: 'string',
+          description:
+            'Filter by issue type: all, duplicates, blurry, dark, bright, small (default: all)',
+        },
+      },
+      required: ['dataset_name'],
+    },
+  },
+  {
+    name: 'view_dataset_image',
+    description:
+      'View a specific dataset image using vision to describe what you see. Returns a detailed description of the image content.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        image_path: { type: 'string', description: 'Absolute path to the image file' },
+        question: {
+          type: 'string',
+          description: 'Specific question about the image (default: describe the image in detail)',
+        },
+      },
+      required: ['image_path'],
+    },
+  },
 ];
 
 export const SERVER_TOOL_NAMES = new Set(serverToolDefinitions.map(t => t.name));
@@ -92,7 +143,7 @@ async function getWriteRoots(): Promise<string[]> {
   ];
 }
 
-async function isReadAllowed(filePath: string): Promise<boolean> {
+export async function isReadAllowed(filePath: string): Promise<boolean> {
   return isUnderRoots(filePath, await getReadRoots());
 }
 
@@ -190,6 +241,123 @@ export async function executeServerTool(
       return `Successfully wrote ${content.length} bytes to ${filePath}`;
     } catch (err) {
       return `Error writing file: ${err instanceof Error ? err.message : String(err)}`;
+    }
+  }
+
+  if (name === 'analyze_dataset_quality') {
+    const datasetName = input.dataset_name as string;
+    const force = (input.force as boolean) || false;
+
+    if (!datasetName) return 'Error: dataset_name is required';
+
+    try {
+      const result = await analyzeDataset(datasetName, { force });
+      return JSON.stringify(result, null, 2);
+    } catch (err) {
+      return `Error analyzing dataset: ${err instanceof Error ? err.message : String(err)}`;
+    }
+  }
+
+  if (name === 'get_dataset_issues') {
+    const datasetName = input.dataset_name as string;
+    const issueType = (input.issue_type as string) || 'all';
+
+    if (!datasetName) return 'Error: dataset_name is required';
+
+    try {
+      const analysis = await getStoredAnalysis(datasetName);
+      if (!analysis) {
+        return 'No analysis found. Run analyze_dataset_quality first.';
+      }
+
+      if (issueType !== 'all') {
+        const filtered: Record<string, unknown> = {
+          dataset: datasetName,
+          issue_type: issueType,
+        };
+        if (issueType === 'duplicates') {
+          filtered.duplicateGroups = analysis.duplicateGroups;
+          filtered.count = analysis.summary.duplicateGroupCount;
+        } else if (issueType === 'blurry') {
+          filtered.images = analysis.issues.blurry;
+          filtered.count = analysis.summary.blurryCount;
+        } else if (issueType === 'dark') {
+          filtered.images = analysis.issues.dark;
+          filtered.count = analysis.summary.darkCount;
+        } else if (issueType === 'bright') {
+          filtered.images = analysis.issues.bright;
+          filtered.count = analysis.summary.brightCount;
+        } else if (issueType === 'small') {
+          filtered.images = analysis.issues.tooSmall;
+          filtered.count = analysis.summary.tooSmallCount;
+        } else {
+          filtered.message = `Unknown issue type "${issueType}". Use: duplicates, blurry, dark, bright, small, or all`;
+        }
+        return JSON.stringify(filtered, null, 2);
+      }
+
+      return JSON.stringify(analysis, null, 2);
+    } catch (err) {
+      return `Error getting dataset issues: ${err instanceof Error ? err.message : String(err)}`;
+    }
+  }
+
+  if (name === 'view_dataset_image') {
+    const imagePath = input.image_path as string;
+    const question = (input.question as string) || 'Describe this image in detail.';
+
+    if (!imagePath) return 'Error: image_path is required';
+    if (!(await isReadAllowed(imagePath)))
+      return `Error: access denied — path not in allowed directories`;
+
+    type MediaType = 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif';
+    const ext = path.extname(imagePath).toLowerCase();
+    const mediaTypeMap: Record<string, MediaType> = {
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.png': 'image/png',
+      '.webp': 'image/webp',
+      '.gif': 'image/gif',
+    };
+    const mediaType = mediaTypeMap[ext];
+    if (!mediaType) return `Error: unsupported image type "${ext}"`;
+
+    try {
+      const imageData = await fs.readFile(imagePath);
+      const auth = await getAnthropicAuth();
+      if (!auth.apiKey && !auth.oauthToken) {
+        return 'Error: Anthropic API key not configured';
+      }
+      const client = createAnthropicClient(auth);
+      const model = await getClaudeCaptionModel();
+
+      const response = await client.messages.create({
+        model,
+        max_tokens: 1024,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'image',
+                source: {
+                  type: 'base64',
+                  media_type: mediaType,
+                  data: imageData.toString('base64'),
+                },
+              },
+              { type: 'text', text: question },
+            ],
+          },
+        ],
+      });
+
+      return response.content
+        .filter(b => b.type === 'text')
+        .map(b => (b as { type: 'text'; text: string }).text)
+        .join('');
+    } catch (err) {
+      return `Error viewing image: ${err instanceof Error ? err.message : String(err)}`;
     }
   }
 

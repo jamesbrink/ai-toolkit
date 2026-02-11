@@ -39,3 +39,40 @@ model Job {
   @@index([status])
   @@index([gpu_ids])
 }
+
+model ImageAnalysis {
+  id                Int      @id @default(autoincrement())
+  filePath          String   @unique
+  datasetName       String
+  width             Int
+  height            Int
+  fileSize          Int
+  format            String
+  pHash             String
+  avgBrightness     Float
+  brightnessStdDev  Float
+  laplacianVariance Float
+  isBlurry          Boolean  @default(false)
+  isDark            Boolean  @default(false)
+  isBright          Boolean  @default(false)
+  isTooSmall        Boolean  @default(false)
+  qualityScore      Int      @default(100)
+  fileModifiedAt    DateTime
+  analyzedAt        DateTime @default(now())
+
+  @@index([datasetName])
+  @@index([pHash])
+  @@index([qualityScore])
+}
+
+model DuplicateGroup {
+  id            Int      @id @default(autoincrement())
+  datasetName   String
+  groupHash     String   @unique
+  imagePaths    String   // JSON array
+  maxSimilarity Float
+  dismissed     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  @@index([datasetName])
+}

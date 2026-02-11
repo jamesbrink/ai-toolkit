@@ -3,6 +3,7 @@
 import React from 'react';
 import { ChatMessage, ContentBlock } from '@/types/claude';
 import ConfigProposal from './ConfigProposal';
+import DeleteProposal from './DeleteProposal';
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -48,6 +49,9 @@ function renderContentBlocks(blocks: ContentBlock[]): React.ReactNode {
     }
     if (block.type === 'tool_use' && block.name === 'update_job_config') {
       return <ConfigProposal key={i} toolUseId={block.id!} changes={block.input?.changes as any[]} />;
+    }
+    if (block.type === 'tool_use' && block.name === 'delete_dataset_images') {
+      return <DeleteProposal key={i} toolUseId={block.id!} imagePaths={block.input?.image_paths as string[]} reason={block.input?.reason as string} />;
     }
     if (block.type === 'tool_use') {
       return (

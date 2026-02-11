@@ -25,6 +25,15 @@ export interface ConfigChange {
   reason: string;
 }
 
+export interface AnalysisSummary {
+  totalImages: number;
+  duplicateGroupCount: number;
+  blurryCount: number;
+  darkCount: number;
+  brightCount: number;
+  tooSmallCount: number;
+}
+
 export interface ChatContext {
   page: string;
   jobConfig?: unknown;
@@ -34,6 +43,8 @@ export interface ChatContext {
   deviceType?: string;
   datasetName?: string;
   imageList?: string[];
+  analysisAvailable?: boolean;
+  analysisSummary?: AnalysisSummary;
 }
 
 export interface ChatSession {

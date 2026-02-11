@@ -30,7 +30,15 @@ Use these tools proactively when the user asks about their data, configs, or tra
 
 Writing captions: Caption files are .txt files placed next to images with the same base name (e.g. photo1.jpg → photo1.txt). Each caption is plain text describing the image for training.
 
-Example configs: The toolkit includes example training configs for all supported architectures. Look in the example configs directory for templates like train_lora_flux_24gb.yaml, train_lora_wan_2.1.yaml, etc.`;
+Example configs: The toolkit includes example training configs for all supported architectures. Look in the example configs directory for templates like train_lora_flux_24gb.yaml, train_lora_wan_2.1.yaml, etc.
+
+Dataset quality analysis tools:
+- analyze_dataset_quality: Scan a dataset for near-duplicate images and quality issues (blur, brightness, size). Returns a summary with counts and details.
+- get_dataset_issues: View stored analysis results filtered by issue type (all, duplicates, blurry, dark, bright, small).
+- view_dataset_image: Look at a specific image using vision to describe what you see. Useful for inspecting flagged images.
+
+When asked about dataset quality, run analyze_dataset_quality first, then present findings clearly.
+Always confirm with the user before proposing image deletions via delete_dataset_images.`;
 
 const MPS_NOTES = `
 Apple Silicon (MPS) constraints:
@@ -71,6 +79,13 @@ function buildPageContext(context: ChatContext): string {
 
   if (context.imageList) {
     parts.push(`Images in dataset: ${context.imageList.length} images`);
+  }
+
+  if (context.analysisAvailable && context.analysisSummary) {
+    const s = context.analysisSummary;
+    parts.push(
+      `Dataset quality analysis available: ${s.totalImages} images analyzed, ${s.duplicateGroupCount} duplicate groups, ${s.blurryCount} blurry, ${s.darkCount} dark, ${s.brightCount} bright, ${s.tooSmallCount} too small`
+    );
   }
 
   return parts.length > 0 ? '\n\nPage context:\n' + parts.join('\n\n') : '';
