@@ -17,7 +17,7 @@
           {
             name = "dev";
             command = "cd ui && npm run dev";
-            help = "Start Next.js dev server with hot reload on :8675";
+            help = "Start Next.js dev server with hot reload on :3000";
             category = "development";
           }
           {
@@ -153,6 +153,9 @@
               cudaPackages.cudnn
             ])}"''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
           ''}
+
+          # Set DATABASE_URL for Prisma (Next.js server + cron worker + prisma CLI)
+          export DATABASE_URL="file:$(pwd)/aitk_db.db"
 
           if [ ! -d "venv" ]; then
             echo "Creating Python virtual environment..."
