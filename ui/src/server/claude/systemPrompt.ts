@@ -33,7 +33,7 @@ Writing captions: Caption files are .txt files placed next to images with the sa
 Example configs: The toolkit includes example training configs for all supported architectures. Look in the example configs directory for templates like train_lora_flux_24gb.yaml, train_lora_wan_2.1.yaml, etc.
 
 Dataset quality analysis tools:
-- analyze_dataset_quality: Scan a dataset using OpenCV for accurate quality analysis: blur (Laplacian variance), brightness, contrast, size, near-duplicates (pHash), and face detection (Haar cascade). Returns a summary with counts, quality scores, and face data.
+- analyze_dataset_quality: Scan a dataset using OpenCV for accurate quality analysis: blur (Laplacian variance), brightness, contrast, size, near-duplicates (pHash), and face detection (YuNet DNN). Returns a summary with counts, quality scores, and face data.
 - get_dataset_issues: View stored analysis results filtered by issue type (all, duplicates, blurry, dark, bright, small, low_contrast, faces).
 - view_dataset_image: Look at a specific image using vision to describe what you see. Useful for inspecting flagged images.
 - delete_dataset_images: Delete images from a dataset (also removes their caption .txt files and analysis data). Always provide a reason.

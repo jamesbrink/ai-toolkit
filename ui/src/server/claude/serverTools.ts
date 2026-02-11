@@ -56,7 +56,7 @@ export const serverToolDefinitions = [
   {
     name: 'analyze_dataset_quality',
     description:
-      'Analyze a dataset for image quality issues, near-duplicate images, and face detection. Uses OpenCV for accurate blur detection (Laplacian variance), brightness, contrast analysis, and Haar cascade face detection. Returns a summary of duplicates, blurry, dark, bright, low-contrast, and too-small images with quality scores, plus face counts.',
+      'Analyze a dataset for image quality issues, near-duplicate images, and face detection. Uses OpenCV for accurate blur detection (Laplacian variance), brightness, contrast analysis, and YuNet DNN face detection. Returns a summary of duplicates, blurry, dark, bright, low-contrast, and too-small images with quality scores, plus face counts.',
     input_schema: {
       type: 'object' as const,
       properties: {

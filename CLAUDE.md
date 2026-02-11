@@ -167,7 +167,7 @@ Five models in `ui/prisma/schema.prisma`:
 - **Settings** — key-value store for app configuration
 - **Queue** — one row per GPU set (`gpu_ids` unique), `is_running` flag tracks if a job is active on that queue
 - **Job** — stores `job_config` (JSON string of training YAML), tracks `status` ("stopped", "queued", "running", "completed", "error"), `step`, `speed_string`, `queue_position`
-- **ImageAnalysis** — per-image quality metrics: pHash, laplacianVariance, brightness, boolean flags (isBlurry, isDark, isBright, isTooSmall), composite qualityScore (0-100). Keyed by `filePath` (unique), indexed by `datasetName`, `pHash`, `qualityScore`
+- **ImageAnalysis** — per-image quality metrics: pHash, laplacianVariance, brightness, contrast, boolean flags (isBlurry, isDark, isBright, isLowContrast, isTooSmall, hasFaces), faceCount, facesJson, composite qualityScore (0-100). Keyed by `filePath` (unique), indexed by `datasetName`, `pHash`, `qualityScore`, `hasFaces`
 - **DuplicateGroup** — groups of near-duplicate images: `imagePaths` (JSON array), `maxSimilarity` (float), `dismissed` flag. Keyed by `groupHash` (unique, sorted paths joined by `|`)
 
 Job flow: UI creates Job with status "queued" → cron worker polls for queued jobs → finds free Queue (matching `gpu_ids`, `is_running=false`) → spawns `python run.py <config>` → sets `is_running=true` → monitors process → on exit sets status and `is_running=false`. The `stop` flag signals graceful stop; `return_to_queue` re-queues instead of stopping.
@@ -190,12 +190,14 @@ Source filtering in both derivations excludes: `node_modules`, `venv`, `output`,
 
 ## Important directories
 - `toolkit/` — core framework (config, data loading, models, schedulers, training utilities)
+- `toolkit/dataset_analysis.py` — Python OpenCV script for quality metrics + YuNet face detection (called by Node.js via child process)
 - `extensions_built_in/` — shipped extensions (`sd_trainer`, `diffusion_models`, `dataset_tools`, etc.)
 - `extensions/` — user extensions (gitignored except `extensions/example`)
 - `jobs/` — job types and process base classes
 - `config/examples/` — reference training configs for all supported models
 - `ui/` — Next.js web UI (Tailwind 4.1, Prisma 6, HeadlessUI)
-- `ui/src/components/` — key UI components: `Sidebar.tsx` (responsive 3-mode nav), `SidebarContext.tsx` (drawer state), `Skeleton.tsx` (loading states), `formInputs.tsx` (form controls + react-select dark styles), `JobActionBar.tsx` (job controls), `SampleImages.tsx` (responsive image grid), `layout.tsx` (TopBar/MainContent with hamburger menu), `DatasetAnalysisPanel.tsx` (quality analysis modal with tabs), `DuplicateGroupCard.tsx` (duplicate group thumbnails with select/dismiss)
+- `ui/src/components/` — key UI components: `Sidebar.tsx` (responsive 3-mode nav), `SidebarContext.tsx` (drawer state), `Skeleton.tsx` (loading states), `formInputs.tsx` (form controls + react-select dark styles), `JobActionBar.tsx` (job controls), `SampleImages.tsx` (responsive image grid), `layout.tsx` (TopBar/MainContent with hamburger menu), `DatasetAnalysisPanel.tsx` (quality analysis modal with Summary/Duplicates/Faces/Quality Issues tabs, bulk actions), `DuplicateGroupCard.tsx` (duplicate group thumbnails with select/dismiss, `bg-gray-700` fallback + `onError` for broken images)
+- `ui/src/components/claude/` — Claude integration components: `CaptionHelper.tsx` (batch caption modal with style selector, accept/reject per-image, "Apply All" button), `ChatPanel.tsx` (chat UI), `ClaudeChatContext.tsx` (chat state), `DeleteProposal.tsx` (deletion confirmation UI)
 - `nix/` — Nix packaging derivations and wrapper scripts
 
 ## Claude AI Integration (Chat & Captions)
@@ -203,11 +205,19 @@ Source filtering in both derivations excludes: `node_modules`, `venv`, `output`,
 ### Architecture
 The web UI integrates Claude as a chat assistant and image captioner via the Anthropic SDK. Key files:
 - `ui/src/server/claude/client.ts` — SDK client factory with OAuth custom fetch interceptor
-- `ui/src/server/claude/serverTools.ts` — server-side tools (`read_file`, `list_directory`, `write_file`, `analyze_dataset_quality`, `get_dataset_issues`, `view_dataset_image`)
+- `ui/src/server/claude/serverTools.ts` — server-side tools (`read_file`, `list_directory`, `write_file`, `analyze_dataset_quality`, `get_dataset_issues`, `view_dataset_image`, `crop_faces`, `delete_dataset_images`)
 - `ui/src/server/claude/systemPrompt.ts` — async system prompt builder (injects resolved paths)
+- `ui/src/server/claude/captionPrompts.ts` — caption system prompt, style-specific prompts, refusal detection
 - `ui/src/app/api/claude/chat/route.ts` — chat API route (agentic tool loop)
-- `ui/src/app/api/claude/caption/route.ts` — single image caption route
-- `ui/src/app/api/claude/caption/batch/route.ts` — batch caption route (NDJSON streaming)
+- `ui/src/app/api/claude/caption/route.ts` — single image caption route (with refusal retry)
+- `ui/src/app/api/claude/caption/batch/route.ts` — batch caption route (NDJSON streaming, with refusal retry)
+
+### Caption prompt system
+`captionPrompts.ts` defines the captioning behavior:
+- **`captionSystemPrompt`** — system prompt establishing context for captioning routes. Instructs Claude to produce factual visual descriptions using neutral artistic language and never refuse.
+- **`captionPrompts`** — record of style-specific user prompts: `descriptive` (20-40 word comma-separated phrases), `booru` (danbooru-style tags), `natural` (single sentence for FLUX), `trigger` (trigger word + variable attributes only).
+- **`fallbackCaptionPrompt`** — focused prompt used on retry when the primary caption is refused. Asks only for visual attributes (face, hair, pose, clothing, setting).
+- **`isRefusal(text)`** — regex-based detection of refusal patterns (e.g. "I can't provide", "not appropriate", "I need to decline"). Both caption routes check the initial response and retry with `fallbackCaptionPrompt` if a refusal is detected.
 
 ### Model selection
 Two separate model settings (configurable in Settings UI):
@@ -241,10 +251,11 @@ When using `CLAUDE_CODE_OAUTH_TOKEN` instead of an API key, the custom fetch in 
 - `isReadAllowed()` is exported for reuse by the `view_dataset_image` tool.
 
 ### Dataset quality analysis server tools
-Four server tools for dataset quality analysis, executed in the agentic tool loop:
-- **`analyze_dataset_quality`** — runs full analysis (pHash, blur, brightness, size) on a dataset, returns summary. Supports `force` flag to skip incremental caching.
-- **`get_dataset_issues`** — returns stored analysis filtered by `issue_type` (all, duplicates, blurry, dark, bright, small).
+Five server tools for dataset quality analysis, executed in the agentic tool loop:
+- **`analyze_dataset_quality`** — runs full analysis (pHash via Node.js, blur/brightness/contrast/face detection via Python OpenCV) on a dataset, returns summary. Supports `force` flag to skip incremental caching.
+- **`get_dataset_issues`** — returns stored analysis filtered by `issue_type` (all, duplicates, blurry, dark, bright, small, low_contrast, faces).
 - **`view_dataset_image`** — reads an image file, base64-encodes it, and makes a secondary Claude vision call (using the caption model) to describe the image. Lets the agent "see" specific images.
+- **`crop_faces`** — crops detected faces from a dataset into a new sibling dataset. Each face gets a padded square crop (default 1.8x) including head, hair, neck, shoulders. Requires running `analyze_dataset_quality` first to detect faces. Delegates to `toolkit/dataset_analysis.py` in `face-crop` mode via `pythonAnalysis.ts`.
 - **`delete_dataset_images`** — deletes images from a dataset (also removes caption .txt files and analysis data). Validates paths are under writable roots before deleting. Provides a reason and per-file deletion summary.
 
 `delete_dataset_images` executes as a server tool directly in the agentic loop. A `DeleteProposal` UI component exists for potential future client-side confirmation flow but is not currently active (the `datasetTools` array is empty).
@@ -255,23 +266,31 @@ The chat route (`route.ts`) emits `tool_progress` events during the agentic tool
 ## Dataset Quality Analysis
 
 ### Architecture
-Automated image quality analysis and near-duplicate detection, accessible from the dataset detail page UI and via Claude chat tools. All image processing runs in Node.js via `sharp` (no Python needed).
+Automated image quality analysis, face detection, and near-duplicate detection, accessible from the dataset detail page UI and via Claude chat tools. Uses a **hybrid Node.js + Python approach**: perceptual hashing runs in Node.js via `sharp`, while quality metrics (blur, brightness, contrast) and face detection run in Python via OpenCV.
 
 Key files:
-- `ui/src/server/imageAnalysis.ts` — pure analysis functions (pHash, blur, brightness, quality scoring)
-- `ui/src/server/datasetAnalysis.ts` — orchestrator (incremental analysis, Prisma persistence, duplicate grouping)
+- `ui/src/server/imageAnalysis.ts` — Node.js pHash computation (DCT-based perceptual hash via sharp) and duplicate grouping (union-find)
+- `ui/src/server/pythonAnalysis.ts` — spawns `toolkit/dataset_analysis.py` as a child process, streams NDJSON results
+- `toolkit/dataset_analysis.py` — Python OpenCV script for blur (Laplacian variance), brightness, contrast, face detection (YuNet DNN), and face cropping
+- `ui/src/server/datasetAnalysis.ts` — orchestrator (incremental analysis, merges pHash from Node.js with quality/face data from Python, Prisma persistence, duplicate grouping)
 - `ui/src/app/api/datasets/analyze/route.ts` — NDJSON streaming analysis endpoint
 - `ui/src/app/api/datasets/analysis/route.ts` — get stored results
 - `ui/src/app/api/datasets/analysis/dismiss-group/route.ts` — dismiss duplicate group
 - `ui/src/app/api/datasets/analysis/delete-images/route.ts` — bulk delete images + captions + analysis rows
+- `ui/src/app/api/datasets/face-crop/route.ts` — NDJSON streaming face crop endpoint (delegates to Python)
+- `ui/src/app/api/datasets/rename/route.ts` — POST with `{ oldName, newName }`, validates characters, checks for conflicts, path traversal protection
+- `ui/src/app/api/datasets/export/route.ts` — POST with `{ datasetName, includeCaptions }`, creates ZIP via `archiver`, returns `{ zipPath, fileName }`
+- `ui/src/app/api/datasets/list/route.ts` — GET, returns `{ name, imageCount, captionCount, totalSizeBytes, lastModified }[]` (not just strings)
 - `ui/src/hooks/useDatasetAnalysis.ts` — React hook for analysis state/streaming
-- `ui/src/components/DatasetAnalysisPanel.tsx` — HeadlessUI Dialog modal (Summary/Duplicates/Quality tabs)
-- `ui/src/components/DuplicateGroupCard.tsx` — thumbnail grid for a duplicate group
+- `ui/src/hooks/useDatasetList.tsx` — React hook returning `DatasetInfo[]` with `{ name, imageCount, captionCount, totalSizeBytes, lastModified }`, exports `DatasetInfo` interface
+- `ui/src/components/DatasetAnalysisPanel.tsx` — HeadlessUI Dialog modal (Summary/Duplicates/Faces/Quality Issues tabs) with bulk actions (Keep First in All, Dismiss All) and face crop dialog
+- `ui/src/components/DuplicateGroupCard.tsx` — thumbnail grid for a duplicate group with `bg-gray-700` fallback + `onError` handler for broken images
+- `ui/src/components/claude/CaptionHelper.tsx` — batch caption modal with style selector (descriptive/booru/natural/trigger), per-image accept/reject, "Apply All" button
 - `ui/src/components/claude/DeleteProposal.tsx` — chat-integrated deletion confirmation UI
 - `ui/src/components/claude/tools/datasetTools.ts` — client tool definition for `delete_dataset_images`
 
 ### Perceptual hashing (pHash)
-DCT-based perceptual hash in `imageAnalysis.ts`:
+DCT-based perceptual hash in `imageAnalysis.ts` (runs in Node.js):
 1. Resize to 32x32 grayscale via sharp
 2. Apply 2D Discrete Cosine Transform (pure JS, precomputed coefficient matrix)
 3. Extract top-left 8x8 low-frequency coefficients (skip DC component)
@@ -279,29 +298,48 @@ DCT-based perceptual hash in `imageAnalysis.ts`:
 
 Near-duplicates are detected by hamming distance between pHashes. Threshold of 10 bits (out of 64) catches resized/recompressed/slightly cropped copies. Union-find groups transitively connected images.
 
-### Quality metrics
-- **Blur detection**: Laplacian variance on 256x256 grayscale (3x3 kernel `[[0,1,0],[1,-4,1],[0,1,0]]`). Variance < 100 = blurry.
-- **Brightness**: Luminance via `0.299*R + 0.587*G + 0.114*B` from sharp stats. < 30 = dark, > 235 = bright.
-- **Size**: `min(width, height) < 256` = too small for training.
-- **Quality score**: Starts at 100, subtract 30 (blurry), 20 (dark), 20 (bright), 25 (too small).
+### Quality metrics (Python OpenCV)
+Quality metrics are computed by `toolkit/dataset_analysis.py` using OpenCV, called via `pythonAnalysis.ts`:
+- **Blur detection**: Laplacian variance via `cv2.Laplacian(gray, cv2.CV_64F).var()`. Variance < 100 = blurry.
+- **Brightness**: Mean pixel intensity of grayscale image. < 50 = dark, > 200 = bright.
+- **Contrast**: Standard deviation of grayscale pixel intensities. < 20 = low contrast.
+- **Size**: `min(width, height) < training_resolution` (default 512) = too small.
+- **Face detection**: OpenCV YuNet DNN model (`cv2.FaceDetectorYN`). Downloads the ONNX model on first use to `~/.local/share/ai-toolkit/models/`. Returns face bounding boxes with confidence scores.
+- **Quality score**: Starts at 100, subtract 30 (blurry), 15 (dark), 15 (bright), 15 (low contrast), 20 (too small). Minimum 0.
+
+### Face cropping
+Face crops are produced by `toolkit/dataset_analysis.py` in `face-crop` mode:
+1. Detect faces using YuNet DNN
+2. For each face, compute a padded square crop centered on the face (default 1.8x padding includes head, hair, neck, shoulders)
+3. Resize crop to training resolution (default 512x512) using INTER_LANCZOS4
+4. Save to output dataset directory, copy caption .txt files if present
+The UI exposes this via the Faces tab in `DatasetAnalysisPanel.tsx` with a configuration dialog for output name, resolution, and padding.
 
 ### Incremental analysis
 The orchestrator (`datasetAnalysis.ts`) checks `fileModifiedAt` against stored `ImageAnalysis` rows. Unchanged images are skipped unless `force: true`. Stale entries (deleted images) are cleaned up automatically.
 
 ### UI integration
 - **"Analyze Quality" button** in dataset page TopBar opens the `DatasetAnalysisPanel` modal
-- **Summary tab**: count cards + average quality score bar
-- **Duplicates tab**: `DuplicateGroupCard` per group with thumbnails, similarity badge, "Keep First" / "Dismiss" actions
-- **Quality Issues tab**: image grid with colored issue badges (blurry=red, dark/bright=yellow, small=orange), multi-select for bulk deletion
+- **Summary tab**: count cards (Total, Duplicates, Blurry, Dark, Bright, Low Contrast, Too Small, With Faces) + average quality score bar
+- **Duplicates tab**: `DuplicateGroupCard` per group with thumbnails, similarity badge, "Keep First" / "Dismiss" per-group actions, plus bulk "Keep First in All" / "Dismiss All" buttons for all active groups
+- **Faces tab**: face count display, "Crop Faces" button opens config dialog (output dataset name, training resolution, padding multiplier)
+- **Quality Issues tab**: image grid with colored issue badges (blurry=red, dark/bright=yellow, low contrast/small=orange), multi-select for bulk deletion
+- **Dataset detail page** (`ui/src/app/datasets/[datasetName]/page.tsx`): rename button (pen icon, uses `ConfirmModal` with input), "Export ZIP" button, real-time image deletion (removes from local state without full page refresh), "Caption with Claude" button opens `CaptionHelper` modal
+- **Datasets list page** (`ui/src/app/datasets/page.tsx`): `UniversalTable` with columns for name, image count, caption count (with color-coded completion percentage), size, last modified. Per-row action buttons: export (ZIP download), rename, delete
 
 ### Claude integration
 - `analyze_dataset_quality` server tool runs the full analysis pipeline
 - `get_dataset_issues` server tool returns stored results filtered by issue type
 - `view_dataset_image` server tool makes a vision API call to describe a specific image
+- `crop_faces` server tool crops detected faces into a new dataset
 - `delete_dataset_images` server tool deletes images directly (validates paths under writable roots)
 - Dataset page sets chat context (`datasetName`, `imageList`) via `useClaudeChat`
 - System prompt (`systemPrompt.ts`) includes analysis tool descriptions and context about available results
 - Tool progress events show spinner indicators in ChatPanel during server-side tool execution
+
+### Hooks
+- **`useDatasetAnalysis`** — returns `{ status, result, progress, error, startAnalysis, getStoredResults, dismissGroup, dismissAllGroups, deleteImages, cropFaces, exportDataset }`
+- **`useDatasetList`** — returns `{ datasets: DatasetInfo[], setDatasets, status, refreshDatasets }`. Exports `DatasetInfo` interface with `{ name, imageCount, captionCount, totalSizeBytes, lastModified }`
 
 ## Environment variables
 - `HF_HUB_ENABLE_HF_TRANSFER=1` — set automatically in `run.py` for fast downloads
