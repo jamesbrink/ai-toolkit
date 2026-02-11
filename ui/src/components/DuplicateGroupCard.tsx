@@ -107,7 +107,8 @@ export default function DuplicateGroupCard({
               <img
                 src={`/api/img/${encodeURIComponent(imgPath)}`}
                 alt={filename}
-                className="w-20 h-20 object-cover rounded-md"
+                className="w-20 h-20 object-cover rounded-md bg-gray-700"
+                onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
               />
               {i === 0 && !isSelected && (
                 <span className="absolute top-0.5 left-0.5 bg-green-700 text-white text-[10px] px-1 rounded">

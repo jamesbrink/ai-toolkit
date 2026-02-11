@@ -172,6 +172,33 @@ export function useDatasetAnalysis(datasetName: string) {
     }
   }, []);
 
+  const dismissAllGroups = useCallback(async () => {
+    setResult(prev => {
+      if (!prev) return prev;
+      const activeGroups = prev.duplicateGroups.filter(g => !g.dismissed);
+      if (activeGroups.length === 0) return prev;
+
+      // Fire off all dismiss requests in parallel (fast boolean flips)
+      const token = localStorage.getItem('AI_TOOLKIT_AUTH');
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      for (const g of activeGroups) {
+        fetch('/api/datasets/analysis/dismiss-group', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ groupId: g.id }),
+        }).catch(err => console.error('Failed to dismiss group:', err));
+      }
+
+      return {
+        ...prev,
+        duplicateGroups: prev.duplicateGroups.map(g => ({ ...g, dismissed: true })),
+        summary: { ...prev.summary, duplicateGroupCount: 0 },
+      };
+    });
+  }, []);
+
   const deleteImages = useCallback(async (imagePaths: string[]) => {
     try {
       const token = localStorage.getItem('AI_TOOLKIT_AUTH');
@@ -190,16 +217,18 @@ export function useDatasetAnalysis(datasetName: string) {
       // Update local state to remove deleted images
       setResult(prev => {
         if (!prev) return prev;
+        const updatedGroups = prev.duplicateGroups
+          .map(g => ({
+            ...g,
+            imagePaths: g.imagePaths.filter(p => !deletedSet.has(p)),
+          }))
+          .filter(g => g.imagePaths.length > 1);
+
         return {
           ...prev,
           totalImages: prev.totalImages - deletedSet.size,
           analyzedImages: prev.analyzedImages - deletedSet.size,
-          duplicateGroups: prev.duplicateGroups
-            .map(g => ({
-              ...g,
-              imagePaths: g.imagePaths.filter(p => !deletedSet.has(p)),
-            }))
-            .filter(g => g.imagePaths.length > 1),
+          duplicateGroups: updatedGroups,
           issues: {
             blurry: prev.issues.blurry.filter(p => !deletedSet.has(p)),
             dark: prev.issues.dark.filter(p => !deletedSet.has(p)),
@@ -209,6 +238,7 @@ export function useDatasetAnalysis(datasetName: string) {
           },
           summary: {
             ...prev.summary,
+            duplicateGroupCount: updatedGroups.filter(g => !g.dismissed).length,
             blurryCount: prev.issues.blurry.filter(p => !deletedSet.has(p)).length,
             darkCount: prev.issues.dark.filter(p => !deletedSet.has(p)).length,
             brightCount: prev.issues.bright.filter(p => !deletedSet.has(p)).length,
@@ -310,6 +340,7 @@ export function useDatasetAnalysis(datasetName: string) {
     startAnalysis,
     getStoredResults,
     dismissGroup,
+    dismissAllGroups,
     deleteImages,
     cropFaces,
     exportDataset,

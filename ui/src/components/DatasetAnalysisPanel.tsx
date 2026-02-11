@@ -21,9 +21,10 @@ export default function DatasetAnalysisPanel({
 }: DatasetAnalysisPanelProps) {
   const {
     status, result, progress, error,
-    startAnalysis, getStoredResults, dismissGroup, deleteImages, cropFaces,
+    startAnalysis, getStoredResults, dismissGroup, dismissAllGroups, deleteImages, cropFaces,
   } = useDatasetAnalysis(datasetName);
   const [selectedQualityImages, setSelectedQualityImages] = useState<Set<string>>(new Set());
+  const [bulkAction, setBulkAction] = useState<'idle' | 'confirm-keep-first' | 'deleting'>('idle');
   const [cropDialogOpen, setCropDialogOpen] = useState(false);
   const [cropConfig, setCropConfig] = useState({
     outputName: `${datasetName}_faces`,
@@ -50,6 +51,18 @@ export default function DatasetAnalysisPanel({
     if (result.deleted.length > 0) {
       onImagesDeleted?.();
     }
+  };
+
+  const activeGroups = result?.duplicateGroups.filter(g => !g.dismissed) ?? [];
+
+  const handleKeepFirstAll = async () => {
+    if (!result) return;
+    const toDelete = activeGroups.flatMap(g => g.imagePaths.slice(1));
+    if (toDelete.length === 0) return;
+    setBulkAction('deleting');
+    const res = await deleteImages(toDelete);
+    if (res.deleted.length > 0) onImagesDeleted?.();
+    setBulkAction('idle');
   };
 
   const handleDeleteQualityImages = async () => {
@@ -265,17 +278,69 @@ export default function DatasetAnalysisPanel({
                         <p>No duplicate groups found</p>
                       </div>
                     ) : (
-                      result.duplicateGroups.map(group => (
-                        <DuplicateGroupCard
-                          key={group.id}
-                          groupId={group.id}
-                          imagePaths={group.imagePaths}
-                          maxSimilarity={group.maxSimilarity}
-                          dismissed={group.dismissed}
-                          onDismiss={dismissGroup}
-                          onDelete={handleDeleteDuplicates}
-                        />
-                      ))
+                      <>
+                        {/* Bulk actions */}
+                        {activeGroups.length > 0 && (
+                          <div className="flex items-center justify-between bg-gray-800 rounded-lg p-3 border border-gray-700">
+                            <span className="text-sm text-gray-300">
+                              {activeGroups.length} duplicate group{activeGroups.length !== 1 ? 's' : ''}{' '}
+                              <span className="text-gray-400">
+                                ({activeGroups.reduce((sum, g) => sum + g.imagePaths.length - 1, 0)} extra images)
+                              </span>
+                            </span>
+                            {bulkAction === 'confirm-keep-first' ? (
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-amber-400">
+                                  Delete {activeGroups.reduce((sum, g) => sum + g.imagePaths.length - 1, 0)} duplicates?
+                                </span>
+                                <button
+                                  onClick={handleKeepFirstAll}
+                                  className="px-3 py-1.5 text-xs bg-red-700 hover:bg-red-600 text-white rounded-lg transition-colors"
+                                >
+                                  Confirm
+                                </button>
+                                <button
+                                  onClick={() => setBulkAction('idle')}
+                                  className="px-3 py-1.5 text-xs text-gray-400 hover:text-gray-200"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            ) : bulkAction === 'deleting' ? (
+                              <div className="flex items-center gap-2 text-sm text-gray-400">
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                Deleting...
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => setBulkAction('confirm-keep-first')}
+                                  className="px-3 py-1.5 text-xs bg-amber-700 hover:bg-amber-600 text-white rounded-lg transition-colors"
+                                >
+                                  Keep First in All
+                                </button>
+                                <button
+                                  onClick={dismissAllGroups}
+                                  className="px-3 py-1.5 text-xs text-gray-400 hover:text-gray-200 border border-gray-600 rounded-lg"
+                                >
+                                  Dismiss All
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        {result.duplicateGroups.map(group => (
+                          <DuplicateGroupCard
+                            key={group.id}
+                            groupId={group.id}
+                            imagePaths={group.imagePaths}
+                            maxSimilarity={group.maxSimilarity}
+                            dismissed={group.dismissed}
+                            onDismiss={dismissGroup}
+                            onDelete={handleDeleteDuplicates}
+                          />
+                        ))}
+                      </>
                     )}
                   </TabPanel>
 
@@ -305,7 +370,7 @@ export default function DatasetAnalysisPanel({
                           </button>
                         </div>
                         <p className="text-xs text-gray-400">
-                          Face detection uses OpenCV Haar cascades. &quot;Crop Faces&quot; will create a new sibling dataset
+                          Face detection uses OpenCV YuNet DNN. &quot;Crop Faces&quot; will create a new sibling dataset
                           with square face crops padded to include head, hair, neck, and shoulders — ideal for LoRA person training.
                         </p>
                       </>
