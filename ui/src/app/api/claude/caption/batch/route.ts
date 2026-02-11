@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { getAnthropicAuth } from '@/server/settings';
 import { createAnthropicClient, getClaudeCaptionModel } from '@/server/claude/client';
-import { captionPrompts } from '@/server/claude/captionPrompts';
+import { captionPrompts, captionSystemPrompt } from '@/server/claude/captionPrompts';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -64,6 +64,7 @@ export async function POST(req: NextRequest) {
           const response = await client.messages.create({
             model: await getClaudeCaptionModel(),
             max_tokens: 500,
+            system: captionSystemPrompt,
             messages: [
               {
                 role: 'user',

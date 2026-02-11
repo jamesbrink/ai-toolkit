@@ -14,9 +14,35 @@ import argparse
 import json
 import os
 import sys
+import urllib.request
 
 import cv2
 import numpy as np
+
+# YuNet model URL and local cache path
+_YUNET_URL = "https://github.com/opencv/opencv_zoo/raw/main/models/face_detection_yunet/face_detection_yunet_2023mar.onnx"
+_YUNET_MODEL_PATH: str | None = None
+
+
+def _get_yunet_model_path() -> str:
+    """Return path to the YuNet ONNX model, downloading it on first use."""
+    global _YUNET_MODEL_PATH
+    if _YUNET_MODEL_PATH and os.path.exists(_YUNET_MODEL_PATH):
+        return _YUNET_MODEL_PATH
+
+    cache_dir = os.path.join(
+        os.environ.get("AI_TOOLKIT_UI_DATA", os.path.expanduser("~/.local/share/ai-toolkit")),
+        "models",
+    )
+    os.makedirs(cache_dir, exist_ok=True)
+    model_path = os.path.join(cache_dir, "face_detection_yunet_2023mar.onnx")
+
+    if not os.path.exists(model_path):
+        print(json.dumps({"type": "info", "message": "Downloading YuNet face detection model..."}), flush=True)
+        urllib.request.urlretrieve(_YUNET_URL, model_path)
+
+    _YUNET_MODEL_PATH = model_path
+    return model_path
 
 
 def compute_blur(gray: np.ndarray) -> float:
@@ -34,30 +60,29 @@ def compute_contrast(gray: np.ndarray) -> float:
     return float(np.std(gray))
 
 
-def detect_faces(gray: np.ndarray) -> list[dict]:
-    """Detect faces using Haar cascade. Returns list of {x, y, w, h, confidence}."""
-    cascade_path = cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
-    face_cascade = cv2.CascadeClassifier(cascade_path)
+def detect_faces(img: np.ndarray, score_threshold: float = 0.5) -> list[dict]:
+    """Detect faces using YuNet DNN model. Returns list of {x, y, w, h, confidence}."""
+    h, w = img.shape[:2]
+    model_path = _get_yunet_model_path()
 
-    # detectMultiScale3 returns (rects, rejectLevels, levelWeights)
-    faces, _, weights = face_cascade.detectMultiScale3(
-        gray,
-        scaleFactor=1.1,
-        minNeighbors=5,
-        minSize=(30, 30),
-        outputRejectLevels=True,
+    detector = cv2.FaceDetectorYN.create(
+        model_path, "", (w, h),
+        score_threshold=score_threshold,
+        nms_threshold=0.3,
+        top_k=5000,
     )
 
+    _, faces = detector.detect(img)
+
     results = []
-    if len(faces) > 0:
-        for i, (x, y, w, h) in enumerate(faces):
-            confidence = float(weights[i]) if i < len(weights) else 0.0
+    if faces is not None:
+        for face in faces:
             results.append({
-                "x": int(x),
-                "y": int(y),
-                "w": int(w),
-                "h": int(h),
-                "confidence": round(confidence, 2),
+                "x": int(face[0]),
+                "y": int(face[1]),
+                "w": int(face[2]),
+                "h": int(face[3]),
+                "confidence": round(float(face[-1]), 2),
             })
 
     return results
@@ -75,7 +100,7 @@ def analyze_image(image_path: str, training_resolution: int = 512) -> dict:
     laplacian_var = compute_blur(gray)
     brightness = compute_brightness(gray)
     contrast = compute_contrast(gray)
-    faces = detect_faces(gray)
+    faces = detect_faces(img)
 
     is_blurry = laplacian_var < 100
     is_dark = brightness < 50
@@ -133,8 +158,7 @@ def face_crop_image(
         return [{"filePath": image_path, "error": f"Failed to read image: {image_path}"}]
 
     h, w = img.shape[:2]
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    faces = detect_faces(gray)
+    faces = detect_faces(img)
 
     if not faces:
         return []
