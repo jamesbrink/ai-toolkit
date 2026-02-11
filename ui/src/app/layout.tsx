@@ -37,8 +37,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   <main className="flex-1 min-w-0 overflow-auto bg-gray-950 text-gray-100 relative">
                     <Suspense>{children}</Suspense>
                   </main>
+                  <ChatPanel />
                 </div>
-                <ChatPanel />
               </ClaudeChatProvider>
             </SidebarProvider>
           </AuthWrapper>

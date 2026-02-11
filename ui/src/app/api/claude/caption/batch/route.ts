@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  const { imagePaths, style } = await req.json();
+  const { imagePaths, style, triggerWord } = await req.json();
   if (!imagePaths || !Array.isArray(imagePaths) || imagePaths.length === 0) {
     return new Response(JSON.stringify({ error: 'imagePaths array required' }), {
       status: 400,
@@ -37,7 +37,10 @@ export async function POST(req: NextRequest) {
   }
 
   const client = createAnthropicClient(auth);
-  const prompt = captionPrompts[style] || captionPrompts.descriptive;
+  let prompt = captionPrompts[style] || captionPrompts.descriptive;
+  if (style === 'trigger' && triggerWord) {
+    prompt = prompt.replace(/\[trigger\]/g, triggerWord);
+  }
   const total = imagePaths.length;
 
   const encoder = new TextEncoder();

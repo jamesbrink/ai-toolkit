@@ -39,7 +39,13 @@ Dataset quality analysis tools:
 - delete_dataset_images: Delete images from a dataset (also removes their caption .txt files and analysis data). Always provide a reason.
 
 When asked about dataset quality, run analyze_dataset_quality first, then present findings clearly.
-When the user asks to delete images (duplicates, low quality, etc.), use the delete_dataset_images tool directly. Always explain what you are deleting and why before calling the tool, and summarize what was deleted afterward.`;
+When the user asks to delete images (duplicates, low quality, etc.), use the delete_dataset_images tool directly. Always explain what you are deleting and why before calling the tool, and summarize what was deleted afterward.
+
+Captioning best practices:
+- Shorter captions (20-40 words) train better than long, exhaustive ones. Filler phrases dilute the signal.
+- For LoRA training: use a trigger word (e.g. "ohwx") and describe only what varies between images, not the trigger concept itself.
+- Keyword/tag style (booru, descriptive) works well for SDXL and SD 1.5. Natural language captions work better for FLUX.
+- When writing captions via write_file, output plain text only — no markdown, no bullet points, no labels.`;
 
 const MPS_NOTES = `
 Apple Silicon (MPS) constraints:

@@ -113,6 +113,21 @@ export async function POST(req: NextRequest) {
               }),
             );
 
+            // Emit tool_completed events so the client can trigger refreshes
+            for (const block of serverToolUses) {
+              if (block.type === 'tool_use') {
+                controller.enqueue(
+                  encoder.encode(
+                    JSON.stringify({
+                      type: 'tool_completed',
+                      tool_name: block.name,
+                      tool_input: block.input,
+                    }) + '\n',
+                  ),
+                );
+              }
+            }
+
             // Append assistant response + tool results to messages for next iteration
             loopMessages = [
               ...loopMessages,

@@ -21,6 +21,7 @@ interface ClaudeChatState {
   setContext: (ctx: ChatCtx) => void;
   registerToolHandler: (handler: ToolHandler) => void;
   clearMessages: () => void;
+  stopStreaming: () => void;
   tools: unknown[];
   setTools: (tools: unknown[]) => void;
 }
@@ -58,6 +59,7 @@ export function ClaudeChatProvider({ children }: { children: React.ReactNode }) 
   const contextRef = useRef<ChatCtx | undefined>(undefined);
   const toolHandlerRef = useRef<ToolHandler | null>(null);
   const messagesInitialized = useRef(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Load messages from localStorage on mount
   useEffect(() => {
@@ -111,6 +113,9 @@ export function ClaudeChatProvider({ children }: { children: React.ReactNode }) 
       const contentBlocks: ContentBlock[] = [];
       let currentBlockIndex = -1;
 
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+
       streamClaude(
         apiMessages,
         contextRef.current,
@@ -118,6 +123,15 @@ export function ClaudeChatProvider({ children }: { children: React.ReactNode }) 
         (event: StreamEvent) => {
           if (event.type === 'tool_progress' && event.tool_name) {
             setActiveToolName(event.tool_name);
+            return;
+          }
+
+          if (event.type === 'tool_completed' && event.tool_name) {
+            window.dispatchEvent(
+              new CustomEvent('claude-tool-completed', {
+                detail: { toolName: event.tool_name, toolInput: event.tool_input },
+              }),
+            );
             return;
           }
 
@@ -208,10 +222,18 @@ export function ClaudeChatProvider({ children }: { children: React.ReactNode }) 
           setIsStreaming(false);
           setActiveToolName(null);
         },
+        controller.signal,
       );
     },
     [tools],
   );
+
+  const stopStreaming = useCallback(() => {
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = null;
+    setIsStreaming(false);
+    setActiveToolName(null);
+  }, []);
 
   const sendMessage = useCallback(
     (text: string) => {
@@ -269,6 +291,7 @@ export function ClaudeChatProvider({ children }: { children: React.ReactNode }) 
         setContext,
         registerToolHandler,
         clearMessages,
+        stopStreaming,
         tools,
         setTools,
       }}

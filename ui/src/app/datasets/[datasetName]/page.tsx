@@ -34,6 +34,18 @@ export default function DatasetPage({ params }: { params: { datasetName: string 
     }
   }, [datasetName, imgList, setContext]);
 
+  // Refresh when Claude agent modifies the dataset (deletes images, writes captions)
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.toolName === 'delete_dataset_images' || detail?.toolName === 'write_file') {
+        refreshImageList(datasetName);
+      }
+    };
+    window.addEventListener('claude-tool-completed', handler);
+    return () => window.removeEventListener('claude-tool-completed', handler);
+  }, [datasetName]);
+
   const refreshImageList = (dbName: string) => {
     setStatus('loading');
     console.log('Fetching images for dataset:', dbName);
@@ -155,7 +167,7 @@ export default function DatasetPage({ params }: { params: { datasetName: string 
       <MainContent>
         {PageInfoContent}
         {status === 'success' && imgList.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 @sm:grid-cols-2 @md:grid-cols-3 @lg:grid-cols-4 gap-4">
             {imgList.map(img => (
               <DatasetImageCard
                 key={img.img_path}

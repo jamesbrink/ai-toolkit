@@ -22,7 +22,8 @@ interface CaptionHelperProps {
 }
 
 export default function CaptionHelper({ isOpen, onClose, imagePaths, datasetName, onCaptionsApplied }: CaptionHelperProps) {
-  const [style, setStyle] = useState<'descriptive' | 'booru' | 'natural'>('descriptive');
+  const [style, setStyle] = useState<'descriptive' | 'booru' | 'natural' | 'trigger'>('descriptive');
+  const [triggerWord, setTriggerWord] = useState('');
   const [results, setResults] = useState<CaptionResult[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
@@ -52,7 +53,7 @@ export default function CaptionHelper({ isOpen, onClose, imagePaths, datasetName
     const res = await fetch('/api/claude/caption/batch', {
       method: 'POST',
       headers,
-      body: JSON.stringify({ imagePaths, style }),
+      body: JSON.stringify({ imagePaths, style, ...(style === 'trigger' && triggerWord ? { triggerWord } : {}) }),
     });
 
     if (!res.ok) {
@@ -99,7 +100,7 @@ export default function CaptionHelper({ isOpen, onClose, imagePaths, datasetName
     }
 
     setIsProcessing(false);
-  }, [imagePaths, style]);
+  }, [imagePaths, style, triggerWord]);
 
   const toggleAccept = (index: number) => {
     setResults(prev => prev.map((r, i) => (i === index ? { ...r, accepted: !r.accepted } : r)));
@@ -146,8 +147,8 @@ export default function CaptionHelper({ isOpen, onClose, imagePaths, datasetName
             {!isProcessing && results.length === 0 && (
               <div className="space-y-3">
                 <label className="block text-sm text-gray-300">Caption style</label>
-                <div className="flex gap-2">
-                  {(['descriptive', 'booru', 'natural'] as const).map(s => (
+                <div className="flex flex-wrap gap-2">
+                  {(['descriptive', 'booru', 'natural', 'trigger'] as const).map(s => (
                     <button
                       key={s}
                       onClick={() => setStyle(s)}
@@ -161,12 +162,25 @@ export default function CaptionHelper({ isOpen, onClose, imagePaths, datasetName
                     </button>
                   ))}
                 </div>
+                {style === 'trigger' && (
+                  <div className="space-y-1">
+                    <label className="block text-xs text-gray-400">Trigger word</label>
+                    <input
+                      type="text"
+                      value={triggerWord}
+                      onChange={e => setTriggerWord(e.target.value)}
+                      placeholder="e.g. ohwx"
+                      className="w-48 bg-gray-800 text-gray-100 text-sm rounded-lg px-3 py-1.5 outline-none focus:ring-1 focus:ring-gray-600 placeholder-gray-500 border border-gray-700"
+                    />
+                  </div>
+                )}
                 <p className="text-xs text-gray-500">
                   {imagePaths.length} image{imagePaths.length !== 1 ? 's' : ''} selected
                 </p>
                 <button
                   onClick={startBatchCaption}
-                  className="px-4 py-2 bg-blue-700 hover:bg-blue-600 text-white text-sm rounded-lg transition-colors"
+                  disabled={style === 'trigger' && !triggerWord.trim()}
+                  className="px-4 py-2 bg-blue-700 hover:bg-blue-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm rounded-lg transition-colors"
                 >
                   Generate Captions
                 </button>

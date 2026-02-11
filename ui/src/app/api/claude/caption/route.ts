@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Anthropic API key not configured' }, { status: 400 });
   }
 
-  const { imagePath, style } = await req.json();
+  const { imagePath, style, triggerWord } = await req.json();
   if (!imagePath) {
     return NextResponse.json({ error: 'imagePath required' }, { status: 400 });
   }
@@ -43,7 +43,10 @@ export async function POST(req: NextRequest) {
   }
 
   const client = createAnthropicClient(auth);
-  const prompt = captionPrompts[style] || captionPrompts.descriptive;
+  let prompt = captionPrompts[style] || captionPrompts.descriptive;
+  if (style === 'trigger' && triggerWord) {
+    prompt = prompt.replace(/\[trigger\]/g, triggerWord);
+  }
 
   const response = await client.messages.create({
     model: await getClaudeCaptionModel(),
