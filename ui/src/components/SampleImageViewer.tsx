@@ -203,14 +203,18 @@ export default function SampleImageViewer({
       const absDx = Math.abs(dx);
       const absDy = Math.abs(dy);
 
-      // Threshold: 50px horizontal, must exceed vertical by 1.5x
+      // Horizontal swipe: 50px threshold, must exceed vertical by 1.5x
       if (absDx > 50 && absDx > absDy * 1.5) {
-        if (dx < 0)
-          handleArrowRight(); // swipe left -> next
-        else handleArrowLeft(); // swipe right -> prev
+        if (dx < 0) handleArrowRight(); // swipe left -> next prompt
+        else handleArrowLeft(); // swipe right -> prev prompt
+      }
+      // Vertical swipe: 50px threshold, must exceed horizontal by 1.5x
+      else if (absDy > 50 && absDy > absDx * 1.5) {
+        if (dy < 0) handleArrowDown(); // swipe up -> next step
+        else handleArrowUp(); // swipe down -> prev step
       }
     },
-    [handleArrowLeft, handleArrowRight],
+    [handleArrowLeft, handleArrowRight, handleArrowUp, handleArrowDown],
   );
 
   if (!mounted) return null;
@@ -231,7 +235,7 @@ export default function SampleImageViewer({
               className="overflow-hidden flex items-center justify-center"
               onPointerDown={onPointerDown}
               onPointerUp={onPointerUp}
-              style={{ touchAction: 'pan-y' }}
+              style={{ touchAction: 'none' }}
             >
               {imgPath &&
                 (isVideo(imgPath) ? (
