@@ -125,11 +125,10 @@
           ]
           ++ lib.optionals isLinux [
             cudaPackages.cudatoolkit
-            cudaPackages.cudnn
             libGL
             glib
             stdenv.cc.cc.lib
-            xorg.libX11
+            libx11
           ];
 
         # ── Environment variables ──────────────────────────────
@@ -150,7 +149,6 @@
               libGL
               glib
               cudaPackages.cudatoolkit
-              cudaPackages.cudnn
             ])}"''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
           ''}
 
