@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { getAnthropicAuth } from '@/server/settings';
 import { createAnthropicClient, getClaudeCaptionModel } from '@/server/claude/client';
-import { captionPrompts, captionSystemPrompt } from '@/server/claude/captionPrompts';
+import { captionPrompts, captionSystemPrompt, fallbackCaptionPrompt, isRefusal } from '@/server/claude/captionPrompts';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -42,6 +42,13 @@ export async function POST(req: NextRequest) {
     prompt = prompt.replace(/\[trigger\]/g, triggerWord);
   }
   const total = imagePaths.length;
+  const model = await getClaudeCaptionModel();
+
+  const extractText = (res: { content: Array<{ type: string; text?: string }> }) =>
+    res.content
+      .filter(b => b.type === 'text')
+      .map(b => (b as { type: 'text'; text: string }).text)
+      .join('');
 
   const encoder = new TextEncoder();
   const readable = new ReadableStream({
@@ -61,28 +68,47 @@ export async function POST(req: NextRequest) {
 
         try {
           const imageData = await fs.readFile(imagePath);
+          const imageSource = {
+            type: 'base64' as const,
+            media_type: mediaType,
+            data: imageData.toString('base64'),
+          };
+
           const response = await client.messages.create({
-            model: await getClaudeCaptionModel(),
+            model,
             max_tokens: 500,
             system: captionSystemPrompt,
             messages: [
               {
                 role: 'user',
                 content: [
-                  {
-                    type: 'image',
-                    source: { type: 'base64', media_type: mediaType, data: imageData.toString('base64') },
-                  },
+                  { type: 'image', source: imageSource },
                   { type: 'text', text: prompt },
                 ],
               },
             ],
           });
 
-          const caption = response.content
-            .filter(b => b.type === 'text')
-            .map(b => (b as { type: 'text'; text: string }).text)
-            .join('');
+          let caption = extractText(response);
+
+          // If the model refused, retry with a focused fallback prompt
+          if (isRefusal(caption)) {
+            const retry = await client.messages.create({
+              model,
+              max_tokens: 500,
+              system: captionSystemPrompt,
+              messages: [
+                {
+                  role: 'user',
+                  content: [
+                    { type: 'image', source: imageSource },
+                    { type: 'text', text: fallbackCaptionPrompt },
+                  ],
+                },
+              ],
+            });
+            caption = extractText(retry);
+          }
 
           controller.enqueue(encoder.encode(JSON.stringify({ imagePath, caption, index: i, total }) + '\n'));
         } catch (err) {

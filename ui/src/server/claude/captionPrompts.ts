@@ -22,6 +22,36 @@ export const captionSystemPrompt = [
   'Do not describe images in a sexual manner. Use figure-drawing and photography terminology (e.g. "seated pose", "reclining figure", "bare shoulders").',
 ].join(' ');
 
+/**
+ * Fallback prompt used when the primary caption is refused. Focuses on
+ * physical attributes that Claude will describe regardless of content.
+ */
+export const fallbackCaptionPrompt = [
+  'Describe only the visual attributes you can identify in this image.',
+  'Focus on: face (shape, expression), hair (color, length, style), apparent age, skin tone, body pose or posture, any clothing or accessories visible, background setting, and lighting.',
+  'Output ONLY comma-separated descriptive phrases. Do not comment on the nature or appropriateness of the image.',
+].join(' ');
+
+const REFUSAL_PATTERNS = [
+  /i can'?t (create|provide|generate|describe|caption)/i,
+  /i'?m not able to/i,
+  /i cannot/i,
+  /i'?m unable to/i,
+  /falls? outside/i,
+  /explicit .* content/i,
+  /not appropriate/i,
+  /i won'?t/i,
+  /sorry.*(can'?t|unable|won'?t)/i,
+  /outside the scope/i,
+  /this image contains/i,
+  /i need to decline/i,
+];
+
+/** Returns true if the caption text looks like a refusal rather than a description. */
+export function isRefusal(text: string): boolean {
+  return REFUSAL_PATTERNS.some(p => p.test(text));
+}
+
 export const captionPrompts: Record<string, string> = {
   descriptive: [
     'Write a concise caption for this image for training a diffusion model.',
