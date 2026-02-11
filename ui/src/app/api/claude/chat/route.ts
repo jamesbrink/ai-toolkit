@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { getAnthropicAuth } from '@/server/settings';
-import { createAnthropicClient, getClaudeModel } from '@/server/claude/client';
+import { createAnthropicClient, getClaudeChatModel } from '@/server/claude/client';
 import { buildSystemPrompt } from '@/server/claude/systemPrompt';
 import {
   serverToolDefinitions,
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
   const { messages, context, tools: clientTools } = await req.json();
 
   const client = createAnthropicClient(auth);
-  const systemPrompt = buildSystemPrompt(context);
+  const systemPrompt = await buildSystemPrompt(context);
 
   // Merge server-side tools with any client-side tools
   const allTools = [...serverToolDefinitions, ...(clientTools || [])];
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
           iterations++;
 
           const response = await client.messages.create({
-            model: getClaudeModel(),
+            model: await getClaudeChatModel(),
             max_tokens: 4096,
             system: systemPrompt,
             messages: loopMessages,

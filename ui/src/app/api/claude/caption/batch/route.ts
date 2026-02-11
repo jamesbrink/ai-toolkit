@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { getAnthropicAuth } from '@/server/settings';
-import { createAnthropicClient, getClaudeModel } from '@/server/claude/client';
+import { createAnthropicClient, getClaudeCaptionModel } from '@/server/claude/client';
 import { captionPrompts } from '@/server/claude/captionPrompts';
 import fs from 'fs/promises';
 import path from 'path';
@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
         try {
           const imageData = await fs.readFile(imagePath);
           const response = await client.messages.create({
-            model: getClaudeModel(),
+            model: await getClaudeCaptionModel(),
             max_tokens: 500,
             messages: [
               {

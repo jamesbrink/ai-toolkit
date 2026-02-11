@@ -1,6 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { TOOLKIT_ROOT, defaultDatasetsFolder, defaultTrainFolder } from '@/paths';
+import { TOOLKIT_ROOT } from '@/paths';
+import { getDatasetsRoot, getTrainingFolder } from '@/server/settings';
 
 // Tool definitions sent to the Claude API
 export const serverToolDefinitions = [
@@ -36,22 +37,27 @@ export const serverToolDefinitions = [
       required: ['path'],
     },
   },
+  {
+    name: 'write_file',
+    description:
+      'Write content to a file. Use this to create or update caption .txt files, training configs, or other files in the datasets or training output directories. Cannot write to toolkit source code (may be read-only). Creates parent directories if needed.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        path: { type: 'string', description: 'Absolute path to the file to write' },
+        content: { type: 'string', description: 'Content to write to the file' },
+      },
+      required: ['path', 'content'],
+    },
+  },
 ];
 
 export const SERVER_TOOL_NAMES = new Set(serverToolDefinitions.map(t => t.name));
 
-// Blocked path segments — never allow reading these
+// Blocked path segments — never allow access to these
 const BLOCKED_PATTERNS = ['.env', 'node_modules', '.git', '__pycache__', '.pyc'];
 
-function getAllowedRoots(): string[] {
-  return [
-    path.resolve(TOOLKIT_ROOT),
-    path.resolve(defaultDatasetsFolder),
-    path.resolve(defaultTrainFolder),
-  ];
-}
-
-function isPathAllowed(filePath: string): boolean {
+function isUnderRoots(filePath: string, roots: string[]): boolean {
   const resolved = path.resolve(filePath);
 
   // Check blocked patterns
@@ -59,9 +65,56 @@ function isPathAllowed(filePath: string): boolean {
     if (resolved.includes(blocked)) return false;
   }
 
-  // Must be under an allowed root
-  const roots = getAllowedRoots();
   return roots.some(root => resolved.startsWith(root + path.sep) || resolved === root);
+}
+
+async function getReadRoots(): Promise<string[]> {
+  const [datasetsRoot, trainingFolder] = await Promise.all([
+    getDatasetsRoot(),
+    getTrainingFolder(),
+  ]);
+  return [
+    path.resolve(TOOLKIT_ROOT),
+    path.resolve(datasetsRoot),
+    path.resolve(trainingFolder),
+  ];
+}
+
+async function getWriteRoots(): Promise<string[]> {
+  const [datasetsRoot, trainingFolder] = await Promise.all([
+    getDatasetsRoot(),
+    getTrainingFolder(),
+  ]);
+  // TOOLKIT_ROOT is excluded — it may be a read-only Nix store path
+  return [
+    path.resolve(datasetsRoot),
+    path.resolve(trainingFolder),
+  ];
+}
+
+async function isReadAllowed(filePath: string): Promise<boolean> {
+  return isUnderRoots(filePath, await getReadRoots());
+}
+
+async function isWriteAllowed(filePath: string): Promise<boolean> {
+  return isUnderRoots(filePath, await getWriteRoots());
+}
+
+/** Returns resolved paths for use in the system prompt */
+export async function getResolvedPaths(): Promise<{
+  toolkitRoot: string;
+  datasetsRoot: string;
+  trainingFolder: string;
+}> {
+  const [datasetsRoot, trainingFolder] = await Promise.all([
+    getDatasetsRoot(),
+    getTrainingFolder(),
+  ]);
+  return {
+    toolkitRoot: path.resolve(TOOLKIT_ROOT),
+    datasetsRoot: path.resolve(datasetsRoot),
+    trainingFolder: path.resolve(trainingFolder),
+  };
 }
 
 export async function executeServerTool(
@@ -73,7 +126,8 @@ export async function executeServerTool(
     const maxLines = (input.max_lines as number) || 200;
 
     if (!filePath) return 'Error: path is required';
-    if (!isPathAllowed(filePath)) return `Error: access denied — path not in allowed directories`;
+    if (!(await isReadAllowed(filePath)))
+      return `Error: access denied — path not in allowed directories`;
 
     try {
       const content = await fs.readFile(filePath, 'utf-8');
@@ -92,7 +146,8 @@ export async function executeServerTool(
     const pattern = input.pattern as string | undefined;
 
     if (!dirPath) return 'Error: path is required';
-    if (!isPathAllowed(dirPath)) return `Error: access denied — path not in allowed directories`;
+    if (!(await isReadAllowed(dirPath)))
+      return `Error: access denied — path not in allowed directories`;
 
     try {
       const entries = await fs.readdir(dirPath, { withFileTypes: true });
@@ -116,6 +171,25 @@ export async function executeServerTool(
       return JSON.stringify(results, null, 2);
     } catch (err) {
       return `Error listing directory: ${err instanceof Error ? err.message : String(err)}`;
+    }
+  }
+
+  if (name === 'write_file') {
+    const filePath = input.path as string;
+    const content = input.content as string;
+
+    if (!filePath) return 'Error: path is required';
+    if (content === undefined || content === null) return 'Error: content is required';
+    if (!(await isWriteAllowed(filePath)))
+      return `Error: access denied — can only write to datasets or training output directories`;
+
+    try {
+      // Create parent directories if they don't exist
+      await fs.mkdir(path.dirname(filePath), { recursive: true });
+      await fs.writeFile(filePath, content, 'utf-8');
+      return `Successfully wrote ${content.length} bytes to ${filePath}`;
+    } catch (err) {
+      return `Error writing file: ${err instanceof Error ? err.message : String(err)}`;
     }
   }
 

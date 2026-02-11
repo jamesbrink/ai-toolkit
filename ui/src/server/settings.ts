@@ -105,6 +105,29 @@ export const getAnthropicApiKey = async (): Promise<string> => {
   return auth.apiKey || auth.oauthToken || '';
 };
 
+const DEFAULT_CHAT_MODEL = 'claude-sonnet-4-5-20250929';
+const DEFAULT_CAPTION_MODEL = 'claude-haiku-4-5-20251001';
+
+export const getClaudeChatModel = async (): Promise<string> => {
+  const key = 'CLAUDE_CHAT_MODEL';
+  let model = myCache.get(key) as string;
+  if (model) return model;
+  const row = await prisma.settings.findFirst({ where: { key } });
+  model = row?.value && row.value !== '' ? row.value : (process.env.CLAUDE_MODEL || DEFAULT_CHAT_MODEL);
+  myCache.set(key, model);
+  return model;
+};
+
+export const getClaudeCaptionModel = async (): Promise<string> => {
+  const key = 'CLAUDE_CAPTION_MODEL';
+  let model = myCache.get(key) as string;
+  if (model) return model;
+  const row = await prisma.settings.findFirst({ where: { key } });
+  model = row?.value && row.value !== '' ? row.value : (process.env.CLAUDE_MODEL || DEFAULT_CAPTION_MODEL);
+  myCache.set(key, model);
+  return model;
+};
+
 export const getDataRoot = async () => {
   const key = 'DATA_ROOT';
   let dataRoot = myCache.get(key) as string;

@@ -8,14 +8,18 @@ export interface Settings {
   TRAINING_FOLDER: string;
   DATASETS_FOLDER: string;
   ANTHROPIC_API_KEY: string;
+  CLAUDE_CHAT_MODEL: string;
+  CLAUDE_CAPTION_MODEL: string;
 }
 
 export default function useSettings() {
-  const [settings, setSettings] = useState({
+  const [settings, setSettings] = useState<Settings>({
     HF_TOKEN: '',
     TRAINING_FOLDER: '',
     DATASETS_FOLDER: '',
     ANTHROPIC_API_KEY: '',
+    CLAUDE_CHAT_MODEL: '',
+    CLAUDE_CAPTION_MODEL: '',
   });
   const [isSettingsLoaded, setIsLoaded] = useState(false);
   useEffect(() => {
@@ -29,6 +33,8 @@ export default function useSettings() {
           TRAINING_FOLDER: data.TRAINING_FOLDER || '',
           DATASETS_FOLDER: data.DATASETS_FOLDER || '',
           ANTHROPIC_API_KEY: data.ANTHROPIC_API_KEY || '',
+          CLAUDE_CHAT_MODEL: data.CLAUDE_CHAT_MODEL || '',
+          CLAUDE_CAPTION_MODEL: data.CLAUDE_CAPTION_MODEL || '',
         });
         setIsLoaded(true);
       })

@@ -29,30 +29,26 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { HF_TOKEN, TRAINING_FOLDER, DATASETS_FOLDER, ANTHROPIC_API_KEY } = body;
+    const {
+      HF_TOKEN, TRAINING_FOLDER, DATASETS_FOLDER, ANTHROPIC_API_KEY,
+      CLAUDE_CHAT_MODEL, CLAUDE_CAPTION_MODEL,
+    } = body;
 
     // Upsert all settings
+    const upsert = (key: string, value: string) =>
+      prisma.settings.upsert({
+        where: { key },
+        update: { value: value || '' },
+        create: { key, value: value || '' },
+      });
+
     await Promise.all([
-      prisma.settings.upsert({
-        where: { key: 'HF_TOKEN' },
-        update: { value: HF_TOKEN },
-        create: { key: 'HF_TOKEN', value: HF_TOKEN },
-      }),
-      prisma.settings.upsert({
-        where: { key: 'TRAINING_FOLDER' },
-        update: { value: TRAINING_FOLDER },
-        create: { key: 'TRAINING_FOLDER', value: TRAINING_FOLDER },
-      }),
-      prisma.settings.upsert({
-        where: { key: 'DATASETS_FOLDER' },
-        update: { value: DATASETS_FOLDER },
-        create: { key: 'DATASETS_FOLDER', value: DATASETS_FOLDER },
-      }),
-      prisma.settings.upsert({
-        where: { key: 'ANTHROPIC_API_KEY' },
-        update: { value: ANTHROPIC_API_KEY || '' },
-        create: { key: 'ANTHROPIC_API_KEY', value: ANTHROPIC_API_KEY || '' },
-      }),
+      upsert('HF_TOKEN', HF_TOKEN),
+      upsert('TRAINING_FOLDER', TRAINING_FOLDER),
+      upsert('DATASETS_FOLDER', DATASETS_FOLDER),
+      upsert('ANTHROPIC_API_KEY', ANTHROPIC_API_KEY),
+      upsert('CLAUDE_CHAT_MODEL', CLAUDE_CHAT_MODEL),
+      upsert('CLAUDE_CAPTION_MODEL', CLAUDE_CAPTION_MODEL),
     ]);
 
     flushCache();

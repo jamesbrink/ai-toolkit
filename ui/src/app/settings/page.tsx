@@ -27,7 +27,7 @@ export default function Settings() {
       });
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setSettings(prev => ({ ...prev, [name]: value }));
   };
@@ -130,6 +130,48 @@ export default function Settings() {
                     className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent"
                     placeholder="Enter your Anthropic API key"
                   />
+                </div>
+
+                <div>
+                  <label htmlFor="CLAUDE_CHAT_MODEL" className="block text-sm font-medium mb-2">
+                    Claude Chat Model
+                    <div className="text-gray-400 text-sm ml-1">
+                      Model used for the AI chat assistant. More capable models give better advice but cost more.
+                    </div>
+                  </label>
+                  <select
+                    id="CLAUDE_CHAT_MODEL"
+                    name="CLAUDE_CHAT_MODEL"
+                    value={settings.CLAUDE_CHAT_MODEL}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent"
+                  >
+                    <option value="">Sonnet (default)</option>
+                    <option value="claude-haiku-4-5-20251001">Haiku 4.5 (fast, low cost)</option>
+                    <option value="claude-sonnet-4-5-20250929">Sonnet 4.5 (balanced)</option>
+                    <option value="claude-opus-4-6">Opus 4.6 (most capable)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="CLAUDE_CAPTION_MODEL" className="block text-sm font-medium mb-2">
+                    Claude Caption Model
+                    <div className="text-gray-400 text-sm ml-1">
+                      Model used for generating image captions. Haiku is recommended for speed and cost when captioning many images.
+                    </div>
+                  </label>
+                  <select
+                    id="CLAUDE_CAPTION_MODEL"
+                    name="CLAUDE_CAPTION_MODEL"
+                    value={settings.CLAUDE_CAPTION_MODEL}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent"
+                  >
+                    <option value="">Haiku (default)</option>
+                    <option value="claude-haiku-4-5-20251001">Haiku 4.5 (fast, low cost)</option>
+                    <option value="claude-sonnet-4-5-20250929">Sonnet 4.5 (balanced)</option>
+                    <option value="claude-opus-4-6">Opus 4.6 (most capable)</option>
+                  </select>
                 </div>
               </div>
             </div>

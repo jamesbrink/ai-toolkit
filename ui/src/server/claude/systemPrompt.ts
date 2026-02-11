@@ -1,4 +1,5 @@
 import { ChatContext } from '@/types/claude';
+import { getResolvedPaths } from '@/server/claude/serverTools';
 
 const BASE_KNOWLEDGE = `You are an AI training assistant integrated into the AI Toolkit web UI. You help users configure and troubleshoot diffusion model training jobs.
 
@@ -17,11 +18,19 @@ Key knowledge:
 
 When suggesting config changes, use the update_job_config tool to propose structured changes the user can accept or reject.
 
-You have access to file-reading tools:
+File tools:
 - read_file: Read file contents (training configs, source code, caption .txt files, dataset metadata). Provide an absolute path.
 - list_directory: List directory contents with optional suffix filter (e.g. ".yaml", ".png"). Provide an absolute path.
+- write_file: Write content to a file. Use this to create or update caption .txt files, training configs, or other files. Only writes to datasets and training output directories (not toolkit source). Provide an absolute path and the full file content.
 
-These tools can access the toolkit source code, dataset folders, and training output directories. Use them proactively when the user asks about their data, configs, or training results.`;
+Read-only access: toolkit source, datasets, training output.
+Read/write access: datasets, training output only.
+
+Use these tools proactively when the user asks about their data, configs, or training results.
+
+Writing captions: Caption files are .txt files placed next to images with the same base name (e.g. photo1.jpg → photo1.txt). Each caption is plain text describing the image for training.
+
+Example configs: The toolkit includes example training configs for all supported architectures. Look in the example configs directory for templates like train_lora_flux_24gb.yaml, train_lora_wan_2.1.yaml, etc.`;
 
 const MPS_NOTES = `
 Apple Silicon (MPS) constraints:
@@ -67,12 +76,22 @@ function buildPageContext(context: ChatContext): string {
   return parts.length > 0 ? '\n\nPage context:\n' + parts.join('\n\n') : '';
 }
 
-export function buildSystemPrompt(context?: ChatContext): string {
+export async function buildSystemPrompt(context?: ChatContext): Promise<string> {
   let prompt = BASE_KNOWLEDGE;
 
   if (context?.deviceType === 'mps') {
     prompt += MPS_NOTES;
   }
+
+  // Inject resolved file system paths so the agent knows where things live
+  const paths = await getResolvedPaths();
+  prompt += `
+
+File system paths (use these with your file tools):
+- Toolkit source (read-only): ${paths.toolkitRoot}
+- Datasets (read/write): ${paths.datasetsRoot}
+- Training output (read/write): ${paths.trainingFolder}
+- Example configs: ${paths.toolkitRoot}/config/examples/`;
 
   if (context) {
     prompt += buildPageContext(context);
