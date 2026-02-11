@@ -2,19 +2,22 @@
 
 import { useEffect, useState, use, useMemo } from 'react';
 import { LuImageOff, LuLoader, LuBan } from 'react-icons/lu';
-import { FaChevronLeft } from 'react-icons/fa';
+import { FaChevronLeft, FaPen } from 'react-icons/fa';
 import { Sparkles, Search, Download } from 'lucide-react';
 import DatasetImageCard from '@/components/DatasetImageCard';
 import { Button } from '@headlessui/react';
 import AddImagesModal, { openImagesModal } from '@/components/AddImagesModal';
 import { TopBar, MainContent } from '@/components/layout';
 import { apiClient } from '@/utils/api';
+import { openConfirm } from '@/components/ConfirmModal';
 import FullscreenDropOverlay from '@/components/FullscreenDropOverlay';
 import CaptionHelper from '@/components/claude/CaptionHelper';
 import DatasetAnalysisPanel from '@/components/DatasetAnalysisPanel';
 import { useClaudeChat } from '@/components/claude/ClaudeChatContext';
+import { useRouter } from 'next/navigation';
 
 export default function DatasetPage({ params }: { params: { datasetName: string } }) {
+  const router = useRouter();
   const [imgList, setImgList] = useState<{ img_path: string }[]>([]);
   const usableParams = use(params as any) as { datasetName: string };
   const datasetName = usableParams.datasetName;
@@ -99,6 +102,29 @@ export default function DatasetPage({ params }: { params: { datasetName: string 
     }
   };
 
+  const handleRename = () => {
+    openConfirm({
+      title: 'Rename Dataset',
+      message: `Enter a new name for "${datasetName}":`,
+      type: 'info',
+      confirmText: 'Rename',
+      inputTitle: 'New Name',
+      onConfirm: async (newName?: string) => {
+        if (!newName?.trim()) return;
+        try {
+          const res = await apiClient.post('/api/datasets/rename', {
+            oldName: datasetName,
+            newName: newName.trim(),
+          });
+          router.replace(`/datasets/${res.data.name}`);
+        } catch (error: any) {
+          const msg = error?.response?.data?.error || 'Rename failed';
+          alert(msg);
+        }
+      },
+    });
+  };
+
   const PageInfoContent = useMemo(() => {
     let icon = null;
     let text = '';
@@ -158,8 +184,15 @@ export default function DatasetPage({ params }: { params: { datasetName: string 
             <FaChevronLeft />
           </Button>
         </div>
-        <div>
+        <div className="flex items-center gap-2">
           <h1 className="text-lg">Dataset: {datasetName}</h1>
+          <button
+            onClick={handleRename}
+            className="text-gray-400 hover:text-gray-200 p-1 rounded transition-colors"
+            title="Rename dataset"
+          >
+            <FaPen className="w-3 h-3" />
+          </button>
         </div>
         <div className="flex-1"></div>
         {imgList.length > 0 && (
