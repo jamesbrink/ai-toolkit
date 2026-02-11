@@ -181,7 +181,7 @@ export default function ChatPanel() {
 
       {/* Desktop: Push layout (>=768px) */}
       <div
-        className={`hidden md:block shrink-0 h-dvh overflow-hidden ${
+        className={`hidden md:block shrink-0 h-full overflow-hidden ${
           isDragging ? '' : 'transition-all duration-300 ease-in-out'
         }`}
         style={{ width: isOpen ? width : 0 }}

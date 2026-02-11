@@ -9,7 +9,8 @@
       "WebFetch",
       "WebSearch",
       "MCP(nixos:*)",
-      "MCP(context7:*)"
+      "MCP(context7:*)",
+      "MCP(playwright:*)"
     ],
     "deny": []
   }
