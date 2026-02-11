@@ -51,6 +51,28 @@ Apple Silicon (MPS) constraints:
 - Set environment: PYTORCH_ENABLE_MPS_FALLBACK=1, PYTORCH_MPS_HIGH_WATERMARK_RATIO=0.0
 - For FLUX on 48GB unified memory: quantize_te=true, low_vram=true, batch_size=1`;
 
+// Truncate a string to maxChars, keeping the tail (most recent content)
+function truncateTail(text: string, maxChars: number): string {
+  if (text.length <= maxChars) return text;
+  return '...(truncated)\n' + text.slice(-maxChars);
+}
+
+// Truncate JSON to maxChars, summarizing if too large
+function truncateJson(data: unknown, maxChars: number): string {
+  const full = JSON.stringify(data, null, 2);
+  if (full.length <= maxChars) return full;
+  // Try compact JSON first
+  const compact = JSON.stringify(data);
+  if (compact.length <= maxChars) return compact;
+  return compact.slice(0, maxChars) + '...(truncated)';
+}
+
+// Max characters for each context section (roughly: 4 chars ≈ 1 token)
+const MAX_LOG_CHARS = 8000;       // ~2K tokens
+const MAX_JOB_CONFIG_CHARS = 6000; // ~1.5K tokens
+const MAX_JOB_DATA_CHARS = 4000;   // ~1K tokens
+const MAX_LOSS_DATA_CHARS = 4000;  // ~1K tokens
+
 function buildPageContext(context: ChatContext): string {
   const parts: string[] = [];
 
@@ -59,19 +81,19 @@ function buildPageContext(context: ChatContext): string {
   }
 
   if (context.jobConfig) {
-    parts.push(`Current job configuration:\n\`\`\`json\n${JSON.stringify(context.jobConfig, null, 2)}\n\`\`\``);
+    parts.push(`Current job configuration:\n\`\`\`json\n${truncateJson(context.jobConfig, MAX_JOB_CONFIG_CHARS)}\n\`\`\``);
   }
 
   if (context.jobData) {
-    parts.push(`Job data:\n\`\`\`json\n${JSON.stringify(context.jobData, null, 2)}\n\`\`\``);
+    parts.push(`Job data:\n\`\`\`json\n${truncateJson(context.jobData, MAX_JOB_DATA_CHARS)}\n\`\`\``);
   }
 
   if (context.logTail) {
-    parts.push(`Recent log output:\n\`\`\`\n${context.logTail}\n\`\`\``);
+    parts.push(`Recent log output:\n\`\`\`\n${truncateTail(context.logTail, MAX_LOG_CHARS)}\n\`\`\``);
   }
 
   if (context.lossData) {
-    parts.push(`Loss data:\n\`\`\`json\n${JSON.stringify(context.lossData, null, 2)}\n\`\`\``);
+    parts.push(`Loss data:\n\`\`\`json\n${truncateJson(context.lossData, MAX_LOSS_DATA_CHARS)}\n\`\`\``);
   }
 
   if (context.datasetName) {

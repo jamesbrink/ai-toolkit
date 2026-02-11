@@ -9,6 +9,42 @@ import {
 } from '@/server/claude/serverTools';
 
 const MAX_TOOL_LOOPS = 10;
+// Reserve tokens for system prompt (~3K) + response (4K) + tools (~2K)
+const MAX_MESSAGE_TOKENS = 180_000;
+
+// Rough token estimate: ~4 characters per token
+function estimateTokens(messages: { role: string; content: unknown }[]): number {
+  let chars = 0;
+  for (const msg of messages) {
+    if (typeof msg.content === 'string') {
+      chars += msg.content.length;
+    } else if (Array.isArray(msg.content)) {
+      chars += JSON.stringify(msg.content).length;
+    }
+  }
+  return Math.ceil(chars / 4);
+}
+
+// Trim older messages to stay within the token budget.
+// Always keeps the most recent messages; drops from the front.
+// Preserves at least the last user message + any trailing assistant/tool messages.
+function trimMessages(
+  messages: { role: string; content: unknown }[],
+  maxTokens: number,
+): { role: string; content: unknown }[] {
+  if (estimateTokens(messages) <= maxTokens) return messages;
+
+  // Drop messages from the front, two at a time (user+assistant pairs),
+  // until we're under budget. Always keep at least the last 4 messages.
+  const minKeep = Math.min(4, messages.length);
+  let trimmed = [...messages];
+
+  while (trimmed.length > minKeep && estimateTokens(trimmed) > maxTokens) {
+    trimmed = trimmed.slice(2);
+  }
+
+  return trimmed;
+}
 
 export async function POST(req: NextRequest) {
   const auth = await getAnthropicAuth();
@@ -31,7 +67,7 @@ export async function POST(req: NextRequest) {
   const readable = new ReadableStream({
     async start(controller) {
       try {
-        let loopMessages = [...messages];
+        let loopMessages = trimMessages(messages, MAX_MESSAGE_TOKENS);
         let iterations = 0;
 
         while (iterations < MAX_TOOL_LOOPS) {
