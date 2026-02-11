@@ -1,6 +1,9 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { AnthropicAuth } from '@/server/settings';
 
+const CLAUDE_CODE_SYSTEM_PREFIX = 'You are Claude Code, Anthropic\'s official CLI for Claude.';
+const CLAUDE_CODE_USER_AGENT = 'claude-cli/2.1.2 (external, cli)';
+
 /**
  * Create an Anthropic SDK client that supports both API key and
  * Claude Code OAuth token authentication.
@@ -9,6 +12,8 @@ import { AnthropicAuth } from '@/server/settings';
  * - Sets Authorization: Bearer <token> (instead of x-api-key)
  * - Adds the oauth-2025-04-20 beta header
  * - Appends ?beta=true to the /v1/messages URL
+ * - Sets user-agent to match Claude Code
+ * - Prepends Claude Code system prompt identifier
  */
 export function createAnthropicClient(auth: AnthropicAuth): Anthropic {
   if (auth.oauthToken) {
@@ -21,6 +26,7 @@ export function createAnthropicClient(auth: AnthropicAuth): Anthropic {
         // Replace API-key auth with OAuth Bearer auth
         headers.delete('x-api-key');
         headers.set('authorization', `Bearer ${token}`);
+        headers.set('user-agent', CLAUDE_CODE_USER_AGENT);
 
         // Required beta flag for OAuth-authenticated requests
         const existingBeta = headers.get('anthropic-beta');
@@ -46,7 +52,33 @@ export function createAnthropicClient(auth: AnthropicAuth): Anthropic {
           url.searchParams.set('beta', 'true');
         }
 
-        return globalThis.fetch(url, { ...init, headers });
+        // Transform request body to match Claude Code expectations
+        let body = init?.body;
+        if (body && typeof body === 'string') {
+          try {
+            const parsed = JSON.parse(body);
+
+            // Prepend Claude Code system prompt identifier
+            if (typeof parsed.system === 'string') {
+              if (!parsed.system.startsWith(CLAUDE_CODE_SYSTEM_PREFIX)) {
+                parsed.system = CLAUDE_CODE_SYSTEM_PREFIX + '\n\n' + parsed.system;
+              }
+            } else if (Array.isArray(parsed.system)) {
+              const firstText = parsed.system.find((b: { type: string }) => b.type === 'text');
+              if (firstText && !firstText.text.startsWith(CLAUDE_CODE_SYSTEM_PREFIX)) {
+                firstText.text = CLAUDE_CODE_SYSTEM_PREFIX + '\n\n' + firstText.text;
+              }
+            } else if (!parsed.system) {
+              parsed.system = CLAUDE_CODE_SYSTEM_PREFIX;
+            }
+
+            body = JSON.stringify(parsed);
+          } catch {
+            // leave body as-is if not valid JSON
+          }
+        }
+
+        return globalThis.fetch(url, { ...init, body, headers });
       },
     });
   }
