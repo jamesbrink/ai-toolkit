@@ -37,9 +37,20 @@ Set `device: mps` in config YAML. Use `low_vram: true` and `quantize_te: true` f
 
 ### Web UI (development)
 ```bash
-cd ui && npm install && npm run build && npm run update_db && npm start
+cd ui && npm install && npm run update_db         # One-time setup (Prisma generate + DB push)
+cd ui && npm run dev                               # Dev mode with hot reload (Turbopack + ts-node-dev worker)
+cd ui && npm run build && npm start                # Production build + start
+cd ui && npm run build_and_start                   # All-in-one: install, migrate, build, start
+cd ui && npm run lint                              # ESLint 9 flat config
+cd ui && npm run format                            # Prettier (prettier-basic preset)
 # Access at http://localhost:8675
 ```
+
+### Docker (NVIDIA GPU)
+```bash
+docker compose up                              # Start UI with NVIDIA GPU passthrough
+```
+Mounts HuggingFace cache, SQLite DB, datasets, output, and config directories. Set `AI_TOOLKIT_AUTH` in environment for web UI password. See `docker-compose.yml` and `docker/Dockerfile` (CUDA 12.8.1 base).
 
 ### No test suite
 There are no automated tests. Validation is done by running training jobs with example configs from `config/examples/`.
@@ -63,6 +74,20 @@ Both contain: `flush()`, `_gradual_move_to_device()`, `set_device_state()`, `gen
 **Training**:
 - `SDTrainer` (`extensions_built_in/sd_trainer/SDTrainer.py`, ~2100 lines) — core training loop
 - `BaseSDTrainProcess` (`jobs/process/BaseSDTrainProcess.py`) — training infrastructure, optimizer, checkpointing
+
+### Extension system
+Extensions are loaded dynamically by `toolkit/extension.py:get_all_extensions()` which scans both `extensions_built_in/` and `extensions/` for packages exporting an `AI_TOOLKIT_EXTENSIONS` list. Each extension subclasses `Extension` with a unique `uid` and a `get_process()` classmethod that lazily imports its process class:
+```python
+class SDTrainerExtension(Extension):
+    uid = "sd_trainer"
+    name = "SD Trainer"
+    @classmethod
+    def get_process(cls):
+        from .SDTrainer import SDTrainer
+        return SDTrainer
+AI_TOOLKIT_EXTENSIONS = [SDTrainerExtension]
+```
+Config YAML references extensions by `uid` in the `process` field. The `get_all_extensions_process_dict()` function builds the uid→process mapping used by `job.py` to dispatch jobs.
 
 ### Config system (`toolkit/config_modules.py`)
 - YAML/JSON configs with `${ENV_VAR}` substitution (loaded from `.env`)
@@ -136,6 +161,14 @@ Two concurrent processes:
 
 Python discovery in worker: `PYTHON_PATH` env var → `.venv/bin/python` → `venv/bin/python` → `python`
 Path config: `TOOLKIT_ROOT` env var → `ui/cron/paths.ts` fallback
+
+### UI job lifecycle (Prisma SQLite)
+Three models in `ui/prisma/schema.prisma`:
+- **Settings** — key-value store for app configuration
+- **Queue** — one row per GPU set (`gpu_ids` unique), `is_running` flag tracks if a job is active on that queue
+- **Job** — stores `job_config` (JSON string of training YAML), tracks `status` ("stopped", "queued", "running", "completed", "error"), `step`, `speed_string`, `queue_position`
+
+Job flow: UI creates Job with status "queued" → cron worker polls for queued jobs → finds free Queue (matching `gpu_ids`, `is_running=false`) → spawns `python run.py <config>` → sets `is_running=true` → monitors process → on exit sets status and `is_running=false`. The `stop` flag signals graceful stop; `return_to_queue` re-queues instead of stopping.
 
 ### Web UI technology stack
 - **Tailwind CSS 4.1** — CSS-first config via `@import "tailwindcss"` in `globals.css`. No `tailwind.config.ts` (deleted during v3→v4 migration). Theme defined in `@theme` block in `globals.css`. PostCSS uses `@tailwindcss/postcss` plugin.
