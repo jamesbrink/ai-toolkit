@@ -90,19 +90,19 @@
         {
           # nix build / nix build .#default
           packages = {
-            default = ai-toolkit;
+            default = ai-toolkit-ui;
             ai-toolkit = ai-toolkit;
             ui = ai-toolkit-ui;
           } // lib.optionalAttrs isLinux {
             docker = docker-image;
           };
 
-          # nix run / nix run .#train -- config.yaml
+          # nix run / nix run .#ui -- start the web UI
           apps = {
             default = {
               type = "app";
-              program = "${ai-toolkit}/bin/ai-toolkit-train";
-              meta.description = "Run a diffusion model training job from a YAML config";
+              program = "${ai-toolkit-ui}/bin/ai-toolkit-ui";
+              meta.description = "Start the Next.js dashboard for managing training jobs";
             };
             train = {
               type = "app";
@@ -156,10 +156,10 @@
               echo "  python run.py config/your_config.yaml"
               echo ""
               echo "Nix package targets:"
-              echo "  nix build          # build ai-toolkit package"
-              echo "  nix build .#ui     # build Next.js web UI"
-              echo "  nix run . -- config/your_config.yaml  # run training"
-              echo "  nix run .#ui       # start web UI on port 8675"
+              echo "  nix build              # build Next.js web UI"
+              echo "  nix build .#ai-toolkit # build Python training package"
+              echo "  nix run                # start web UI on port 8675"
+              echo "  nix run .#train -- config/your_config.yaml  # run training"
               ${lib.optionalString isLinux ''echo "  nix build .#docker  # build Docker image"''}
             '';
           };
