@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { getAnthropicAuth } from '@/server/settings';
 import { createAnthropicClient, getClaudeModel } from '@/server/claude/client';
+import { captionPrompts } from '@/server/claude/captionPrompts';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -17,15 +18,6 @@ function getMediaType(filePath: string): MediaType | null {
   };
   return map[ext] || null;
 }
-
-const stylePrompts: Record<string, string> = {
-  descriptive:
-    'Describe this image in detail for training a diffusion model. Include subject, appearance, pose, clothing, background, lighting, style, and composition. Be factual and specific.',
-  booru:
-    'Write booru-style tags for this image, separated by commas. Include subject, clothing, pose, expression, hair, background, lighting, and style tags. Use common danbooru tag format.',
-  natural:
-    'Write a natural language caption for this image suitable for training a diffusion model. Describe what you see clearly and concisely in 1-2 sentences.',
-};
 
 export async function POST(req: NextRequest) {
   const auth = await getAnthropicAuth();
@@ -45,7 +37,7 @@ export async function POST(req: NextRequest) {
   }
 
   const client = createAnthropicClient(auth);
-  const prompt = stylePrompts[style] || stylePrompts.descriptive;
+  const prompt = captionPrompts[style] || captionPrompts.descriptive;
   const total = imagePaths.length;
 
   const encoder = new TextEncoder();
