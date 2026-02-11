@@ -59,18 +59,23 @@ export function createAnthropicClient(auth: AnthropicAuth): Anthropic {
           try {
             const parsed = JSON.parse(body);
 
-            // Prepend Claude Code system prompt identifier
+            // Prepend Claude Code system prompt as a separate array block.
+            // Anthropic validates that the FIRST text block is exactly the
+            // Claude Code prefix — string concatenation breaks this check.
+            const prefixBlock = { type: 'text', text: CLAUDE_CODE_SYSTEM_PREFIX };
             if (typeof parsed.system === 'string') {
-              if (!parsed.system.startsWith(CLAUDE_CODE_SYSTEM_PREFIX)) {
-                parsed.system = CLAUDE_CODE_SYSTEM_PREFIX + '\n\n' + parsed.system;
+              if (parsed.system === CLAUDE_CODE_SYSTEM_PREFIX) {
+                parsed.system = [prefixBlock];
+              } else {
+                parsed.system = [prefixBlock, { type: 'text', text: parsed.system }];
               }
             } else if (Array.isArray(parsed.system)) {
-              const firstText = parsed.system.find((b: { type: string }) => b.type === 'text');
-              if (firstText && !firstText.text.startsWith(CLAUDE_CODE_SYSTEM_PREFIX)) {
-                firstText.text = CLAUDE_CODE_SYSTEM_PREFIX + '\n\n' + firstText.text;
+              const first = parsed.system[0];
+              if (!first || first.type !== 'text' || first.text !== CLAUDE_CODE_SYSTEM_PREFIX) {
+                parsed.system = [prefixBlock, ...parsed.system];
               }
-            } else if (!parsed.system) {
-              parsed.system = CLAUDE_CODE_SYSTEM_PREFIX;
+            } else {
+              parsed.system = [prefixBlock];
             }
 
             // Prefix tool names with mcp__ so they pass OAuth tool validation
