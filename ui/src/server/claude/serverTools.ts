@@ -4,6 +4,7 @@ import { TOOLKIT_ROOT } from '@/paths';
 import { getDatasetsRoot, getTrainingFolder, getAnthropicAuth } from '@/server/settings';
 import { createAnthropicClient, getClaudeCaptionModel } from '@/server/claude/client';
 import { analyzeDataset, getStoredAnalysis, deleteAnalyzedImages } from '@/server/datasetAnalysis';
+import { runPythonAnalysis } from '@/server/pythonAnalysis';
 
 // Tool definitions sent to the Claude API
 export const serverToolDefinitions = [
@@ -55,7 +56,7 @@ export const serverToolDefinitions = [
   {
     name: 'analyze_dataset_quality',
     description:
-      'Analyze a dataset for image quality issues and near-duplicate images. Scans all images and returns a summary of duplicates, blurry, dark, bright, and too-small images with quality scores.',
+      'Analyze a dataset for image quality issues, near-duplicate images, and face detection. Uses OpenCV for accurate blur detection (Laplacian variance), brightness, contrast analysis, and Haar cascade face detection. Returns a summary of duplicates, blurry, dark, bright, low-contrast, and too-small images with quality scores, plus face counts.',
     input_schema: {
       type: 'object' as const,
       properties: {
@@ -79,7 +80,7 @@ export const serverToolDefinitions = [
         issue_type: {
           type: 'string',
           description:
-            'Filter by issue type: all, duplicates, blurry, dark, bright, small (default: all)',
+            'Filter by issue type: all, duplicates, blurry, dark, bright, small, low_contrast, faces (default: all)',
         },
       },
       required: ['dataset_name'],
@@ -99,6 +100,30 @@ export const serverToolDefinitions = [
         },
       },
       required: ['image_path'],
+    },
+  },
+  {
+    name: 'crop_faces',
+    description:
+      'Crop detected faces from a dataset and create a new sibling dataset with face crops. Each face gets a square crop with padding (default 1.8x) that includes head, hair, neck, and shoulders — ideal for LoRA person training. Requires running analyze_dataset_quality first to detect faces.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        dataset_name: { type: 'string', description: 'Name of the source dataset' },
+        output_dataset_name: {
+          type: 'string',
+          description: 'Name for the output dataset (default: {dataset_name}_faces)',
+        },
+        training_resolution: {
+          type: 'number',
+          description: 'Resolution to resize face crops to (default: 512)',
+        },
+        padding: {
+          type: 'number',
+          description: 'Padding multiplier around face bounding box (default: 1.8)',
+        },
+      },
+      required: ['dataset_name'],
     },
   },
   {
@@ -310,8 +335,14 @@ export async function executeServerTool(
         } else if (issueType === 'small') {
           filtered.images = analysis.issues.tooSmall;
           filtered.count = analysis.summary.tooSmallCount;
+        } else if (issueType === 'low_contrast') {
+          filtered.images = analysis.issues.lowContrast;
+          filtered.count = analysis.summary.lowContrastCount;
+        } else if (issueType === 'faces') {
+          filtered.count = analysis.summary.facesCount;
+          filtered.message = `${analysis.summary.facesCount} images with detected faces. Use the crop_faces tool to create a new dataset with face crops.`;
         } else {
-          filtered.message = `Unknown issue type "${issueType}". Use: duplicates, blurry, dark, bright, small, or all`;
+          filtered.message = `Unknown issue type "${issueType}". Use: duplicates, blurry, dark, bright, small, low_contrast, faces, or all`;
         }
         return JSON.stringify(filtered, null, 2);
       }
@@ -378,6 +409,51 @@ export async function executeServerTool(
         .join('');
     } catch (err) {
       return `Error viewing image: ${err instanceof Error ? err.message : String(err)}`;
+    }
+  }
+
+  if (name === 'crop_faces') {
+    const datasetName = input.dataset_name as string;
+    const outputDatasetName = (input.output_dataset_name as string) || `${datasetName}_faces`;
+    const trainingResolution = (input.training_resolution as number) || 512;
+    const paddingVal = (input.padding as number) || 1.8;
+
+    if (!datasetName) return 'Error: dataset_name is required';
+
+    try {
+      const datasetsRoot = await getDatasetsRoot();
+      const datasetDir = path.join(datasetsRoot, datasetName);
+      const outputDir = path.join(datasetsRoot, outputDatasetName);
+
+      // Find all images in the dataset
+      const fsModule = await import('fs');
+      const IMAGE_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif']);
+      function findImages(dir: string): string[] {
+        const results: string[] = [];
+        if (!fsModule.default.existsSync(dir)) return results;
+        for (const item of fsModule.default.readdirSync(dir)) {
+          const p = path.join(dir, item);
+          const s = fsModule.default.statSync(p);
+          if (s.isDirectory() && item !== '_controls' && !item.startsWith('.')) {
+            results.push(...findImages(p));
+          } else if (IMAGE_EXTENSIONS.has(path.extname(p).toLowerCase())) {
+            results.push(p);
+          }
+        }
+        return results;
+      }
+      const imagePaths = findImages(datasetDir);
+      if (imagePaths.length === 0) return 'Error: no images found in dataset';
+
+      const summary = await runPythonAnalysis('face-crop', imagePaths, {
+        outputDir,
+        trainingResolution,
+        padding: paddingVal,
+      });
+
+      return `Face cropping complete. Created ${summary.totalCrops || 0} face crops from ${summary.totalImages || 0} images.\nOutput dataset: ${outputDatasetName}\nOutput directory: ${outputDir}`;
+    } catch (err) {
+      return `Error cropping faces: ${err instanceof Error ? err.message : String(err)}`;
     }
   }
 

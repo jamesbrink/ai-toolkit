@@ -56,6 +56,11 @@ model ImageAnalysis {
   isDark            Boolean  @default(false)
   isBright          Boolean  @default(false)
   isTooSmall        Boolean  @default(false)
+  contrast          Float    @default(0)
+  isLowContrast     Boolean  @default(false)
+  hasFaces          Boolean  @default(false)
+  faceCount         Int      @default(0)
+  facesJson         String   @default("[]")
   qualityScore      Int      @default(100)
   fileModifiedAt    DateTime
   analyzedAt        DateTime @default(now())
@@ -63,6 +68,7 @@ model ImageAnalysis {
   @@index([datasetName])
   @@index([pHash])
   @@index([qualityScore])
+  @@index([hasFaces])
 }
 
 model DuplicateGroup {

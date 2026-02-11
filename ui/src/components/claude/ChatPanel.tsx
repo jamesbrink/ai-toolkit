@@ -15,6 +15,7 @@ const TOOL_LABELS: Record<string, string> = {
   get_dataset_issues: 'Checking dataset issues...',
   view_dataset_image: 'Viewing image...',
   delete_dataset_images: 'Deleting images...',
+  crop_faces: 'Cropping faces...',
 };
 
 const MIN_WIDTH = 320;

@@ -3,7 +3,8 @@ import fsSync from 'fs';
 import path from 'path';
 import { PrismaClient } from '@prisma/client';
 import { getDatasetsRoot } from '@/server/settings';
-import { analyzeImage, findDuplicateGroups, ImageMetrics } from '@/server/imageAnalysis';
+import { computePerceptualHash, findDuplicateGroups, ImageMetrics } from '@/server/imageAnalysis';
+import { runPythonAnalysis, PythonAnalysisResult } from '@/server/pythonAnalysis';
 
 const prisma = new PrismaClient();
 
@@ -24,6 +25,7 @@ export interface DatasetAnalysisResult {
     dark: string[];
     bright: string[];
     tooSmall: string[];
+    lowContrast: string[];
   };
   summary: {
     duplicateGroupCount: number;
@@ -31,6 +33,8 @@ export interface DatasetAnalysisResult {
     darkCount: number;
     brightCount: number;
     tooSmallCount: number;
+    lowContrastCount: number;
+    facesCount: number;
     avgQualityScore: number;
   };
 }
@@ -75,10 +79,11 @@ export async function analyzeDataset(
   const total = imagePaths.length;
   const allMetrics: ImageMetrics[] = [];
 
-  for (let i = 0; i < imagePaths.length; i++) {
-    const imagePath = imagePaths[i];
+  // Determine which images need analysis vs can use cached results
+  const pathsToAnalyze: string[] = [];
+  const cachedByPath = new Map<string, ImageMetrics>();
 
-    // Check if we can skip (incremental analysis)
+  for (const imagePath of imagePaths) {
     if (!options?.force) {
       try {
         const stat = await fs.stat(imagePath);
@@ -86,8 +91,7 @@ export async function analyzeDataset(
           where: { filePath: imagePath },
         });
         if (existing && existing.fileModifiedAt.getTime() === stat.mtime.getTime()) {
-          // File unchanged, use stored metrics
-          allMetrics.push({
+          cachedByPath.set(imagePath, {
             filePath: existing.filePath,
             width: existing.width,
             height: existing.height,
@@ -97,23 +101,97 @@ export async function analyzeDataset(
             avgBrightness: existing.avgBrightness,
             brightnessStdDev: existing.brightnessStdDev,
             laplacianVariance: existing.laplacianVariance,
+            contrast: existing.contrast,
             isBlurry: existing.isBlurry,
             isDark: existing.isDark,
             isBright: existing.isBright,
+            isLowContrast: existing.isLowContrast,
             isTooSmall: existing.isTooSmall,
+            hasFaces: existing.hasFaces,
+            faceCount: existing.faceCount,
+            facesJson: existing.facesJson,
             qualityScore: existing.qualityScore,
             fileModifiedAt: existing.fileModifiedAt,
           });
-          options?.onProgress?.({ type: 'progress', current: i + 1, total, imagePath });
           continue;
         }
       } catch {
-        // File doesn't exist in DB or stat failed, analyze it
+        // Not in DB or stat failed — needs analysis
       }
+    }
+    pathsToAnalyze.push(imagePath);
+  }
+
+  // Collect Python analysis results indexed by path
+  const pythonResultsByPath = new Map<string, PythonAnalysisResult>();
+
+  if (pathsToAnalyze.length > 0) {
+    // Run Python OpenCV analysis for quality metrics + face detection
+    const progressOffset = cachedByPath.size;
+    await runPythonAnalysis('analyze', pathsToAnalyze, {}, {
+      onResult: (result) => {
+        pythonResultsByPath.set(result.filePath as string, result);
+      },
+      onProgress: (current, _total) => {
+        options?.onProgress?.({
+          type: 'progress',
+          current: progressOffset + current,
+          total,
+          imagePath: pathsToAnalyze[current - 1] || '',
+        });
+      },
+      onError: (error, filePath) => {
+        console.error(`Python analysis error for ${filePath}: ${error}`);
+      },
+    });
+  }
+
+  // Build final metrics: merge pHash (Node.js) with quality data (Python)
+  let processedCount = 0;
+  for (const imagePath of imagePaths) {
+    const cached = cachedByPath.get(imagePath);
+    if (cached) {
+      allMetrics.push(cached);
+      processedCount++;
+      options?.onProgress?.({ type: 'progress', current: processedCount, total, imagePath });
+      continue;
+    }
+
+    const pyResult = pythonResultsByPath.get(imagePath);
+    if (!pyResult) {
+      processedCount++;
+      continue;
     }
 
     try {
-      const metrics = await analyzeImage(imagePath);
+      // Compute pHash in Node.js (works correctly with sharp's DCT)
+      const pHash = await computePerceptualHash(imagePath);
+      const stat = await fs.stat(imagePath);
+      const metadata = await (await import('sharp')).default(imagePath).metadata();
+
+      const metrics: ImageMetrics = {
+        filePath: imagePath,
+        width: pyResult.width as number,
+        height: pyResult.height as number,
+        fileSize: pyResult.fileSize as number,
+        format: metadata.format || 'unknown',
+        pHash,
+        avgBrightness: pyResult.avgBrightness as number,
+        brightnessStdDev: 0, // Not computed by Python; kept for schema compat
+        laplacianVariance: pyResult.laplacianVariance as number,
+        contrast: pyResult.contrast as number,
+        isBlurry: pyResult.isBlurry as boolean,
+        isDark: pyResult.isDark as boolean,
+        isBright: pyResult.isBright as boolean,
+        isLowContrast: pyResult.isLowContrast as boolean,
+        isTooSmall: pyResult.isTooSmall as boolean,
+        hasFaces: pyResult.hasFaces as boolean,
+        faceCount: pyResult.faceCount as number,
+        facesJson: JSON.stringify(pyResult.faces || []),
+        qualityScore: pyResult.qualityScore as number,
+        fileModifiedAt: stat.mtime,
+      };
+
       allMetrics.push(metrics);
 
       // Upsert into Prisma
@@ -130,10 +208,15 @@ export async function analyzeDataset(
           avgBrightness: metrics.avgBrightness,
           brightnessStdDev: metrics.brightnessStdDev,
           laplacianVariance: metrics.laplacianVariance,
+          contrast: metrics.contrast,
           isBlurry: metrics.isBlurry,
           isDark: metrics.isDark,
           isBright: metrics.isBright,
+          isLowContrast: metrics.isLowContrast,
           isTooSmall: metrics.isTooSmall,
+          hasFaces: metrics.hasFaces,
+          faceCount: metrics.faceCount,
+          facesJson: metrics.facesJson,
           qualityScore: metrics.qualityScore,
           fileModifiedAt: metrics.fileModifiedAt,
         },
@@ -146,20 +229,25 @@ export async function analyzeDataset(
           avgBrightness: metrics.avgBrightness,
           brightnessStdDev: metrics.brightnessStdDev,
           laplacianVariance: metrics.laplacianVariance,
+          contrast: metrics.contrast,
           isBlurry: metrics.isBlurry,
           isDark: metrics.isDark,
           isBright: metrics.isBright,
+          isLowContrast: metrics.isLowContrast,
           isTooSmall: metrics.isTooSmall,
+          hasFaces: metrics.hasFaces,
+          faceCount: metrics.faceCount,
+          facesJson: metrics.facesJson,
           qualityScore: metrics.qualityScore,
           fileModifiedAt: metrics.fileModifiedAt,
           analyzedAt: new Date(),
         },
       });
     } catch (err) {
-      console.error(`Failed to analyze ${imagePath}:`, err);
+      console.error(`Failed to process ${imagePath}:`, err);
     }
 
-    options?.onProgress?.({ type: 'progress', current: i + 1, total, imagePath });
+    processedCount++;
   }
 
   // Clean up stale entries for images that no longer exist
@@ -177,7 +265,7 @@ export async function analyzeDataset(
     });
   }
 
-  // Find duplicate groups
+  // Find duplicate groups (pHash-based, still in Node.js)
   const dupGroups = findDuplicateGroups(allMetrics);
 
   // Clear old duplicate groups for this dataset, then insert new ones
@@ -226,10 +314,15 @@ export async function getStoredAnalysis(datasetName: string): Promise<DatasetAna
     avgBrightness: a.avgBrightness,
     brightnessStdDev: a.brightnessStdDev,
     laplacianVariance: a.laplacianVariance,
+    contrast: a.contrast,
     isBlurry: a.isBlurry,
     isDark: a.isDark,
     isBright: a.isBright,
+    isLowContrast: a.isLowContrast,
     isTooSmall: a.isTooSmall,
+    hasFaces: a.hasFaces,
+    faceCount: a.faceCount,
+    facesJson: a.facesJson,
     qualityScore: a.qualityScore,
     fileModifiedAt: a.fileModifiedAt,
   }));
@@ -310,6 +403,8 @@ function buildResult(
   const dark = metrics.filter(m => m.isDark).map(m => m.filePath);
   const bright = metrics.filter(m => m.isBright).map(m => m.filePath);
   const tooSmall = metrics.filter(m => m.isTooSmall).map(m => m.filePath);
+  const lowContrast = metrics.filter(m => m.isLowContrast).map(m => m.filePath);
+  const withFaces = metrics.filter(m => m.hasFaces);
   const avgScore = metrics.length > 0
     ? metrics.reduce((sum, m) => sum + m.qualityScore, 0) / metrics.length
     : 100;
@@ -319,13 +414,15 @@ function buildResult(
     totalImages: metrics.length,
     analyzedImages: metrics.length,
     duplicateGroups: groups,
-    issues: { blurry, dark, bright, tooSmall },
+    issues: { blurry, dark, bright, tooSmall, lowContrast },
     summary: {
       duplicateGroupCount: groups.filter(g => !g.dismissed).length,
       blurryCount: blurry.length,
       darkCount: dark.length,
       brightCount: bright.length,
       tooSmallCount: tooSmall.length,
+      lowContrastCount: lowContrast.length,
+      facesCount: withFaces.length,
       avgQualityScore: Math.round(avgScore),
     },
   };

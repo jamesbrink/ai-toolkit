@@ -3,7 +3,7 @@
 import { useEffect, useState, use, useMemo } from 'react';
 import { LuImageOff, LuLoader, LuBan } from 'react-icons/lu';
 import { FaChevronLeft } from 'react-icons/fa';
-import { Sparkles, Search } from 'lucide-react';
+import { Sparkles, Search, Download } from 'lucide-react';
 import DatasetImageCard from '@/components/DatasetImageCard';
 import { Button } from '@headlessui/react';
 import AddImagesModal, { openImagesModal } from '@/components/AddImagesModal';
@@ -21,6 +21,7 @@ export default function DatasetPage({ params }: { params: { datasetName: string 
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [captionModalOpen, setCaptionModalOpen] = useState(false);
   const [analysisModalOpen, setAnalysisModalOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const { isConfigured, setContext } = useClaudeChat();
 
   // Set chat context so Claude knows which dataset the user is viewing
@@ -69,6 +70,34 @@ export default function DatasetPage({ params }: { params: { datasetName: string 
       refreshImageList(datasetName);
     }
   }, [datasetName]);
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const token = localStorage.getItem('AI_TOOLKIT_AUTH');
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch('/api/datasets/export', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ datasetName, includeCaptions: true }),
+      });
+
+      if (!res.ok) throw new Error('Export failed');
+
+      const data = await res.json();
+      // Trigger download via the existing file serving API
+      const link = document.createElement('a');
+      link.href = `/api/files/${encodeURIComponent(data.zipPath)}`;
+      link.download = data.fileName;
+      link.click();
+    } catch (err) {
+      console.error('Export failed:', err);
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const PageInfoContent = useMemo(() => {
     let icon = null;
@@ -141,6 +170,18 @@ export default function DatasetPage({ params }: { params: { datasetName: string 
             >
               <Search className="w-4 h-4" />
               Analyze Quality
+            </Button>
+          </div>
+        )}
+        {imgList.length > 0 && (
+          <div className="mr-2">
+            <Button
+              className="text-gray-200 bg-gray-600 hover:bg-gray-500 px-3 py-1 rounded-md flex items-center gap-1.5 text-sm disabled:opacity-50"
+              onClick={handleExport}
+              disabled={exporting}
+            >
+              <Download className="w-4 h-4" />
+              {exporting ? 'Exporting...' : 'Export ZIP'}
             </Button>
           </div>
         )}

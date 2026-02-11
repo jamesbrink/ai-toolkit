@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Dialog, DialogPanel, DialogTitle, Tab, TabGroup, TabList, TabPanel, TabPanels } from '@headlessui/react';
-import { X, Loader2, AlertTriangle, Eye, Sun, Moon, Minimize2, Copy } from 'lucide-react';
+import { X, Loader2, AlertTriangle, Eye, Sun, Moon, Minimize2, Copy, Contrast, User, Crop } from 'lucide-react';
 import { useDatasetAnalysis } from '@/hooks/useDatasetAnalysis';
 import DuplicateGroupCard from '@/components/DuplicateGroupCard';
 
@@ -19,9 +19,19 @@ export default function DatasetAnalysisPanel({
   datasetName,
   onImagesDeleted,
 }: DatasetAnalysisPanelProps) {
-  const { status, result, progress, error, startAnalysis, getStoredResults, dismissGroup, deleteImages } =
-    useDatasetAnalysis(datasetName);
+  const {
+    status, result, progress, error,
+    startAnalysis, getStoredResults, dismissGroup, deleteImages, cropFaces,
+  } = useDatasetAnalysis(datasetName);
   const [selectedQualityImages, setSelectedQualityImages] = useState<Set<string>>(new Set());
+  const [cropDialogOpen, setCropDialogOpen] = useState(false);
+  const [cropConfig, setCropConfig] = useState({
+    outputName: `${datasetName}_faces`,
+    resolution: 512,
+    padding: 1.8,
+  });
+  const [cropStatus, setCropStatus] = useState<'idle' | 'cropping' | 'done' | 'error'>('idle');
+  const [cropResult, setCropResult] = useState<Record<string, unknown> | null>(null);
 
   // Try to load stored results when panel opens
   useEffect(() => {
@@ -29,6 +39,11 @@ export default function DatasetAnalysisPanel({
       getStoredResults();
     }
   }, [isOpen, status, getStoredResults]);
+
+  // Reset crop config when dataset changes
+  useEffect(() => {
+    setCropConfig(prev => ({ ...prev, outputName: `${datasetName}_faces` }));
+  }, [datasetName]);
 
   const handleDeleteDuplicates = async (imagePaths: string[]) => {
     const result = await deleteImages(imagePaths);
@@ -58,9 +73,33 @@ export default function DatasetAnalysisPanel({
     });
   };
 
+  const handleCropFaces = async () => {
+    setCropStatus('cropping');
+    try {
+      const summary = await cropFaces({
+        outputDatasetName: cropConfig.outputName,
+        trainingResolution: cropConfig.resolution,
+        padding: cropConfig.padding,
+      });
+      setCropResult(summary);
+      setCropStatus('done');
+    } catch (err) {
+      console.error('Face crop failed:', err);
+      setCropStatus('error');
+    }
+  };
+
   const allIssueImages = result
-    ? [...new Set([...result.issues.blurry, ...result.issues.dark, ...result.issues.bright, ...result.issues.tooSmall])]
+    ? [...new Set([
+        ...result.issues.blurry,
+        ...result.issues.dark,
+        ...result.issues.bright,
+        ...result.issues.tooSmall,
+        ...result.issues.lowContrast,
+      ])]
     : [];
+
+  const tabLabels = ['Summary', 'Duplicates', 'Faces', 'Quality Issues'];
 
   return (
     <Dialog open={isOpen} onClose={onClose} className="relative z-50">
@@ -79,23 +118,15 @@ export default function DatasetAnalysisPanel({
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto">
-            {/* Analysis controls */}
+            {/* Analysis controls — single button, always force */}
             {(status === 'idle' || status === 'complete' || status === 'error') && (
               <div className="px-5 py-3 border-b border-gray-800 flex items-center gap-3">
                 <button
-                  onClick={() => startAnalysis(false)}
+                  onClick={() => startAnalysis(true)}
                   className="px-4 py-2 bg-blue-700 hover:bg-blue-600 text-white text-sm rounded-lg transition-colors"
                 >
-                  {result ? 'Re-analyze' : 'Analyze Dataset'}
+                  {result ? 'Re-analyze Dataset' : 'Analyze Dataset'}
                 </button>
-                {result && (
-                  <button
-                    onClick={() => startAnalysis(true)}
-                    className="px-3 py-2 text-gray-400 hover:text-gray-200 text-sm border border-gray-700 rounded-lg transition-colors"
-                  >
-                    Force Full Re-scan
-                  </button>
-                )}
                 {error && (
                   <span className="text-sm text-red-400">{error}</span>
                 )}
@@ -124,7 +155,7 @@ export default function DatasetAnalysisPanel({
             {result && status !== 'analyzing' && (
               <TabGroup>
                 <TabList className="flex border-b border-gray-700 px-5">
-                  {['Summary', 'Duplicates', 'Quality Issues'].map(tab => (
+                  {tabLabels.map(tab => (
                     <Tab
                       key={tab}
                       className={({ selected }) =>
@@ -141,6 +172,11 @@ export default function DatasetAnalysisPanel({
                           {result.summary.duplicateGroupCount}
                         </span>
                       )}
+                      {tab === 'Faces' && result.summary.facesCount > 0 && (
+                        <span className="ml-1.5 px-1.5 py-0.5 text-[10px] rounded-full bg-purple-900/50 text-purple-300">
+                          {result.summary.facesCount}
+                        </span>
+                      )}
                       {tab === 'Quality Issues' && allIssueImages.length > 0 && (
                         <span className="ml-1.5 px-1.5 py-0.5 text-[10px] rounded-full bg-red-900/50 text-red-300">
                           {allIssueImages.length}
@@ -153,10 +189,10 @@ export default function DatasetAnalysisPanel({
                 <TabPanels className="p-5">
                   {/* Summary Tab */}
                   <TabPanel className="space-y-4">
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
                       <SummaryCard label="Total Images" value={result.totalImages} />
                       <SummaryCard
-                        label="Duplicate Groups"
+                        label="Duplicates"
                         value={result.summary.duplicateGroupCount}
                         icon={<Copy className="w-4 h-4" />}
                         color={result.summary.duplicateGroupCount > 0 ? 'amber' : 'green'}
@@ -180,10 +216,22 @@ export default function DatasetAnalysisPanel({
                         color={result.summary.brightCount > 0 ? 'yellow' : 'green'}
                       />
                       <SummaryCard
+                        label="Low Contrast"
+                        value={result.summary.lowContrastCount}
+                        icon={<Contrast className="w-4 h-4" />}
+                        color={result.summary.lowContrastCount > 0 ? 'orange' : 'green'}
+                      />
+                      <SummaryCard
                         label="Too Small"
                         value={result.summary.tooSmallCount}
                         icon={<Minimize2 className="w-4 h-4" />}
                         color={result.summary.tooSmallCount > 0 ? 'orange' : 'green'}
+                      />
+                      <SummaryCard
+                        label="With Faces"
+                        value={result.summary.facesCount}
+                        icon={<User className="w-4 h-4" />}
+                        color={result.summary.facesCount > 0 ? 'purple' : 'gray'}
                       />
                     </div>
 
@@ -231,6 +279,39 @@ export default function DatasetAnalysisPanel({
                     )}
                   </TabPanel>
 
+                  {/* Faces Tab */}
+                  <TabPanel className="space-y-4">
+                    {result.summary.facesCount === 0 ? (
+                      <div className="text-center py-8 text-gray-400">
+                        <User className="w-8 h-8 mx-auto mb-2 opacity-40" />
+                        <p>No faces detected in this dataset</p>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex items-center justify-between bg-gray-800 rounded-lg p-3 border border-gray-700">
+                          <span className="text-sm text-gray-300">
+                            {result.summary.facesCount} image{result.summary.facesCount !== 1 ? 's' : ''} with detected faces
+                          </span>
+                          <button
+                            onClick={() => {
+                              setCropDialogOpen(true);
+                              setCropStatus('idle');
+                              setCropResult(null);
+                            }}
+                            className="px-3 py-1.5 text-sm bg-purple-700 hover:bg-purple-600 text-white rounded-lg transition-colors flex items-center gap-1.5"
+                          >
+                            <Crop className="w-4 h-4" />
+                            Crop Faces
+                          </button>
+                        </div>
+                        <p className="text-xs text-gray-400">
+                          Face detection uses OpenCV Haar cascades. &quot;Crop Faces&quot; will create a new sibling dataset
+                          with square face crops padded to include head, hair, neck, and shoulders — ideal for LoRA person training.
+                        </p>
+                      </>
+                    )}
+                  </TabPanel>
+
                   {/* Quality Issues Tab */}
                   <TabPanel className="space-y-4">
                     {allIssueImages.length === 0 ? (
@@ -260,6 +341,7 @@ export default function DatasetAnalysisPanel({
                             if (result.issues.dark.includes(imgPath)) issues.push('dark');
                             if (result.issues.bright.includes(imgPath)) issues.push('bright');
                             if (result.issues.tooSmall.includes(imgPath)) issues.push('small');
+                            if (result.issues.lowContrast.includes(imgPath)) issues.push('low contrast');
                             const isSelected = selectedQualityImages.has(imgPath);
 
                             return (
@@ -320,6 +402,112 @@ export default function DatasetAnalysisPanel({
           </div>
         </DialogPanel>
       </div>
+
+      {/* Face Crop Config Dialog */}
+      <Dialog open={cropDialogOpen} onClose={() => setCropDialogOpen(false)} className="relative z-[60]">
+        <div className="fixed inset-0 bg-black/60" aria-hidden="true" />
+        <div className="fixed inset-0 flex items-center justify-center p-4">
+          <DialogPanel className="w-full max-w-md bg-gray-900 rounded-xl border border-gray-700 p-5 space-y-4">
+            <DialogTitle className="text-lg font-medium text-gray-100">Crop Faces</DialogTitle>
+
+            {cropStatus === 'idle' && (
+              <>
+                <div className="space-y-3">
+                  <label className="block">
+                    <span className="text-sm text-gray-300">Output Dataset Name</span>
+                    <input
+                      type="text"
+                      value={cropConfig.outputName}
+                      onChange={e => setCropConfig(prev => ({ ...prev, outputName: e.target.value }))}
+                      className="mt-1 w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 text-sm"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="text-sm text-gray-300">Training Resolution</span>
+                    <input
+                      type="number"
+                      value={cropConfig.resolution}
+                      onChange={e => setCropConfig(prev => ({ ...prev, resolution: parseInt(e.target.value) || 512 }))}
+                      className="mt-1 w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 text-sm"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="text-sm text-gray-300">Padding Multiplier</span>
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={cropConfig.padding}
+                      onChange={e => setCropConfig(prev => ({ ...prev, padding: parseFloat(e.target.value) || 1.8 }))}
+                      className="mt-1 w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 text-sm"
+                    />
+                    <span className="text-xs text-gray-400 mt-1 block">
+                      1.8x includes head, hair, neck, shoulders. Lower = tighter crop.
+                    </span>
+                  </label>
+                </div>
+                <div className="flex justify-end gap-2 pt-2">
+                  <button
+                    onClick={() => setCropDialogOpen(false)}
+                    className="px-3 py-2 text-sm text-gray-400 hover:text-gray-200"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleCropFaces}
+                    className="px-4 py-2 text-sm bg-purple-700 hover:bg-purple-600 text-white rounded-lg transition-colors"
+                  >
+                    Start Cropping
+                  </button>
+                </div>
+              </>
+            )}
+
+            {cropStatus === 'cropping' && (
+              <div className="flex items-center gap-3 text-sm text-gray-300 py-4">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Cropping faces...
+              </div>
+            )}
+
+            {cropStatus === 'done' && cropResult && (
+              <div className="space-y-3">
+                <p className="text-sm text-green-400">
+                  Created {cropResult.totalCrops as number} face crops from {cropResult.totalImages as number} images.
+                </p>
+                <p className="text-xs text-gray-400">
+                  Output dataset: <span className="text-gray-200">{cropConfig.outputName}</span>
+                </p>
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => {
+                      setCropDialogOpen(false);
+                      // Navigate to the new dataset
+                      window.location.href = `/datasets/${encodeURIComponent(cropConfig.outputName)}`;
+                    }}
+                    className="px-4 py-2 text-sm bg-blue-700 hover:bg-blue-600 text-white rounded-lg transition-colors"
+                  >
+                    View New Dataset
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {cropStatus === 'error' && (
+              <div className="space-y-3">
+                <p className="text-sm text-red-400">Face cropping failed. Check the console for details.</p>
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => setCropStatus('idle')}
+                    className="px-3 py-2 text-sm text-gray-400 hover:text-gray-200"
+                  >
+                    Try Again
+                  </button>
+                </div>
+              </div>
+            )}
+          </DialogPanel>
+        </div>
+      </Dialog>
     </Dialog>
   );
 }
@@ -333,7 +521,7 @@ function SummaryCard({
   label: string;
   value: number;
   icon?: React.ReactNode;
-  color?: 'green' | 'red' | 'yellow' | 'amber' | 'orange' | 'gray';
+  color?: 'green' | 'red' | 'yellow' | 'amber' | 'orange' | 'purple' | 'gray';
 }) {
   const colorMap = {
     green: 'border-green-800 bg-green-950/20 text-green-400',
@@ -341,6 +529,7 @@ function SummaryCard({
     yellow: 'border-yellow-800 bg-yellow-950/20 text-yellow-400',
     amber: 'border-amber-800 bg-amber-950/20 text-amber-400',
     orange: 'border-orange-800 bg-orange-950/20 text-orange-400',
+    purple: 'border-purple-800 bg-purple-950/20 text-purple-400',
     gray: 'border-gray-700 bg-gray-800 text-gray-300',
   };
 

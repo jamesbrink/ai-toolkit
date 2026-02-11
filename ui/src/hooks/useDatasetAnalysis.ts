@@ -7,6 +7,7 @@ export interface AnalysisIssues {
   dark: string[];
   bright: string[];
   tooSmall: string[];
+  lowContrast: string[];
 }
 
 export interface DuplicateGroup {
@@ -22,6 +23,8 @@ export interface AnalysisSummary {
   darkCount: number;
   brightCount: number;
   tooSmallCount: number;
+  lowContrastCount: number;
+  facesCount: number;
   avgQualityScore: number;
 }
 
@@ -202,6 +205,7 @@ export function useDatasetAnalysis(datasetName: string) {
             dark: prev.issues.dark.filter(p => !deletedSet.has(p)),
             bright: prev.issues.bright.filter(p => !deletedSet.has(p)),
             tooSmall: prev.issues.tooSmall.filter(p => !deletedSet.has(p)),
+            lowContrast: prev.issues.lowContrast.filter(p => !deletedSet.has(p)),
           },
           summary: {
             ...prev.summary,
@@ -209,6 +213,7 @@ export function useDatasetAnalysis(datasetName: string) {
             darkCount: prev.issues.dark.filter(p => !deletedSet.has(p)).length,
             brightCount: prev.issues.bright.filter(p => !deletedSet.has(p)).length,
             tooSmallCount: prev.issues.tooSmall.filter(p => !deletedSet.has(p)).length,
+            lowContrastCount: prev.issues.lowContrast.filter(p => !deletedSet.has(p)).length,
           },
         };
       });
@@ -220,6 +225,83 @@ export function useDatasetAnalysis(datasetName: string) {
     }
   }, []);
 
+  const cropFaces = useCallback(async (opts: {
+    outputDatasetName?: string;
+    trainingResolution?: number;
+    padding?: number;
+  } = {}) => {
+    const token = localStorage.getItem('AI_TOOLKIT_AUTH');
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const res = await fetch('/api/datasets/face-crop', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        datasetName,
+        outputDatasetName: opts.outputDatasetName,
+        trainingResolution: opts.trainingResolution,
+        padding: opts.padding,
+      }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: res.statusText }));
+      throw new Error(err.error || 'Face crop failed');
+    }
+
+    // Stream NDJSON progress
+    const reader = res.body?.getReader();
+    if (!reader) throw new Error('No response body');
+
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let summary: Record<string, unknown> | null = null;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+        try {
+          const data = JSON.parse(trimmed);
+          if (data.type === 'progress') {
+            setProgress({ current: data.current, total: data.total });
+          } else if (data.type === 'summary') {
+            summary = data;
+          }
+        } catch { /* skip */ }
+      }
+    }
+
+    return summary;
+  }, [datasetName]);
+
+  const exportDataset = useCallback(async (includeCaptions: boolean = true) => {
+    const token = localStorage.getItem('AI_TOOLKIT_AUTH');
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const res = await fetch('/api/datasets/export', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ datasetName, includeCaptions }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: res.statusText }));
+      throw new Error(err.error || 'Export failed');
+    }
+
+    return await res.json() as { zipPath: string; fileName: string };
+  }, [datasetName]);
+
   return {
     status,
     result,
@@ -229,5 +311,7 @@ export function useDatasetAnalysis(datasetName: string) {
     getStoredResults,
     dismissGroup,
     deleteImages,
+    cropFaces,
+    exportDataset,
   };
 }

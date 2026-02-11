@@ -1,5 +1,4 @@
 import sharp from 'sharp';
-import fs from 'fs/promises';
 
 export interface ImageMetrics {
   filePath: string;
@@ -11,10 +10,15 @@ export interface ImageMetrics {
   avgBrightness: number;
   brightnessStdDev: number;
   laplacianVariance: number;
+  contrast: number;
   isBlurry: boolean;
   isDark: boolean;
   isBright: boolean;
+  isLowContrast: boolean;
   isTooSmall: boolean;
+  hasFaces: boolean;
+  faceCount: number;
+  facesJson: string;
   qualityScore: number;
   fileModifiedAt: Date;
 }
@@ -117,90 +121,6 @@ export async function computePerceptualHash(filePath: string): Promise<string> {
 }
 
 /**
- * Compute the Laplacian variance of an image as a blur detection metric.
- * Resizes to 256x256 grayscale, applies a 3x3 Laplacian kernel,
- * and returns the variance of the output. Low variance = blurry.
- */
-export async function computeLaplacianVariance(
-  filePath: string
-): Promise<number> {
-  const SIZE = 256;
-  const { data } = await sharp(filePath)
-    .resize(SIZE, SIZE, { fit: 'fill' })
-    .grayscale()
-    .raw()
-    .toBuffer({ resolveWithObject: true });
-
-  // Laplacian kernel: [[0,1,0],[1,-4,1],[0,1,0]]
-  const laplacianValues: number[] = [];
-
-  for (let y = 1; y < SIZE - 1; y++) {
-    for (let x = 1; x < SIZE - 1; x++) {
-      const idx = y * SIZE + x;
-      const lap =
-        data[idx - SIZE] + // top
-        data[idx - 1] + // left
-        -4 * data[idx] + // center
-        data[idx + 1] + // right
-        data[idx + SIZE]; // bottom
-      laplacianValues.push(lap);
-    }
-  }
-
-  // Compute variance
-  const n = laplacianValues.length;
-  let sum = 0;
-  for (let i = 0; i < n; i++) {
-    sum += laplacianValues[i];
-  }
-  const mean = sum / n;
-
-  let variance = 0;
-  for (let i = 0; i < n; i++) {
-    const diff = laplacianValues[i] - mean;
-    variance += diff * diff;
-  }
-  variance /= n;
-
-  return variance;
-}
-
-/**
- * Compute brightness statistics for an image.
- * Uses sharp stats to get channel means and computes luminance.
- */
-export async function computeBrightness(
-  filePath: string
-): Promise<{ avg: number; stdDev: number }> {
-  const stats = await sharp(filePath).stats();
-  const channels = stats.channels;
-
-  // For grayscale images, use the single channel
-  if (channels.length === 1) {
-    return {
-      avg: channels[0].mean,
-      stdDev: channels[0].stdev,
-    };
-  }
-
-  // For color images, compute luminance: 0.299*R + 0.587*G + 0.114*B
-  const rMean = channels[0].mean;
-  const gMean = channels[1].mean;
-  const bMean = channels[2].mean;
-  const luminance = 0.299 * rMean + 0.587 * gMean + 0.114 * bMean;
-
-  // Weighted standard deviation
-  const rStd = channels[0].stdev;
-  const gStd = channels[1].stdev;
-  const bStd = channels[2].stdev;
-  const stdDev = Math.sqrt(
-    0.299 * rStd * rStd + 0.587 * gStd * gStd + 0.114 * bStd * bStd
-  );
-
-  return { avg: luminance, stdDev };
-}
-
-/**
  * Compute the Hamming distance between two perceptual hash hex strings.
  * Returns 0-64 (0 = identical, 64 = completely different).
  */
@@ -224,60 +144,6 @@ export function hammingDistance(hash1: string, hash2: string): number {
   }
 
   return distance;
-}
-
-/**
- * Analyze a single image and return comprehensive metrics.
- */
-export async function analyzeImage(filePath: string): Promise<ImageMetrics> {
-  const [metadata, stat, pHash, laplacianVariance, brightness] =
-    await Promise.all([
-      sharp(filePath).metadata(),
-      fs.stat(filePath),
-      computePerceptualHash(filePath),
-      computeLaplacianVariance(filePath),
-      computeBrightness(filePath),
-    ]);
-
-  if (!metadata.width || !metadata.height) {
-    throw new Error(`Failed to read image dimensions for: ${filePath}`);
-  }
-
-  const width = metadata.width;
-  const height = metadata.height;
-  const format = metadata.format || 'unknown';
-  const fileSize = stat.size;
-  const fileModifiedAt = stat.mtime;
-
-  const isBlurry = laplacianVariance < 100;
-  const isDark = brightness.avg < 30;
-  const isBright = brightness.avg > 235;
-  const isTooSmall = Math.min(width, height) < 256;
-
-  // Compute quality score
-  let qualityScore = 100;
-  if (isBlurry) qualityScore -= 30;
-  if (isDark) qualityScore -= 20;
-  if (isBright) qualityScore -= 20;
-  if (isTooSmall) qualityScore -= 25;
-
-  return {
-    filePath,
-    width,
-    height,
-    fileSize,
-    format,
-    pHash,
-    avgBrightness: brightness.avg,
-    brightnessStdDev: brightness.stdDev,
-    laplacianVariance,
-    isBlurry,
-    isDark,
-    isBright,
-    isTooSmall,
-    qualityScore,
-    fileModifiedAt,
-  };
 }
 
 /**

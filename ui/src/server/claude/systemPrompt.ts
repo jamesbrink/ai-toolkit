@@ -33,13 +33,15 @@ Writing captions: Caption files are .txt files placed next to images with the sa
 Example configs: The toolkit includes example training configs for all supported architectures. Look in the example configs directory for templates like train_lora_flux_24gb.yaml, train_lora_wan_2.1.yaml, etc.
 
 Dataset quality analysis tools:
-- analyze_dataset_quality: Scan a dataset for near-duplicate images and quality issues (blur, brightness, size). Returns a summary with counts and details.
-- get_dataset_issues: View stored analysis results filtered by issue type (all, duplicates, blurry, dark, bright, small).
+- analyze_dataset_quality: Scan a dataset using OpenCV for accurate quality analysis: blur (Laplacian variance), brightness, contrast, size, near-duplicates (pHash), and face detection (Haar cascade). Returns a summary with counts, quality scores, and face data.
+- get_dataset_issues: View stored analysis results filtered by issue type (all, duplicates, blurry, dark, bright, small, low_contrast, faces).
 - view_dataset_image: Look at a specific image using vision to describe what you see. Useful for inspecting flagged images.
 - delete_dataset_images: Delete images from a dataset (also removes their caption .txt files and analysis data). Always provide a reason.
+- crop_faces: Crop detected faces from a dataset into a new sibling dataset. Each face gets a padded square crop (default 1.8x padding) including head, hair, neck, shoulders — ideal for LoRA person training.
 
 When asked about dataset quality, run analyze_dataset_quality first, then present findings clearly.
 When the user asks to delete images (duplicates, low quality, etc.), use the delete_dataset_images tool directly. Always explain what you are deleting and why before calling the tool, and summarize what was deleted afterward.
+When the user wants to train a LoRA on a person, suggest running face detection and then cropping faces to create a focused training dataset.
 
 Captioning best practices:
 - Shorter captions (20-40 words) train better than long, exhaustive ones. Filler phrases dilute the signal.
@@ -113,7 +115,7 @@ function buildPageContext(context: ChatContext): string {
   if (context.analysisAvailable && context.analysisSummary) {
     const s = context.analysisSummary;
     parts.push(
-      `Dataset quality analysis available: ${s.totalImages} images analyzed, ${s.duplicateGroupCount} duplicate groups, ${s.blurryCount} blurry, ${s.darkCount} dark, ${s.brightCount} bright, ${s.tooSmallCount} too small`
+      `Dataset quality analysis available: ${s.totalImages} images analyzed, ${s.duplicateGroupCount} duplicate groups, ${s.blurryCount} blurry, ${s.darkCount} dark, ${s.brightCount} bright, ${s.lowContrastCount ?? 0} low contrast, ${s.tooSmallCount} too small, ${s.facesCount ?? 0} with faces`
     );
   }
 
