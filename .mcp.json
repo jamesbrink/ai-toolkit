@@ -3,6 +3,14 @@
     "nixos": {
       "command": "nix",
       "args": ["run", "github:utensils/mcp-nixos", "--"]
+    },
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "@playwright/mcp@latest",
+        "--headless",
+        "--viewport-size=1280x720"
+      ]
     }
   }
 }

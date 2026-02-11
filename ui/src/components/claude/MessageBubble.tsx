@@ -45,7 +45,7 @@ const markdownComponents: Components = {
   hr: () => <hr className="border-gray-700 my-3" />,
   table: ({ children }) => (
     <div className="overflow-x-auto my-2 chat-scrollbar">
-      <table className="text-xs border-collapse w-full">{children}</table>
+      <table className="text-xs border-collapse min-w-full">{children}</table>
     </div>
   ),
   th: ({ children }) => <th className="border border-gray-700 px-2 py-1 text-left font-semibold">{children}</th>,
@@ -96,7 +96,7 @@ export default function MessageBubble({ message, isStreaming }: MessageBubblePro
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-3`}>
       <div
-        className={`max-w-[85%] min-w-0 px-3 py-2 rounded-lg text-sm overflow-hidden ${
+        className={`max-w-[85%] min-w-0 px-3 py-2 rounded-lg text-sm overflow-x-auto overflow-y-hidden break-words chat-scrollbar ${
           isUser ? 'bg-gray-700 text-gray-100' : 'bg-gray-800 text-gray-100'
         }`}
       >
