@@ -214,7 +214,7 @@ export default function DatasetPage({ params }: { params: { datasetName: string 
                 key={img.img_path}
                 alt="image"
                 imageUrl={img.img_path}
-                onDelete={() => refreshImageList(datasetName)}
+                onDelete={() => setImgList(prev => prev.filter(item => item.img_path !== img.img_path))}
                 showAiCaption={isConfigured}
               />
             ))}

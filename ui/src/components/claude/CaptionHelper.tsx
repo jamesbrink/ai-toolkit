@@ -110,9 +110,11 @@ export default function CaptionHelper({ isOpen, onClose, imagePaths, datasetName
     setResults(prev => prev.map(r => (r.error ? r : { ...r, accepted: true })));
   };
 
-  const applyAccepted = async () => {
-    const accepted = results.filter(r => r.accepted && !r.error);
-    for (const result of accepted) {
+  const [isSaving, setIsSaving] = useState(false);
+
+  const applyCaptions = async (items: CaptionResult[]) => {
+    setIsSaving(true);
+    for (const result of items) {
       try {
         await apiClient.post('/api/img/caption', {
           imgPath: result.imagePath,
@@ -122,11 +124,23 @@ export default function CaptionHelper({ isOpen, onClose, imagePaths, datasetName
         console.error('Failed to save caption:', err);
       }
     }
+    setIsSaving(false);
     onCaptionsApplied?.();
     onClose();
   };
 
+  const applyAccepted = () => {
+    applyCaptions(results.filter(r => r.accepted && !r.error));
+  };
+
+  const applyAll = () => {
+    const all = results.filter(r => !r.error && r.caption);
+    setResults(prev => prev.map(r => (!r.error && r.caption ? { ...r, accepted: true } : r)));
+    applyCaptions(all);
+  };
+
   const acceptedCount = results.filter(r => r.accepted).length;
+  const appliableCount = results.filter(r => !r.error && r.caption).length;
 
   return (
     <Dialog open={isOpen} onClose={onClose} className="relative z-50">
@@ -264,18 +278,34 @@ export default function CaptionHelper({ isOpen, onClose, imagePaths, datasetName
                   setResults([]);
                   setProgress({ current: 0, total: 0 });
                 }}
-                className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-200"
+                disabled={isSaving}
+                className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-200 disabled:opacity-40"
               >
                 <RotateCcw className="w-4 h-4" />
                 Regenerate
               </button>
-              <button
-                onClick={applyAccepted}
-                disabled={acceptedCount === 0}
-                className="px-4 py-2 bg-green-700 hover:bg-green-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm rounded-lg transition-colors"
-              >
-                Apply {acceptedCount} caption{acceptedCount !== 1 ? 's' : ''}
-              </button>
+              <div className="flex items-center gap-2">
+                {isSaving && (
+                  <span className="flex items-center gap-1.5 text-xs text-gray-400">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    Saving...
+                  </span>
+                )}
+                <button
+                  onClick={applyAccepted}
+                  disabled={acceptedCount === 0 || isSaving}
+                  className="px-4 py-2 bg-green-700 hover:bg-green-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm rounded-lg transition-colors"
+                >
+                  Apply {acceptedCount} caption{acceptedCount !== 1 ? 's' : ''}
+                </button>
+                <button
+                  onClick={applyAll}
+                  disabled={appliableCount === 0 || isSaving}
+                  className="px-4 py-2 bg-blue-700 hover:bg-blue-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm rounded-lg transition-colors"
+                >
+                  Apply All ({appliableCount})
+                </button>
+              </div>
             </div>
           )}
         </DialogPanel>
