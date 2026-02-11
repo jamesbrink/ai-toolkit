@@ -13,7 +13,6 @@ import FullscreenDropOverlay from '@/components/FullscreenDropOverlay';
 import CaptionHelper from '@/components/claude/CaptionHelper';
 import DatasetAnalysisPanel from '@/components/DatasetAnalysisPanel';
 import { useClaudeChat } from '@/components/claude/ClaudeChatContext';
-import { datasetTools } from '@/components/claude/tools/configTools';
 
 export default function DatasetPage({ params }: { params: { datasetName: string } }) {
   const [imgList, setImgList] = useState<{ img_path: string }[]>([]);
@@ -22,16 +21,9 @@ export default function DatasetPage({ params }: { params: { datasetName: string 
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [captionModalOpen, setCaptionModalOpen] = useState(false);
   const [analysisModalOpen, setAnalysisModalOpen] = useState(false);
-  const { isConfigured, setTools, setContext } = useClaudeChat();
+  const { isConfigured, setContext } = useClaudeChat();
 
-  // Register dataset tools and context for Claude chat
-  useEffect(() => {
-    if (isConfigured) {
-      setTools(datasetTools);
-      return () => setTools([]);
-    }
-  }, [isConfigured, setTools]);
-
+  // Set chat context so Claude knows which dataset the user is viewing
   useEffect(() => {
     if (datasetName) {
       setContext({
