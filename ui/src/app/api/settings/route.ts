@@ -35,6 +35,7 @@ export async function POST(request: Request) {
       CLAUDE_CHAT_MODEL,
       CLAUDE_CAPTION_MODEL,
       MDNS_ENABLED,
+      RUNPOD_API_KEY,
     } = body;
 
     // Upsert all settings
@@ -53,6 +54,7 @@ export async function POST(request: Request) {
       upsert('CLAUDE_CHAT_MODEL', CLAUDE_CHAT_MODEL),
       upsert('CLAUDE_CAPTION_MODEL', CLAUDE_CAPTION_MODEL),
       upsert('MDNS_ENABLED', MDNS_ENABLED),
+      upsert('RUNPOD_API_KEY', RUNPOD_API_KEY),
     ]);
 
     flushCache();

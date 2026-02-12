@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [refactor]
+    tags: ['v*']
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: DeterminateSystems/nix-installer-action@main
+
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: Lint and typecheck
+        run: |
+          nix develop --command bash -c "cd ui && npm ci && npm run typecheck && npm run lint"
+
+      - name: Check Nix formatting
+        run: nix fmt -- --check
+
+  build-docker:
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: DeterminateSystems/nix-installer-action@main
+        with:
+          extra-conf: |
+            extra-substituters = https://cuda-maintainers.cachix.org
+            extra-trusted-public-keys = cuda-maintainers.cachix.org-1:0dq3bujKpuEPMCX6U4WylrUDZ9JyUG0VpVZa7CNfq5E=
+
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: Build Docker image
+        run: nix build .#docker --print-build-logs
+
+      - name: Load Docker image
+        run: docker load < result
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Tag and push
+        run: |
+          IMAGE="ghcr.io/${{ github.repository_owner }}/ai-toolkit"
+          SHA_TAG="${IMAGE}:sha-${GITHUB_SHA::7}"
+
+          docker tag ai-toolkit:latest "${SHA_TAG}"
+          docker push "${SHA_TAG}"
+
+          # Tag as latest on refactor branch push or version tag
+          if [[ "${{ github.ref }}" == "refs/heads/refactor" ]] || [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            docker tag ai-toolkit:latest "${IMAGE}:latest"
+            docker push "${IMAGE}:latest"
+          fi
+
+          # Tag with version on version tag push
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF#refs/tags/}"
+            docker tag ai-toolkit:latest "${IMAGE}:${VERSION}"
+            docker push "${IMAGE}:${VERSION}"
+          fi

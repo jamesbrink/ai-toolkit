@@ -197,6 +197,36 @@ export default function Settings() {
                     </select>
                   </div>
                 </div>
+
+                {/* Cloud Providers Section */}
+                <div className="pt-4 border-t border-gray-700">
+                  <h2 className="text-sm font-semibold text-gray-300 uppercase tracking-wide mb-4">Cloud Providers</h2>
+                  <div>
+                    <label htmlFor="RUNPOD_API_KEY" className="block text-sm font-medium mb-2">
+                      RunPod API Key
+                      <div className="text-gray-400 text-sm ml-1">
+                        Deploy and manage cloud GPU pods directly from AI Toolkit. Get a key from{' '}
+                        <a
+                          href="https://www.runpod.io/console/user/settings"
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          runpod.io/console/user/settings
+                        </a>
+                        .
+                      </div>
+                    </label>
+                    <input
+                      type="password"
+                      id="RUNPOD_API_KEY"
+                      name="RUNPOD_API_KEY"
+                      value={settings.RUNPOD_API_KEY}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent"
+                      placeholder="Enter your RunPod API key"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </div>

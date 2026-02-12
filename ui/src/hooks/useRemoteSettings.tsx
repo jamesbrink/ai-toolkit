@@ -12,6 +12,7 @@ const defaultSettings: Settings = {
   CLAUDE_CHAT_MODEL: '',
   CLAUDE_CAPTION_MODEL: '',
   MDNS_ENABLED: 'true',
+  RUNPOD_API_KEY: '',
 };
 
 export default function useRemoteSettings(hostId: string | null) {
@@ -38,6 +39,7 @@ export default function useRemoteSettings(hostId: string | null) {
           CLAUDE_CHAT_MODEL: data.CLAUDE_CHAT_MODEL || '',
           CLAUDE_CAPTION_MODEL: data.CLAUDE_CAPTION_MODEL || '',
           MDNS_ENABLED: data.MDNS_ENABLED ?? 'true',
+          RUNPOD_API_KEY: data.RUNPOD_API_KEY || '',
         });
         setIsLoaded(true);
       })

@@ -104,6 +104,20 @@ export const getAnthropicApiKey = async (): Promise<string> => {
   return auth.apiKey || auth.oauthToken || '';
 };
 
+export const getRunPodApiKey = async (): Promise<string> => {
+  const key = 'RUNPOD_API_KEY';
+  let apiKey = myCache.get(key) as string;
+  if (apiKey) {
+    return apiKey;
+  }
+  const row = await prisma.settings.findFirst({
+    where: { key },
+  });
+  apiKey = row?.value && row.value !== '' ? row.value : process.env.RUNPOD_API_KEY || '';
+  myCache.set(key, apiKey);
+  return apiKey;
+};
+
 const DEFAULT_CHAT_MODEL = 'claude-sonnet-4-5-20250929';
 const DEFAULT_CAPTION_MODEL = 'claude-haiku-4-5-20251001';
 

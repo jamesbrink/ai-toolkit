@@ -1,0 +1,66 @@
+import { NextResponse } from 'next/server';
+import crypto from 'crypto';
+import prisma from '@/server/prisma';
+import { deployPod } from '@/server/runpod';
+
+export async function GET() {
+  try {
+    const pods = await prisma.runPodPod.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
+    return NextResponse.json({ pods });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to fetch pods';
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const { name, gpuTypeId, gpuTypeDisplay, gpuCount, cloudType, volumeInGb, containerDiskInGb, publicKey } = body;
+
+    if (!name || !gpuTypeId) {
+      return NextResponse.json({ error: 'name and gpuTypeId are required' }, { status: 400 });
+    }
+
+    // Generate a secure auth password for the remote instance
+    const authPassword = crypto.randomBytes(18).toString('base64url');
+
+    // Deploy via RunPod API
+    const deployed = await deployPod({
+      name,
+      gpuTypeId,
+      gpuCount: gpuCount || 1,
+      cloudType: cloudType || 'COMMUNITY',
+      volumeInGb: volumeInGb || 50,
+      containerDiskInGb: containerDiskInGb || 20,
+      authPassword,
+      publicKey,
+    });
+
+    // Create local tracking record
+    const pod = await prisma.runPodPod.create({
+      data: {
+        runpodId: deployed.id,
+        name: deployed.name,
+        gpuTypeId,
+        gpuTypeDisplay: gpuTypeDisplay || '',
+        gpuCount: gpuCount || 1,
+        cloudType: cloudType || 'COMMUNITY',
+        volumeInGb: volumeInGb || 50,
+        containerDiskInGb: containerDiskInGb || 20,
+        costPerHr: deployed.costPerHr || 0,
+        desiredStatus: 'RUNNING',
+        currentStatus: 'deploying',
+        authPassword,
+        startedAt: new Date(),
+      },
+    });
+
+    return NextResponse.json({ pod }, { status: 201 });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to deploy pod';
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}

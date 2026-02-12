@@ -1,17 +1,29 @@
 # OCI/Docker image for ai-toolkit
 # Build with: nix build .#docker
 # Load with: docker load < result
-# Run UI:    docker run -p 8675:8675 -v ./datasets:/workspace/datasets -v ./output:/workspace/output ai-toolkit
+# Run UI:    docker run -p 8675:8675 -p 22:22 -v ./datasets:/workspace/datasets -v ./output:/workspace/output ai-toolkit
 # Run train: docker run ai-toolkit ai-toolkit-train config/your_config.yaml
 #
 # For mDNS host discovery, use host networking:
 #   docker run --network=host ai-toolkit
+#
+# For RunPod SSH access, set PUBLIC_KEY env var:
+#   docker run -e PUBLIC_KEY="ssh-ed25519 ..." ai-toolkit
 {
   pkgs,
   lib,
   ai-toolkit,
   ai-toolkit-ui,
 }:
+
+let
+  entrypoint = pkgs.substituteAll {
+    src = ./docker-entrypoint.sh;
+    isExecutable = true;
+    inherit (pkgs) openssh;
+    uiWrapper = ai-toolkit-ui;
+  };
+in
 
 pkgs.dockerTools.buildLayeredImage {
   name = "ai-toolkit";
@@ -26,10 +38,42 @@ pkgs.dockerTools.buildLayeredImage {
     git
     nodejs_22
     cacert
+    openssh
+    gnugrep
+    gawk
   ];
 
+  fakeRootCommands = ''
+    # sshd requires these directories and files
+    mkdir -p ./run/sshd
+    mkdir -p ./etc/ssh
+    mkdir -p ./root/.ssh
+    chmod 700 ./root/.ssh
+    mkdir -p ./tmp
+    chmod 1777 ./tmp
+
+    # Minimal passwd/group/shadow for sshd
+    echo 'root:x:0:0:root:/root:/bin/bash' > ./etc/passwd
+    echo 'root:x:0:' > ./etc/group
+    echo 'root:!:1::::::' > ./etc/shadow
+    chmod 640 ./etc/shadow
+    echo 'sshd:x:74:74:sshd:/var/empty/sshd:/bin/false' >> ./etc/passwd
+    echo 'sshd:x:74:' >> ./etc/group
+
+    # Minimal sshd_config
+    cat > ./etc/ssh/sshd_config << 'SSHD_EOF'
+    Port 22
+    PermitRootLogin yes
+    PubkeyAuthentication yes
+    PasswordAuthentication no
+    ChallengeResponseAuthentication no
+    UsePAM no
+    Subsystem sftp internal-sftp
+    SSHD_EOF
+  '';
+
   config = {
-    Cmd = [ "${ai-toolkit-ui}/bin/ai-toolkit-ui" ];
+    Entrypoint = [ "${entrypoint}" ];
     WorkingDir = "/workspace";
     Volumes = {
       "/workspace/config" = { };
@@ -39,6 +83,7 @@ pkgs.dockerTools.buildLayeredImage {
     };
     ExposedPorts = {
       "8675/tcp" = { };
+      "22/tcp" = { };
       "5353/udp" = { }; # mDNS
     };
     Env = [

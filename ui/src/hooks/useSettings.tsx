@@ -11,6 +11,7 @@ export interface Settings {
   CLAUDE_CHAT_MODEL: string;
   CLAUDE_CAPTION_MODEL: string;
   MDNS_ENABLED: string;
+  RUNPOD_API_KEY: string;
 }
 
 export default function useSettings() {
@@ -22,6 +23,7 @@ export default function useSettings() {
     CLAUDE_CHAT_MODEL: '',
     CLAUDE_CAPTION_MODEL: '',
     MDNS_ENABLED: 'true',
+    RUNPOD_API_KEY: '',
   });
   const [isSettingsLoaded, setIsLoaded] = useState(false);
   useEffect(() => {
@@ -37,6 +39,7 @@ export default function useSettings() {
           CLAUDE_CHAT_MODEL: data.CLAUDE_CHAT_MODEL || '',
           CLAUDE_CAPTION_MODEL: data.CLAUDE_CAPTION_MODEL || '',
           MDNS_ENABLED: data.MDNS_ENABLED ?? 'true',
+          RUNPOD_API_KEY: data.RUNPOD_API_KEY || '',
         });
         setIsLoaded(true);
       })
