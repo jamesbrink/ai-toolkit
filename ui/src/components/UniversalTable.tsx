@@ -111,17 +111,22 @@ export default function UniversalTable<T>({
                   {columns.map(column => (
                     <th
                       key={column.key}
-                      className={classNames(
-                        'px-3 py-2',
-                        column.className,
-                        column.sortable && 'cursor-pointer select-none hover:text-gray-200 transition-colors',
-                      )}
-                      onClick={column.sortable ? () => handleSort(column.key) : undefined}
+                      className={classNames('px-3 py-2', column.className)}
                     >
-                      <span className="inline-flex items-center">
-                        {column.title}
-                        {column.sortable && <SortIndicator columnKey={column.key} />}
-                      </span>
+                      {column.sortable ? (
+                        <button
+                          type="button"
+                          className="inline-flex items-center cursor-pointer select-none hover:text-gray-200 transition-colors"
+                          onClick={() => handleSort(column.key)}
+                        >
+                          {column.title}
+                          <SortIndicator columnKey={column.key} />
+                        </button>
+                      ) : (
+                        <span className="inline-flex items-center">
+                          {column.title}
+                        </span>
+                      )}
                     </th>
                   ))}
                 </tr>

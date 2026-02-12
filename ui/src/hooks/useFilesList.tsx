@@ -24,7 +24,6 @@ export default function useFilesList(jobID: string, reloadInterval: null | numbe
     request
       .then(res => res.data)
       .then(data => {
-        console.log('Fetched files:', data);
         if (data.files) {
           setFiles(data.files);
         }

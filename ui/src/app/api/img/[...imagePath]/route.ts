@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 import { getDatasetsRoot, getTrainingFolder, getDataRoot } from '@/server/settings';
+import { contentTypeMap } from '@/utils/mimeTypes';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ imagePath: string[] }> }) {
   const { imagePath } = await params;
@@ -32,6 +33,17 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return new NextResponse('Access denied', { status: 403 });
     }
 
+    // Symlink protection: verify resolved path is still within allowed directories
+    try {
+      const realPath = fs.realpathSync(filepath);
+      if (!allowedDirs.some(root => realPath.startsWith(root))) {
+        console.warn(`Access denied (symlink escape): ${filepath} resolves to ${realPath}`);
+        return new NextResponse('Access denied', { status: 403 });
+      }
+    } catch {
+      // realpathSync throws if file doesn't exist — handled by existsSync below
+    }
+
     // Check if file exists
     if (!fs.existsSync(filepath)) {
       console.warn(`File not found: ${filepath}`);
@@ -46,28 +58,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     // Determine content type
     const ext = path.extname(filepath).toLowerCase();
-    const contentTypeMap: { [key: string]: string } = {
-      // Images
-      '.jpg': 'image/jpeg',
-      '.jpeg': 'image/jpeg',
-      '.png': 'image/png',
-      '.gif': 'image/gif',
-      '.webp': 'image/webp',
-      '.svg': 'image/svg+xml',
-      '.bmp': 'image/bmp',
-      // Videos
-      '.mp4': 'video/mp4',
-      '.avi': 'video/x-msvideo',
-      '.mov': 'video/quicktime',
-      '.mkv': 'video/x-matroska',
-      '.wmv': 'video/x-ms-wmv',
-      '.m4v': 'video/x-m4v',
-      '.flv': 'video/x-flv',
-      // Audio
-      '.mp3': 'audio/mpeg',
-      '.wav': 'audio/wav',
-    };
-
     const contentType = contentTypeMap[ext] || 'application/octet-stream';
 
     // Read file as buffer

@@ -9,8 +9,7 @@ export const startJob = (jobID: string) => {
     apiClient
       .get(`/api/jobs/${jobID}/start`)
       .then(res => res.data)
-      .then(data => {
-        console.log('Job started:', data);
+      .then(() => {
         resolve();
       })
       .catch(error => {
@@ -25,8 +24,7 @@ export const stopJob = (jobID: string) => {
     apiClient
       .get(`/api/jobs/${jobID}/stop`)
       .then(res => res.data)
-      .then(data => {
-        console.log('Job stopped:', data);
+      .then(() => {
         resolve();
       })
       .catch(error => {
@@ -41,8 +39,7 @@ export const deleteJob = (jobID: string) => {
     apiClient
       .get(`/api/jobs/${jobID}/delete`)
       .then(res => res.data)
-      .then(data => {
-        console.log('Job deleted:', data);
+      .then(() => {
         resolve();
       })
       .catch(error => {
@@ -57,8 +54,7 @@ export const markJobAsStopped = (jobID: string) => {
     apiClient
       .get(`/api/jobs/${jobID}/mark_stopped`)
       .then(res => res.data)
-      .then(data => {
-        console.log('Job marked as stopped:', data);
+      .then(() => {
         resolve();
       })
       .catch(error => {
@@ -85,11 +81,6 @@ export const getAvaliableJobActions = (job: AnyJob) => {
     canStart = true;
   }
   return { canDelete, canEdit, canStop, canStart, canRemoveFromQueue };
-};
-
-export const getNumberOfSamples = (job: AnyJob) => {
-  const jobConfig = getJobConfig(job);
-  return jobConfig.config.process[0].sample?.prompts?.length || 0;
 };
 
 export const getTotalSteps = (job: AnyJob) => {

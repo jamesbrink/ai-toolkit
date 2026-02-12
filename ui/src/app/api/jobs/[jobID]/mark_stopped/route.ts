@@ -8,7 +8,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     where: { id: jobID },
   });
 
-  // update job status to 'running'
+  if (!job) {
+    return NextResponse.json({ error: 'Job not found' }, { status: 404 });
+  }
+
+  // update job status to 'stopped'
   await prisma.job.update({
     where: { id: jobID },
     data: {
@@ -17,8 +21,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       info: 'Job stopped',
     },
   });
-
-  console.log(`Job ${jobID} marked as stopped`);
 
   return NextResponse.json(job);
 }

@@ -378,7 +378,6 @@ export default function SimpleJob({
                   label="Linear Rank"
                   value={jobConfig.config.process[0].network.linear}
                   onChange={value => {
-                    console.log('onChange', value);
                     setJobConfig(value, 'config.process[0].network.linear');
                     setJobConfig(value, 'config.process[0].network.linear_alpha');
                   }}
@@ -392,8 +391,7 @@ export default function SimpleJob({
                     label="Conv Rank"
                     value={jobConfig.config.process[0].network.conv}
                     onChange={value => {
-                      console.log('onChange', value);
-                      setJobConfig(value, 'config.process[0].network.conv');
+                        setJobConfig(value, 'config.process[0].network.conv');
                       setJobConfig(value, 'config.process[0].network.conv_alpha');
                     }}
                     placeholder="eg. 16"

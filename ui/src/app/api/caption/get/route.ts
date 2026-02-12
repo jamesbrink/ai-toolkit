@@ -1,16 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
-import path from 'path';
 import { getDatasetsRoot } from '@/server/settings';
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
   const { imgPath } = body;
-  console.log('Received POST request for caption:', imgPath);
   try {
     // Decode the path
     const filepath = imgPath;
-    console.log('Decoded image path:', filepath);
 
     // caption name is the filepath without extension but with .txt
     const captionPath = filepath.replace(/\.[^/.]+$/, '') + '.txt';
@@ -24,6 +21,17 @@ export async function POST(request: NextRequest) {
     if (!isAllowed) {
       console.warn(`Access denied: ${filepath} not in ${allowedDir}`);
       return new NextResponse('Access denied', { status: 403 });
+    }
+
+    // Symlink protection: verify resolved path is still within allowed directory
+    try {
+      const realPath = fs.realpathSync(captionPath);
+      if (!realPath.startsWith(allowedDir)) {
+        console.warn(`Access denied (symlink escape): ${captionPath} resolves to ${realPath}`);
+        return new NextResponse('Access denied', { status: 403 });
+      }
+    } catch {
+      // realpathSync throws if file doesn't exist — handled by existsSync below
     }
 
     // Check if file exists

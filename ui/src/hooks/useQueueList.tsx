@@ -14,9 +14,8 @@ export default function useQueueList() {
       .get('/api/queue')
       .then(res => res.data)
       .then(data => {
-        console.log('Queues:', data);
         if (data.error) {
-          console.log('Error fetching queues:', data.error);
+          console.error('Error fetching queues:', data.error);
           setStatus('error');
         } else {
           setQueues(data.queues);

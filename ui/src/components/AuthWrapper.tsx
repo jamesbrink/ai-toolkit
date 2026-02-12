@@ -59,7 +59,7 @@ export default function AuthWrapper({ authRequired, children }: AuthWrapperProps
       }
     } catch (err) {
       setIsAuthorized(false);
-      console.log(err);
+      console.error(err);
       setError('Invalid token. Please try again.');
     }
     setIsLoading(false);

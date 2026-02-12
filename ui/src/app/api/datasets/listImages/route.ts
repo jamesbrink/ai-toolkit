@@ -7,6 +7,11 @@ export async function POST(request: Request) {
   const datasetsPath = await getDatasetsRoot();
   const body = await request.json();
   const { datasetName } = body;
+
+  if (!datasetName || typeof datasetName !== 'string' || datasetName.trim() === '') {
+    return NextResponse.json({ error: 'datasetName is required' }, { status: 400 });
+  }
+
   const datasetFolder = path.join(datasetsPath, datasetName);
 
   try {

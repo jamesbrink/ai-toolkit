@@ -208,7 +208,6 @@ export default function Datasets() {
         apiClient
           .post('/api/datasets/delete', { name: datasetName })
           .then(() => {
-            console.log('Dataset deleted:', datasetName);
             refreshDatasets();
           })
           .catch(error => {
@@ -290,7 +289,6 @@ export default function Datasets() {
     e.preventDefault();
     try {
       const data = await apiClient.post('/api/datasets/create', { name: newDatasetName }).then(res => res.data);
-      console.log('New dataset created:', data);
       refreshDatasets();
       setNewDatasetName('');
       setIsNewDatasetModalOpen(false);
@@ -313,7 +311,6 @@ export default function Datasets() {
         }
         try {
           const data = await apiClient.post('/api/datasets/create', { name }).then(res => res.data);
-          console.log('New dataset created:', data);
           if (data.name) {
             router.push(`/datasets/${data.name}`);
           } else {

@@ -5,8 +5,7 @@ export const startQueue = (queueID: string) => {
     apiClient
       .get(`/api/queue/${queueID}/start`)
       .then(res => res.data)
-      .then(data => {
-        console.log('Queue started:', data);
+      .then(() => {
         resolve();
       })
       .catch(error => {
@@ -20,8 +19,7 @@ export const stopQueue = (queueID: string) => {
     apiClient
       .get(`/api/queue/${queueID}/stop`)
       .then(res => res.data)
-      .then(data => {
-        console.log('Queue stopped:', data);
+      .then(() => {
         resolve();
       })
       .catch(error => {

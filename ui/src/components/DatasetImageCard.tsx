@@ -77,7 +77,6 @@ const DatasetImageCard: React.FC<DatasetImageCardProps> = ({
       .post(proxyApiPath('/api/caption/get', hostId), { imgPath: imageUrl })
       .then(res => res.data)
       .then(data => {
-        console.log('Caption fetched:', data);
         if (data) {
           // fix issue where caption could be non string
           data = `${data}`;
@@ -102,7 +101,6 @@ const DatasetImageCard: React.FC<DatasetImageCardProps> = ({
       .post('/api/img/caption', { imgPath: imageUrl, caption: trimmedCaption })
       .then(res => res.data)
       .then(data => {
-        console.log('Caption saved:', data);
         setSavedCaption(trimmedCaption);
       })
       .catch(error => {
@@ -220,6 +218,7 @@ const DatasetImageCard: React.FC<DatasetImageCardProps> = ({
                 onClick={generateAiCaption}
                 disabled={isGeneratingAiCaption}
                 title="Generate caption with Claude"
+                aria-label="Generate caption with Claude"
               >
                 {isGeneratingAiCaption ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -231,6 +230,7 @@ const DatasetImageCard: React.FC<DatasetImageCardProps> = ({
             {!isRemote && onDelete && (
               <button
                 className="bg-gray-800 rounded-full p-2"
+                aria-label={`Delete ${isItAVideo ? 'video' : 'image'}`}
                 onClick={() => {
                   openConfirm({
                     title: `Delete ${isItAVideo ? 'video' : 'image'}`,
@@ -241,7 +241,6 @@ const DatasetImageCard: React.FC<DatasetImageCardProps> = ({
                       apiClient
                         .post('/api/img/delete', { imgPath: imageUrl })
                         .then(() => {
-                          console.log('Image deleted:', imageUrl);
                           onDelete();
                         })
                         .catch(error => {

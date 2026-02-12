@@ -58,8 +58,6 @@ export default function AddSingleImageModal() {
           },
           timeout: 0, // Disable timeout
         });
-        console.log('Upload successful:', resp.data);
-
         onDone(resp.data.files[0] || null);
       } catch (error) {
         console.error('Upload failed:', error);

@@ -79,7 +79,6 @@ export default function SampleControlImage({
 
   const clearImage = useCallback(
     (e?: React.MouseEvent) => {
-      console.log('clearImage');
       if (e) {
         e.stopPropagation();
         e.preventDefault();

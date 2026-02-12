@@ -235,20 +235,22 @@ export default function SampleImages({ job, hostId }: SampleImagesProps) {
         imageBaseUrl={imageBaseUrl}
         hostId={hostId}
       />
-      <div
+      <button
+        type="button"
         className="fixed top-20 mt-4 right-6 w-10 h-10 rounded-full bg-gray-900 shadow-lg flex items-center justify-center text-white opacity-80 hover:opacity-100 cursor-pointer"
         onClick={scrollToTop}
-        title="Scroll to Top"
+        aria-label="Scroll to top"
       >
         <FaCaretUp className="text-gray-400" />
-      </div>
-      <div
+      </button>
+      <button
+        type="button"
         className="fixed bottom-5 right-6 w-10 h-10 rounded-full bg-gray-900 shadow-lg flex items-center justify-center text-white opacity-80 hover:opacity-100 cursor-pointer"
         onClick={scrollToBottom}
-        title="Scroll to Bottom"
+        aria-label="Scroll to bottom"
       >
         <FaCaretDown className="text-gray-400" />
-      </div>
+      </button>
     </div>
   );
 }

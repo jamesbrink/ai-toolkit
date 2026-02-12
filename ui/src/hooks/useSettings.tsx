@@ -29,7 +29,6 @@ export default function useSettings() {
       .get('/api/settings')
       .then(res => res.data)
       .then(data => {
-        console.log('Settings:', data);
         setSettings({
           HF_TOKEN: data.HF_TOKEN || '',
           TRAINING_FOLDER: data.TRAINING_FOLDER || '',

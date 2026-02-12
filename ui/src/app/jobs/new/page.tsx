@@ -144,7 +144,6 @@ export default function TrainingForm() {
       request
         .then(res => res.data)
         .then(data => {
-          console.log('Clone Training:', data);
           setGpuIDs(data.gpu_ids);
           const newJobConfig = migrateJobConfig(JSON.parse(data.job_config));
           newJobConfig.config.name = `${newJobConfig.config.name}_copy`;
@@ -160,7 +159,6 @@ export default function TrainingForm() {
         .get(`/api/jobs?id=${runId}`)
         .then(res => res.data)
         .then(data => {
-          console.log('Training:', data);
           setGpuIDs(data.gpu_ids);
           setJobConfig(migrateJobConfig(JSON.parse(data.job_config)));
         })
@@ -267,7 +265,7 @@ export default function TrainingForm() {
       } else {
         alert('Failed to save job. Please try again.');
       }
-      console.log('Error saving training:', error);
+      console.error('Error saving training:', error);
     } finally {
       setTimeout(() => {
         setStatus('idle');

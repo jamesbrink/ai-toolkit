@@ -327,7 +327,6 @@ export default function SampleImageViewer({
                               : apiClient.post('/api/img/delete', { imgPath: imgPath });
                             deleteRequest
                               .then(() => {
-                                console.log('Image deleted:', imgPath);
                                 onChange(null);
                                 if (refreshSampleImages) {
                                   refreshSampleImages();

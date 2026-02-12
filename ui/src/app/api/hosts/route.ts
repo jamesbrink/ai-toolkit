@@ -24,6 +24,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'address is required' }, { status: 400 });
     }
 
+    const portNum = Number(port);
+    if (!Number.isInteger(portNum) || portNum < 1 || portNum > 65535) {
+      return NextResponse.json({ error: 'port must be an integer between 1 and 65535' }, { status: 400 });
+    }
+
     // Try to fetch the remote's identity
     let remoteInstanceId: string | null = null;
     let remoteDeviceType = 'none';

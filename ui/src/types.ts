@@ -4,29 +4,10 @@
 
 export type DeviceType = 'nvidia' | 'mps' | 'cpu' | 'none';
 
-export interface GpuUtilization {
-  gpu: number;
-  memory: number;
-}
-
 export interface GpuMemory {
   total: number;
   free: number;
   used: number;
-}
-
-export interface GpuPower {
-  draw: number;
-  limit: number;
-}
-
-export interface GpuClocks {
-  graphics: number;
-  memory: number;
-}
-
-export interface GpuFan {
-  speed: number;
 }
 
 export interface GpuInfo {
@@ -34,11 +15,22 @@ export interface GpuInfo {
   name: string;
   driverVersion?: string;
   temperature?: number;
-  utilization: GpuUtilization;
+  utilization: {
+    gpu: number;
+    memory: number;
+  };
   memory: GpuMemory;
-  power?: GpuPower;
-  clocks?: GpuClocks;
-  fan?: GpuFan;
+  power?: {
+    draw: number;
+    limit: number;
+  };
+  clocks?: {
+    graphics: number;
+    memory: number;
+  };
+  fan?: {
+    speed: number;
+  };
   isMps?: boolean;
 }
 
@@ -113,11 +105,6 @@ export interface DatasetConfig {
   control_path_3?: string | null;
 }
 
-export interface EMAConfig {
-  use_ema: boolean;
-  ema_decay: number;
-}
-
 export interface TrainConfig {
   batch_size: number;
   bypass_guidance_embedding?: boolean;
@@ -131,7 +118,10 @@ export interface TrainConfig {
   content_or_style: string;
   optimizer: string;
   lr: number;
-  ema_config?: EMAConfig;
+  ema_config?: {
+    use_ema: boolean;
+    ema_decay: number;
+  };
   dtype: string;
   unload_text_encoder: boolean;
   cache_text_embeddings: boolean;
@@ -152,17 +142,15 @@ export interface TrainConfig {
   differential_guidance_scale?: number;
 }
 
-export interface QuantizeKwargsConfig {
-  exclude: string[];
-}
-
 export interface ModelConfig {
   name_or_path: string;
   quantize: boolean;
   quantize_te: boolean;
   qtype: string;
   qtype_te: string;
-  quantize_kwargs?: QuantizeKwargsConfig;
+  quantize_kwargs?: {
+    exclude: string[];
+  };
   arch: string;
   low_vram: boolean;
   model_kwargs: Record<string, unknown>;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Server, Cpu, Monitor } from 'lucide-react';
 import classNames from 'classnames';
 
@@ -13,14 +13,12 @@ interface HostSummaryCardProps {
 }
 
 export default function HostSummaryCard({ id, name, isOnline, deviceType, activeJobs }: HostSummaryCardProps) {
-  const router = useRouter();
-
   const DeviceIcon = deviceType === 'mps' ? Monitor : deviceType === 'nvidia' ? Cpu : Server;
 
   return (
-    <div
-      onClick={() => router.push(`/hosts/${id}`)}
-      className="bg-gray-900 rounded-xl border border-gray-800 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
+    <Link
+      href={`/hosts/${id}`}
+      className="block bg-gray-900 rounded-xl border border-gray-800 p-3 hover:shadow-lg transition-all duration-200"
     >
       <div className="flex items-center space-x-3">
         <DeviceIcon className="w-5 h-5 text-gray-400 shrink-0" />
@@ -39,6 +37,6 @@ export default function HostSummaryCard({ id, name, isOnline, deviceType, active
           </div>
         </div>
       </div>
-    </div>
+    </Link>
   );
 }

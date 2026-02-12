@@ -21,7 +21,6 @@ export default function useDatasetList() {
       .get('/api/datasets/list')
       .then(res => res.data)
       .then(data => {
-        console.log('Datasets:', data);
         data.sort((a: DatasetInfo, b: DatasetInfo) => a.name.localeCompare(b.name));
         setDatasets(data);
         setStatus('success');

@@ -14,9 +14,8 @@ export default function useJobsList(onlyActive = false, reloadInterval: null | n
       .get('/api/jobs')
       .then(res => res.data)
       .then(data => {
-        console.log('Jobs:', data);
         if (data.error) {
-          console.log('Error fetching jobs:', data.error);
+          console.error('Error fetching jobs:', data.error);
           setStatus('error');
         } else {
           if (onlyActive) {
