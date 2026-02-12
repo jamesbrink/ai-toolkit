@@ -25,7 +25,7 @@ export default function DeployPodModal({ isOpen, onClose, gpuTypes, onDeployed }
   const selectedGpu = gpuTypes.find(g => g.id === gpuTypeId);
   const filteredGpus = gpuTypes.filter(g => (cloudType === 'SECURE' ? g.secureCloud : g.communityCloud));
 
-  const estimatedCost = selectedGpu?.lowestPrice?.uninterruptablePrice || 0;
+  const estimatedCost = (cloudType === 'SECURE' ? selectedGpu?.securePrice : selectedGpu?.communityPrice) || 0;
 
   const handleDeploy = async () => {
     if (!name.trim()) {
@@ -145,12 +145,14 @@ export default function DeployPodModal({ isOpen, onClose, gpuTypes, onDeployed }
                     className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     <option value="">Select GPU...</option>
-                    {filteredGpus.map(gpu => (
-                      <option key={gpu.id} value={gpu.id}>
-                        {gpu.displayName} ({gpu.memoryInGb}GB) - $
-                        {gpu.lowestPrice?.uninterruptablePrice?.toFixed(2) || '?'}/hr
-                      </option>
-                    ))}
+                    {filteredGpus.map(gpu => {
+                      const price = cloudType === 'SECURE' ? gpu.securePrice : gpu.communityPrice;
+                      return (
+                        <option key={gpu.id} value={gpu.id}>
+                          {gpu.displayName} ({gpu.memoryInGb}GB) - ${price?.toFixed(2) ?? '?'}/hr
+                        </option>
+                      );
+                    })}
                   </select>
                 </div>
 

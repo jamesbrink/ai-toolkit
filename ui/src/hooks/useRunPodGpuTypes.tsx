@@ -9,11 +9,8 @@ export interface GpuTypeInfo {
   memoryInGb: number;
   secureCloud: boolean;
   communityCloud: boolean;
-  lowestPrice: {
-    minimumBidPrice: number;
-    uninterruptablePrice: number;
-    stockStatus: string;
-  } | null;
+  communityPrice: number | null;
+  securePrice: number | null;
 }
 
 export default function useRunPodGpuTypes(enabled = true) {
