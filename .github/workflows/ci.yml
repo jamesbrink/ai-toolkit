@@ -17,8 +17,6 @@ jobs:
 
       - uses: DeterminateSystems/nix-installer-action@main
 
-      - uses: DeterminateSystems/magic-nix-cache-action@main
-
       - name: Lint and typecheck
         run: |
           nix develop --command bash -c "cd ui && npm ci && DATABASE_URL=file:./ci.db npx prisma generate && npm run typecheck && npm run lint"
@@ -37,8 +35,6 @@ jobs:
           extra-conf: |
             extra-substituters = https://cuda-maintainers.cachix.org
             extra-trusted-public-keys = cuda-maintainers.cachix.org-1:0dq3bujKpuEPMCX6U4WylrUDZ9JyUG0VpVZa7CNfq5E=
-
-      - uses: DeterminateSystems/magic-nix-cache-action@main
 
       - name: Build Docker image
         run: nix build .#docker --print-build-logs
