@@ -11,7 +11,7 @@ function routeAction(source: DataSource, localPath: string) {
   return apiClient.get(localPath);
 }
 
-function routePost(source: DataSource, localPath: string, data?: unknown) {
+export function routePost(source: DataSource, localPath: string, data?: unknown) {
   if (source.type === 'remote' && source.hostId) {
     const stripped = localPath.replace(/^\/api\//, '');
     return remoteApi.post(source.hostId, stripped, data);

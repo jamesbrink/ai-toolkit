@@ -17,7 +17,7 @@ export async function GET() {
 
     if (hasNvidiaSmi) {
       // Get GPU stats
-      const gpuStats = await getGpuStats(isWindows);
+      const gpuStats = await getGpuStats();
 
       return NextResponse.json({
         hasNvidiaSmi: true,
@@ -66,7 +66,7 @@ async function checkNvidiaSmi(isWindows: boolean): Promise<boolean> {
       await execAsync('which nvidia-smi');
     }
     return true;
-  } catch (error) {
+  } catch {
     return false;
   }
 }
@@ -115,7 +115,7 @@ async function getAppleGpuUtilization(): Promise<number> {
   return 0;
 }
 
-async function getGpuStats(isWindows: boolean) {
+async function getGpuStats() {
   // Command is the same for both platforms, but the path might be different
   const command =
     'nvidia-smi --query-gpu=index,name,driver_version,temperature.gpu,utilization.gpu,utilization.memory,memory.total,memory.free,memory.used,power.draw,power.limit,clocks.current.graphics,clocks.current.memory,fan.speed --format=csv,noheader,nounits';

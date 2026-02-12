@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Modal } from '@/components/Modal';
 import Link from 'next/link';
 import { TextInput } from '@/components/formInputs';
-import useDatasetList, { DatasetInfo } from '@/hooks/useDatasetList';
+import useDatasetList from '@/hooks/useDatasetList';
 import useHostList from '@/hooks/useHostList';
 import useAllDatasets from '@/hooks/useAllDatasets';
 import { SourcedDatasetInfo } from '@/types';
@@ -288,7 +288,7 @@ export default function Datasets() {
   const handleCreateDataset = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const data = await apiClient.post('/api/datasets/create', { name: newDatasetName }).then(res => res.data);
+      await apiClient.post('/api/datasets/create', { name: newDatasetName });
       refreshDatasets();
       setNewDatasetName('');
       setIsNewDatasetModalOpen(false);

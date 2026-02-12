@@ -89,7 +89,7 @@ export default function SampleImageViewer({
       if (idx < 0 || idx >= sampleImages.length) return;
       onChange(sampleImages[idx]);
     },
-    [sampleImages, numSamples, onChange],
+    [sampleImages, onChange],
   );
 
   const currentIndex = useMemo(() => {
@@ -114,7 +114,7 @@ export default function SampleImageViewer({
     const nextIdx = currentIndex - 1;
     if (nextIdx < minIdx) return;
     setImageAtIndex(nextIdx);
-  }, [sampleImages, currentIndex, imgInfo.promptIdx, setImageAtIndex]);
+  }, [currentIndex, imgInfo.promptIdx, setImageAtIndex]);
 
   const handleArrowRight = useCallback(() => {
     if (currentIndex === -1) return;
@@ -123,14 +123,14 @@ export default function SampleImageViewer({
     const nextIdx = currentIndex + 1;
     if (nextIdx > maxIdx) return;
     setImageAtIndex(nextIdx);
-  }, [sampleImages, currentIndex, imgInfo.promptIdx, setImageAtIndex]);
+  }, [numSamples, currentIndex, imgInfo.promptIdx, setImageAtIndex]);
 
   const sampleItem = useMemo<SampleItem | null>(() => {
     if (!sampleConfig) return null;
     if (imgInfo.promptIdx < 0) return null;
     if (imgInfo.promptIdx >= sampleConfig.samples.length) return null;
     return sampleConfig.samples[imgInfo.promptIdx];
-  }, [sampleConfig, imgInfo.promptIdx]);
+  }, [sampleConfig, imgInfo]);
 
   const controlImages = useMemo<string[]>(() => {
     if (!imgPath) return [];
@@ -163,7 +163,7 @@ export default function SampleImageViewer({
       return sampleConfig.seed + imgInfo.promptIdx;
     }
     return sampleConfig?.seed ?? '?';
-  }, [sampleItem, sampleConfig]);
+  }, [sampleItem, sampleConfig, imgInfo.promptIdx]);
 
   // keyboard events while open
   useEffect(() => {
@@ -258,6 +258,7 @@ export default function SampleImageViewer({
                     controls={true}
                   />
                 ) : (
+                  /* eslint-disable-next-line @next/next/no-img-element -- dynamic API-served sample image; next/image optimization not applicable */
                   <img
                     src={`${imageBaseUrl}${encodeURIComponent(imgPath)}`}
                     alt="Sample Image"
@@ -280,6 +281,7 @@ export default function SampleImageViewer({
               {controlImages.length > 0 && (
                 <div key={imgPath} className="flex space-x-2 mr-4">
                   {controlImages.map((ci, idx) => (
+                    /* eslint-disable-next-line @next/next/no-img-element -- dynamic API-served control image */
                     <img
                       key={idx}
                       src={`${imageBaseUrl}${encodeURIComponent(ci)}`}

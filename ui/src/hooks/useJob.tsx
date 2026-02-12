@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { Job } from '@/server/prismaTypes';
 import { apiClient } from '@/utils/api';
 import { remoteApi } from '@/utils/remoteApi';
@@ -10,7 +10,7 @@ export default function useJob(jobID: string, reloadInterval: null | number = nu
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const didInitialLoadRef = useRef(false);
 
-  const refreshJob = () => {
+  const refreshJob = useCallback(() => {
     if (!didInitialLoadRef.current) {
       setStatus('loading');
     }
@@ -28,7 +28,7 @@ export default function useJob(jobID: string, reloadInterval: null | number = nu
           setStatus('error');
         }
       });
-  };
+  }, [jobID, hostId]);
 
   useEffect(() => {
     didInitialLoadRef.current = false;
@@ -43,7 +43,7 @@ export default function useJob(jobID: string, reloadInterval: null | number = nu
         clearInterval(interval);
       };
     }
-  }, [jobID, hostId]);
+  }, [refreshJob, reloadInterval]);
 
   return { job, setJob, status, refreshJob };
 }

@@ -71,6 +71,7 @@ export default function DeleteProposal({ toolUseId, imagePaths, reason }: Delete
         >
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 flex-1 min-w-0">
+              {/* eslint-disable-next-line @next/next/no-img-element -- dynamic API-served dataset image */}
               <img
                 src={`/api/img/${encodeURIComponent(imgPath)}`}
                 alt={imgPath.split('/').pop() || ''}

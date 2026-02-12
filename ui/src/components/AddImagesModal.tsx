@@ -69,6 +69,7 @@ export default function AddImagesModal() {
         setUploadProgress(0);
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- onDone reads addImagesModalInfo which is already in deps; adding onDone would cause infinite re-creation since it's not memoized
     [addImagesModalInfo],
   );
 

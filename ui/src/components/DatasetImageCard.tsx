@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState, ReactNode, KeyboardEvent } from 'react';
-import { FaTrashAlt, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { FaTrashAlt } from 'react-icons/fa';
 import { Sparkles, Loader2 } from 'lucide-react';
 import { openConfirm } from './ConfirmModal';
 import classNames from 'classnames';
@@ -100,7 +100,7 @@ const DatasetImageCard: React.FC<DatasetImageCardProps> = ({
     apiClient
       .post('/api/img/caption', { imgPath: imageUrl, caption: trimmedCaption })
       .then(res => res.data)
-      .then(data => {
+      .then(() => {
         setSavedCaption(trimmedCaption);
       })
       .catch(error => {
@@ -113,6 +113,7 @@ const DatasetImageCard: React.FC<DatasetImageCardProps> = ({
     if (inViewport && isVisible) {
       fetchCaption();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchCaption is intentionally excluded to avoid re-fetching on every render
   }, [inViewport, isVisible]);
 
   useEffect(() => {
@@ -139,14 +140,8 @@ const DatasetImageCard: React.FC<DatasetImageCardProps> = ({
     return () => {
       observer.disconnect();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- isVisible is only read for one-time initialization; re-creating the observer on isVisible change would be wasteful
   }, []);
-
-  const toggleVisibility = (): void => {
-    setIsVisible(prev => !prev);
-    if (!isVisible && !isCaptionLoaded) {
-      fetchCaption();
-    }
-  };
 
   const handleLoad = (): void => {
     setLoaded(true);
@@ -194,6 +189,7 @@ const DatasetImageCard: React.FC<DatasetImageCardProps> = ({
                 />
               )}
               {isItImage && (
+                /* eslint-disable-next-line @next/next/no-img-element -- dynamic API-served image; next/image optimization not applicable */
                 <img
                   src={proxyApiPath(`/api/img/${encodeURIComponent(imageUrl)}`, hostId)}
                   alt={alt}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Job } from '@/server/prismaTypes';
 import { apiClient } from '@/utils/api';
 
@@ -8,7 +8,7 @@ export default function useJobsList(onlyActive = false, reloadInterval: null | n
   const [jobs, setJobs] = useState<Job[]>([]);
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
 
-  const refreshJobs = () => {
+  const refreshJobs = useCallback(() => {
     setStatus('loading');
     apiClient
       .get('/api/jobs')
@@ -29,7 +29,8 @@ export default function useJobsList(onlyActive = false, reloadInterval: null | n
         console.error('Error fetching jobs:', error);
         setStatus('error');
       });
-  };
+  }, [onlyActive]);
+
   useEffect(() => {
     refreshJobs();
 
@@ -39,7 +40,7 @@ export default function useJobsList(onlyActive = false, reloadInterval: null | n
       }, reloadInterval);
       return () => clearInterval(interval);
     }
-  }, []);
+  }, [refreshJobs, reloadInterval]);
 
   return { jobs, setJobs, status, refreshJobs };
 }

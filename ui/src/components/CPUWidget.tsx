@@ -1,6 +1,5 @@
-import React from 'react';
 import { CpuInfo } from '@/types';
-import { Thermometer, Zap, Clock, HardDrive, Fan, Cpu } from 'lucide-react';
+import { HardDrive, Cpu } from 'lucide-react';
 
 interface CPUWidgetProps {
   cpu: CpuInfo | null;
@@ -13,10 +12,6 @@ export default function CPUWidget({ cpu }: CPUWidgetProps) {
 
   const getUtilizationColor = (value: number): string => {
     return value < 30 ? 'bg-emerald-500' : value < 70 ? 'bg-amber-500' : 'bg-rose-500';
-  };
-
-  const getTemperatureColor = (temp: number): string => {
-    return temp < 50 ? 'text-emerald-500' : temp < 80 ? 'text-amber-500' : 'text-rose-500';
   };
 
   if (!cpu) {

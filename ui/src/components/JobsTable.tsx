@@ -5,7 +5,7 @@ import useAllQueues from '@/hooks/useAllQueues';
 import useAllGPUInfo from '@/hooks/useAllGPUInfo';
 import Link from 'next/link';
 import UniversalTable, { TableColumn } from '@/components/UniversalTable';
-import { GpuInfo, JobConfig, UnifiedJob, UnifiedQueue, SourcedGpuInfo, DataSource } from '@/types';
+import { GpuInfo, JobConfig, UnifiedJob, UnifiedQueue, DataSource } from '@/types';
 import JobActionBar from './JobActionBar';
 import { Job, Queue } from '@/server/prismaTypes';
 import useQueueList from '@/hooks/useQueueList';
@@ -173,12 +173,12 @@ function MultiHostJobsTable({ onlyActive, hosts }: { onlyActive: boolean; hosts:
     }
 
     return jd;
-  }, [allJobs, allQueues, allGpus, gpusLoading]);
+  }, [allJobs, allGpus, gpusLoading]);
 
   // Find matching queue for a composite key
   const findQueue = (compositeKey: string): UnifiedQueue | undefined => {
-    const [hostKey, gpuKey] = compositeKey.split(':');
-    return allQueues.find(q => (q.source.hostId || 'local') === hostKey && `${q.gpu_ids}` === gpuKey);
+    const [hostPart, gpuKey] = compositeKey.split(':');
+    return allQueues.find(q => (q.source.hostId || 'local') === hostPart && `${q.gpu_ids}` === gpuKey);
   };
 
   let isLoading = jobsLoading || queuesLoading || (gpusLoading && allGpus.length === 0);
@@ -193,7 +193,7 @@ function MultiHostJobsTable({ onlyActive, hosts }: { onlyActive: boolean; hosts:
           const queue = findQueue(compositeKey);
           const group = jobsDict[compositeKey];
           const queueRunning = queue?.is_running ?? false;
-          const [hostKey, gpuKey] = compositeKey.split(':');
+          const [, gpuKey] = compositeKey.split(':');
 
           const handleStartQueue = async () => {
             if (group.source.type === 'remote' && group.source.hostId) {
@@ -286,7 +286,7 @@ function MultiHostJobsTable({ onlyActive, hosts }: { onlyActive: boolean; hosts:
 function LocalJobsTable({ onlyActive }: { onlyActive: boolean }) {
   const { jobs, status, refreshJobs } = useJobsList(onlyActive, 5000);
   const { queues, status: queueStatus, refreshQueues } = useQueueList();
-  const { gpuList, isGPUInfoLoaded, deviceType } = useGPUInfo();
+  const { gpuList, isGPUInfoLoaded } = useGPUInfo();
 
   const refresh = () => {
     refreshJobs();
@@ -392,7 +392,7 @@ function LocalJobsTable({ onlyActive }: { onlyActive: boolean }) {
       });
     });
     return jd;
-  }, [jobs, queues, isGPUInfoLoaded]);
+  }, [jobs, gpuList, isGPUInfoLoaded]);
 
   let isLoading = status === 'loading' || queueStatus === 'loading' || !isGPUInfoLoaded;
 

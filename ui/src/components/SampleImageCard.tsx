@@ -21,8 +21,6 @@ interface SampleImageCardProps {
 const SampleImageCard: React.FC<SampleImageCardProps> = ({
   imageUrl,
   alt,
-  numSamples,
-  sampleImages,
   children,
   className = '',
   onClick = () => {},
@@ -72,7 +70,7 @@ const SampleImageCard: React.FC<SampleImageCardProps> = ({
                 src={`${imageBaseUrl}${encodeURIComponent(imageUrl)}`}
                 className="w-full h-full object-cover"
                 preload="none"
-                onLoad={handleLoad}
+                onLoadedData={handleLoad}
                 playsInline
                 muted
                 loop
@@ -80,6 +78,7 @@ const SampleImageCard: React.FC<SampleImageCardProps> = ({
                 controls={false}
               />
             ) : (
+              /* eslint-disable-next-line @next/next/no-img-element -- dynamic API-served sample image; next/image optimization not applicable */
               <img
                 src={`${imageBaseUrl}${encodeURIComponent(imageUrl)}`}
                 alt={alt}

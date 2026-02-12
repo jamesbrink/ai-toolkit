@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, use, useMemo } from 'react';
+import { useEffect, useState, use, useMemo, useCallback } from 'react';
 import { LuImageOff, LuLoader, LuBan } from 'react-icons/lu';
 import { FaChevronLeft, FaPen, FaCopy } from 'react-icons/fa';
 import { Sparkles, Search, Download, Upload } from 'lucide-react';
@@ -68,6 +68,25 @@ export default function DatasetPage({ params }: { params: Promise<{ datasetName:
     }
   }, [datasetName, imgList, setContext, hostId, hostName]);
 
+  const refreshImageList = useCallback(
+    (dbName: string) => {
+      setStatus('loading');
+      apiClient
+        .post(proxyApiPath('/api/datasets/listImages', hostId), { datasetName: dbName })
+        .then((res: { data: { images: { img_path: string }[] } }) => {
+          const data = res.data;
+          data.images.sort((a, b) => a.img_path.localeCompare(b.img_path));
+          setImgList(data.images);
+          setStatus('success');
+        })
+        .catch(error => {
+          console.error('Error fetching images:', error);
+          setStatus('error');
+        });
+    },
+    [hostId],
+  );
+
   // Refresh when Claude agent modifies the dataset
   useEffect(() => {
     const handler = (e: Event) => {
@@ -78,29 +97,13 @@ export default function DatasetPage({ params }: { params: Promise<{ datasetName:
     };
     window.addEventListener('claude-tool-completed', handler);
     return () => window.removeEventListener('claude-tool-completed', handler);
-  }, [datasetName]);
-
-  const refreshImageList = (dbName: string) => {
-    setStatus('loading');
-    apiClient
-      .post(proxyApiPath('/api/datasets/listImages', hostId), { datasetName: dbName })
-      .then((res: { data: { images: { img_path: string }[] } }) => {
-        const data = res.data;
-        data.images.sort((a, b) => a.img_path.localeCompare(b.img_path));
-        setImgList(data.images);
-        setStatus('success');
-      })
-      .catch(error => {
-        console.error('Error fetching images:', error);
-        setStatus('error');
-      });
-  };
+  }, [datasetName, refreshImageList]);
 
   useEffect(() => {
     if (datasetName) {
       refreshImageList(datasetName);
     }
-  }, [datasetName]);
+  }, [datasetName, refreshImageList]);
 
   const handleExport = async () => {
     setExporting(true);
@@ -140,7 +143,7 @@ export default function DatasetPage({ params }: { params: Promise<{ datasetName:
         })
         .catch(() => {});
     }
-  }, [datasetName, imgList.length]);
+  }, [datasetName, imgList.length, hostId]);
 
   const handleDuplicate = () => {
     openConfirm({

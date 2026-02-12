@@ -5,7 +5,6 @@ import { createGlobalState } from 'react-global-hooks';
 import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/react';
 import { FaExclamationTriangle, FaInfo } from 'react-icons/fa';
 import { TextInput } from './formInputs';
-import React from 'react';
 import { useFromNull } from '@/hooks/useFromNull';
 import classNames from 'classnames';
 
@@ -54,7 +53,7 @@ export default function ConfirmModal() {
         setConfirm(null);
       }, 500);
     }
-  }, [isOpen]);
+  }, [isOpen, setConfirm]);
 
   const onCancel = () => {
     if (confirm?.onCancel) {

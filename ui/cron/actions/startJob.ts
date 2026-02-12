@@ -6,170 +6,165 @@ import fs from 'fs';
 import { TOOLKIT_ROOT, getTrainingFolder, getHFToken } from '../paths';
 const isWindows = process.platform === 'win32';
 
-const startAndWatchJob = (job: Job) => {
-  // starts and watches the job asynchronously
-  return new Promise<void>(async (resolve, reject) => {
-    const jobID = job.id;
+const startAndWatchJob = async (job: Job): Promise<void> => {
+  const jobID = job.id;
 
-    // setup the training
-    const trainingRoot = await getTrainingFolder();
+  // setup the training
+  const trainingRoot = await getTrainingFolder();
 
-    const trainingFolder = path.join(trainingRoot, job.name);
-    if (!fs.existsSync(trainingFolder)) {
-      fs.mkdirSync(trainingFolder, { recursive: true });
-    }
+  const trainingFolder = path.join(trainingRoot, job.name);
+  if (!fs.existsSync(trainingFolder)) {
+    fs.mkdirSync(trainingFolder, { recursive: true });
+  }
 
-    // make the config file
-    const configPath = path.join(trainingFolder, '.job_config.json');
+  // make the config file
+  const configPath = path.join(trainingFolder, '.job_config.json');
 
-    //log to path
-    const logPath = path.join(trainingFolder, 'log.txt');
+  //log to path
+  const logPath = path.join(trainingFolder, 'log.txt');
 
-    try {
-      // if the log path exists, move it to a folder called logs and rename it {num}_log.txt, looking for the highest num
-      // if the log path does not exist, create it
-      if (fs.existsSync(logPath)) {
-        const logsFolder = path.join(trainingFolder, 'logs');
-        if (!fs.existsSync(logsFolder)) {
-          fs.mkdirSync(logsFolder, { recursive: true });
-        }
-
-        let num = 0;
-        while (fs.existsSync(path.join(logsFolder, `${num}_log.txt`))) {
-          num++;
-        }
-
-        fs.renameSync(logPath, path.join(logsFolder, `${num}_log.txt`));
+  try {
+    // if the log path exists, move it to a folder called logs and rename it {num}_log.txt, looking for the highest num
+    // if the log path does not exist, create it
+    if (fs.existsSync(logPath)) {
+      const logsFolder = path.join(trainingFolder, 'logs');
+      if (!fs.existsSync(logsFolder)) {
+        fs.mkdirSync(logsFolder, { recursive: true });
       }
-    } catch (e) {
-      console.error('Error moving log file:', e);
-    }
 
-    // update the config dataset path
-    const jobConfig = JSON.parse(job.job_config);
-    // Derive sqlite_db_path from DATABASE_URL (file:/path/to/aitk_db.db) when
-    // available, so the training process uses the same writable DB as the UI.
-    // Falls back to TOOLKIT_ROOT for non-Nix installs where the repo is writable.
-    const dbUrl = process.env.DATABASE_URL || '';
-    const dbPath = dbUrl.startsWith('file:') ? dbUrl.slice(5) : path.join(TOOLKIT_ROOT, 'aitk_db.db');
-    jobConfig.config.process[0].sqlite_db_path = dbPath;
-
-    // write the config file
-    fs.writeFileSync(configPath, JSON.stringify(jobConfig, null, 2));
-
-    let pythonPath = process.env.PYTHON_PATH || 'python';
-    // use .venv or venv if it exists (skip venv detection if PYTHON_PATH is set)
-    if (!process.env.PYTHON_PATH) {
-      if (fs.existsSync(path.join(TOOLKIT_ROOT, '.venv'))) {
-        if (isWindows) {
-          pythonPath = path.join(TOOLKIT_ROOT, '.venv', 'Scripts', 'python.exe');
-        } else {
-          pythonPath = path.join(TOOLKIT_ROOT, '.venv', 'bin', 'python');
-        }
-      } else if (fs.existsSync(path.join(TOOLKIT_ROOT, 'venv'))) {
-        if (isWindows) {
-          pythonPath = path.join(TOOLKIT_ROOT, 'venv', 'Scripts', 'python.exe');
-        } else {
-          pythonPath = path.join(TOOLKIT_ROOT, 'venv', 'bin', 'python');
-        }
+      let num = 0;
+      while (fs.existsSync(path.join(logsFolder, `${num}_log.txt`))) {
+        num++;
       }
+
+      fs.renameSync(logPath, path.join(logsFolder, `${num}_log.txt`));
     }
+  } catch (e) {
+    console.error('Error moving log file:', e);
+  }
 
-    const runFilePath = path.join(TOOLKIT_ROOT, 'run.py');
-    if (!fs.existsSync(runFilePath)) {
-      console.error(`run.py not found at path: ${runFilePath}`);
-      await prisma.job.update({
-        where: { id: jobID },
-        data: {
-          status: 'error',
-          info: `Error launching job: run.py not found`,
-        },
-      });
-      return;
-    }
+  // update the config dataset path
+  const jobConfig = JSON.parse(job.job_config);
+  // Derive sqlite_db_path from DATABASE_URL (file:/path/to/aitk_db.db) when
+  // available, so the training process uses the same writable DB as the UI.
+  // Falls back to TOOLKIT_ROOT for non-Nix installs where the repo is writable.
+  const dbUrl = process.env.DATABASE_URL || '';
+  const dbPath = dbUrl.startsWith('file:') ? dbUrl.slice(5) : path.join(TOOLKIT_ROOT, 'aitk_db.db');
+  jobConfig.config.process[0].sqlite_db_path = dbPath;
 
-    const isMpsJob = job.gpu_ids === 'mps';
+  // write the config file
+  fs.writeFileSync(configPath, JSON.stringify(jobConfig, null, 2));
 
-    const additionalEnv: Record<string, string> = {
-      AITK_JOB_ID: jobID,
-      IS_AI_TOOLKIT_UI: '1',
-    };
-
-    if (isMpsJob) {
-      additionalEnv.PYTORCH_ENABLE_MPS_FALLBACK = '1';
-      additionalEnv.PYTORCH_MPS_HIGH_WATERMARK_RATIO = '0.0';
-    } else {
-      additionalEnv.CUDA_DEVICE_ORDER = 'PCI_BUS_ID';
-      additionalEnv.CUDA_VISIBLE_DEVICES = `${job.gpu_ids}`;
-    }
-
-    // HF_TOKEN
-    const hfToken = await getHFToken();
-    if (hfToken && hfToken.trim() !== '') {
-      additionalEnv.HF_TOKEN = hfToken;
-    }
-
-    // Add the --log argument to the command
-    const args = [runFilePath, configPath, '--log', logPath];
-
-    try {
-      let subprocess;
-
+  let pythonPath = process.env.PYTHON_PATH || 'python';
+  // use .venv or venv if it exists (skip venv detection if PYTHON_PATH is set)
+  if (!process.env.PYTHON_PATH) {
+    if (fs.existsSync(path.join(TOOLKIT_ROOT, '.venv'))) {
       if (isWindows) {
-        // Spawn Python directly on Windows so the process can survive parent exit
-        subprocess = spawn(pythonPath, args, {
-          env: {
-            ...process.env,
-            ...additionalEnv,
-          },
-          cwd: TOOLKIT_ROOT,
-          detached: true,
-          windowsHide: true,
-          stdio: 'ignore', // don't tie stdio to parent
-        });
+        pythonPath = path.join(TOOLKIT_ROOT, '.venv', 'Scripts', 'python.exe');
       } else {
-        // For non-Windows platforms, fully detach and ignore stdio so it survives daemon-like
-        subprocess = spawn(pythonPath, args, {
-          detached: true,
-          stdio: 'ignore',
-          env: {
-            ...process.env,
-            ...additionalEnv,
-          },
-          cwd: TOOLKIT_ROOT,
-        });
+        pythonPath = path.join(TOOLKIT_ROOT, '.venv', 'bin', 'python');
       }
-
-      // Important: let the child run independently of this Node process.
-      if (subprocess.unref) {
-        subprocess.unref();
+    } else if (fs.existsSync(path.join(TOOLKIT_ROOT, 'venv'))) {
+      if (isWindows) {
+        pythonPath = path.join(TOOLKIT_ROOT, 'venv', 'Scripts', 'python.exe');
+      } else {
+        pythonPath = path.join(TOOLKIT_ROOT, 'venv', 'bin', 'python');
       }
-
-      // Optionally write a pid file for future management (stop/inspect) without keeping streams open
-      try {
-        fs.writeFileSync(path.join(trainingFolder, 'pid.txt'), String(subprocess.pid ?? ''), { flag: 'w' });
-      } catch (e) {
-        console.error('Error writing pid file:', e);
-      }
-
-      // (No stdout/stderr listeners — logging should go to --log handled by your Python)
-      // (No monitoring loop — the whole point is to let it live past this worker)
-    } catch (error: unknown) {
-      // Handle any exceptions during process launch
-      console.error('Error launching process:', error);
-
-      await prisma.job.update({
-        where: { id: jobID },
-        data: {
-          status: 'error',
-          info: `Error launching job: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        },
-      });
-      return;
     }
-    // Resolve the promise immediately after starting the process
-    resolve();
-  });
+  }
+
+  const runFilePath = path.join(TOOLKIT_ROOT, 'run.py');
+  if (!fs.existsSync(runFilePath)) {
+    console.error(`run.py not found at path: ${runFilePath}`);
+    await prisma.job.update({
+      where: { id: jobID },
+      data: {
+        status: 'error',
+        info: `Error launching job: run.py not found`,
+      },
+    });
+    return;
+  }
+
+  const isMpsJob = job.gpu_ids === 'mps';
+
+  const additionalEnv: Record<string, string> = {
+    AITK_JOB_ID: jobID,
+    IS_AI_TOOLKIT_UI: '1',
+  };
+
+  if (isMpsJob) {
+    additionalEnv.PYTORCH_ENABLE_MPS_FALLBACK = '1';
+    additionalEnv.PYTORCH_MPS_HIGH_WATERMARK_RATIO = '0.0';
+  } else {
+    additionalEnv.CUDA_DEVICE_ORDER = 'PCI_BUS_ID';
+    additionalEnv.CUDA_VISIBLE_DEVICES = `${job.gpu_ids}`;
+  }
+
+  // HF_TOKEN
+  const hfToken = await getHFToken();
+  if (hfToken && hfToken.trim() !== '') {
+    additionalEnv.HF_TOKEN = hfToken;
+  }
+
+  // Add the --log argument to the command
+  const args = [runFilePath, configPath, '--log', logPath];
+
+  try {
+    let subprocess;
+
+    if (isWindows) {
+      // Spawn Python directly on Windows so the process can survive parent exit
+      subprocess = spawn(pythonPath, args, {
+        env: {
+          ...process.env,
+          ...additionalEnv,
+        },
+        cwd: TOOLKIT_ROOT,
+        detached: true,
+        windowsHide: true,
+        stdio: 'ignore', // don't tie stdio to parent
+      });
+    } else {
+      // For non-Windows platforms, fully detach and ignore stdio so it survives daemon-like
+      subprocess = spawn(pythonPath, args, {
+        detached: true,
+        stdio: 'ignore',
+        env: {
+          ...process.env,
+          ...additionalEnv,
+        },
+        cwd: TOOLKIT_ROOT,
+      });
+    }
+
+    // Important: let the child run independently of this Node process.
+    if (subprocess.unref) {
+      subprocess.unref();
+    }
+
+    // Optionally write a pid file for future management (stop/inspect) without keeping streams open
+    try {
+      fs.writeFileSync(path.join(trainingFolder, 'pid.txt'), String(subprocess.pid ?? ''), { flag: 'w' });
+    } catch (e) {
+      console.error('Error writing pid file:', e);
+    }
+
+    // (No stdout/stderr listeners — logging should go to --log handled by your Python)
+    // (No monitoring loop — the whole point is to let it live past this worker)
+  } catch (error: unknown) {
+    // Handle any exceptions during process launch
+    console.error('Error launching process:', error);
+
+    await prisma.job.update({
+      where: { id: jobID },
+      data: {
+        status: 'error',
+        info: `Error launching job: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      },
+    });
+    return;
+  }
 };
 
 export default async function startJob(jobID: string) {

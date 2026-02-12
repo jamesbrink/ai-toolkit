@@ -1,7 +1,6 @@
 'use client';
 import { createGlobalState } from 'react-global-hooks';
 import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/react';
-import React from 'react';
 import { ConfigDoc } from '@/types';
 
 export const docState = createGlobalState<ConfigDoc | null>(null);

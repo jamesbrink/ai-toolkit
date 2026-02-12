@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { DatasetInfo } from './useDatasetList';
 import { remoteApi } from '@/utils/remoteApi';
 
@@ -8,7 +8,7 @@ export default function useRemoteDatasetList(hostId: string | null) {
   const [datasets, setDatasets] = useState<DatasetInfo[]>([]);
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
 
-  const refreshDatasets = () => {
+  const refreshDatasets = useCallback(() => {
     if (!hostId) return;
     setStatus('loading');
     remoteApi
@@ -23,7 +23,7 @@ export default function useRemoteDatasetList(hostId: string | null) {
         console.error('Error fetching remote datasets:', error);
         setStatus('error');
       });
-  };
+  }, [hostId]);
 
   useEffect(() => {
     if (!hostId) {
@@ -32,7 +32,7 @@ export default function useRemoteDatasetList(hostId: string | null) {
       return;
     }
     refreshDatasets();
-  }, [hostId]);
+  }, [hostId, refreshDatasets]);
 
   return { datasets, status, refreshDatasets };
 }

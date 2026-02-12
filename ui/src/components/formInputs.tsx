@@ -6,7 +6,7 @@ import dynamic from 'next/dynamic';
 import { CircleHelp } from 'lucide-react';
 import { getDoc } from '@/docs';
 import { openDoc } from '@/components/DocModal';
-import type { CSSObjectWithLabel, GroupBase, StylesConfig } from 'react-select';
+import type { CSSObjectWithLabel, StylesConfig } from 'react-select';
 import { ConfigDoc, GroupedSelectOption, SelectOption } from '@/types';
 
 const Select = dynamic(() => import('react-select'), { ssr: false });
@@ -384,13 +384,16 @@ export const SliderInput: React.FC<SliderInputProps> = props => {
   const trackRef = React.useRef<HTMLDivElement | null>(null);
   const [dragging, setDragging] = React.useState(false);
 
-  const clamp = (v: number) => (v < min ? min : v > max ? max : v);
-  const snapToStep = (v: number) => {
-    if (!Number.isFinite(v)) return min;
-    const steps = Math.round((v - min) / step);
-    const snapped = min + steps * step;
-    return clamp(Number(snapped.toFixed(6)));
-  };
+  const clamp = React.useCallback((v: number) => (v < min ? min : v > max ? max : v), [min, max]);
+  const snapToStep = React.useCallback(
+    (v: number) => {
+      if (!Number.isFinite(v)) return min;
+      const steps = Math.round((v - min) / step);
+      const snapped = min + steps * step;
+      return clamp(Number(snapped.toFixed(6)));
+    },
+    [min, step, clamp],
+  );
 
   const percent = React.useMemo(() => {
     if (max === min) return 0;
@@ -413,7 +416,7 @@ export const SliderInput: React.FC<SliderInputProps> = props => {
       const raw = min + ratio * (max - min);
       onChange(snapToStep(raw));
     },
-    [min, max, step, onChange],
+    [min, max, onChange, snapToStep],
   );
 
   // Mouse/touch pointer drag
@@ -424,21 +427,25 @@ export const SliderInput: React.FC<SliderInputProps> = props => {
     // Capture the pointer so moves outside the element are still tracked correctly
     try {
       (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
-    } catch {}
+    } catch {
+      // Pointer capture not supported
+    }
 
     setDragging(true);
     calcFromClientX(e.clientX);
 
-    const handleMove = (ev: PointerEvent) => {
-      ev.preventDefault();
-      calcFromClientX(ev.clientX);
+    const handleMove = (moveEvent: PointerEvent) => {
+      moveEvent.preventDefault();
+      calcFromClientX(moveEvent.clientX);
     };
-    const handleUp = (ev: PointerEvent) => {
+    const handleUp = (_ev: PointerEvent) => {
       setDragging(false);
       // release capture if we got it
       try {
         (e.currentTarget as HTMLElement).releasePointerCapture?.(e.pointerId);
-      } catch {}
+      } catch {
+        // Pointer capture release not supported
+      }
       window.removeEventListener('pointermove', handleMove);
       window.removeEventListener('pointerup', handleUp);
     };

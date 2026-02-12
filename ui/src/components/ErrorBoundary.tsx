@@ -1,7 +1,7 @@
 // ErrorBoundary.tsx
 'use client';
 
-import React, { ReactNode, ErrorInfo, Component } from 'react';
+import { ReactNode, ErrorInfo, Component } from 'react';
 
 interface ErrorBoundaryProps {
   children: ReactNode;

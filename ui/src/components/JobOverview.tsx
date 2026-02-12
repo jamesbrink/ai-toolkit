@@ -19,8 +19,11 @@ interface JobOverviewProps {
 
 export default function JobOverview({ job, hostId }: JobOverviewProps) {
   const isMpsJob = job.gpu_ids === 'mps';
-  const gpuIds = useMemo(() => (isMpsJob ? null : job.gpu_ids.split(',').map(id => parseInt(id))), [job.gpu_ids]);
-  const { log, setLog, status: statusLog, refresh: refreshLog } = useJobLog(job.id, 2000, hostId);
+  const gpuIds = useMemo(
+    () => (isMpsJob ? null : job.gpu_ids.split(',').map(id => parseInt(id))),
+    [job.gpu_ids, isMpsJob],
+  );
+  const { log, status: statusLog } = useJobLog(job.id, 2000, hostId);
   const logRef = useRef<HTMLDivElement>(null);
   // Track whether we should auto-scroll to bottom
   const [isScrolledToBottom, setIsScrolledToBottom] = useState(true);
@@ -120,10 +123,7 @@ export default function JobOverview({ job, hostId }: JobOverviewProps) {
     }
   };
 
-  let status = job.status;
-  if (isStopping) {
-    status = 'stopping';
-  }
+  const displayStatus = isStopping ? 'stopping' : job.status;
 
   return (
     <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
@@ -133,7 +133,7 @@ export default function JobOverview({ job, hostId }: JobOverviewProps) {
           <h2 className="text-gray-100">
             <Info className="w-5 h-5 mr-2 -mt-1 text-amber-400 inline-block" /> {job.info}
           </h2>
-          <span className={`px-3 py-1 rounded-full text-sm ${getStatusColor(job.status)}`}>{job.status}</span>
+          <span className={`px-3 py-1 rounded-full text-sm ${getStatusColor(displayStatus)}`}>{displayStatus}</span>
         </div>
 
         <div className="p-4 space-y-6 flex flex-col flex-grow">

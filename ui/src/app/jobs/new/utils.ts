@@ -1,8 +1,11 @@
-import { GroupedSelectOption, JobConfig, SelectOption } from '@/types';
-import { modelArchs, ModelArch } from './options';
+import { JobConfig } from '@/types';
+import { modelArchs } from './options';
 import { objectCopy } from '@/utils/basic';
 
-const expandDatasetDefaults = (defaults: Record<string, [unknown, unknown]>, numDatasets: number): Record<string, [unknown, unknown]> => {
+const expandDatasetDefaults = (
+  defaults: Record<string, [unknown, unknown]>,
+  numDatasets: number,
+): Record<string, [unknown, unknown]> => {
   // expands the defaults for datasets[x] to datasets[0], datasets[1], etc.
   const expandedDefaults: Record<string, [unknown, unknown]> = { ...defaults };
   for (const key in defaults) {

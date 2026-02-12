@@ -34,7 +34,7 @@ export default function JobActionBar({
   hideView,
   autoStartQueue = false,
 }: JobActionBarProps) {
-  const { canStart, canStop, canDelete, canEdit, canRemoveFromQueue } = getAvaliableJobActions(job);
+  const { canStart, canStop, canEdit, canRemoveFromQueue } = getAvaliableJobActions(job);
   const isRemote = source?.type === 'remote';
 
   if (!afterDelete) afterDelete = onRefresh;
@@ -210,7 +210,7 @@ export default function JobActionBar({
                   confirmText: 'Mark as Stopped',
                   onConfirm: async () => {
                     await doMarkStopped();
-                    onRefresh && onRefresh();
+                    if (onRefresh) onRefresh();
                   },
                 });
               }}

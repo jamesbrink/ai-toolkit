@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     fs.writeFileSync(captionPath, caption);
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to create dataset' }, { status: 500 });
   }
 }

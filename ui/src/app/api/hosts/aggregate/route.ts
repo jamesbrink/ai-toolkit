@@ -51,7 +51,9 @@ export async function GET() {
           if (jobsRes.status === 'fulfilled' && jobsRes.value.ok) {
             const jobsData = await jobsRes.value.json();
             const jobs = jobsData.jobs || [];
-            activeJobCount = jobs.filter((j: Record<string, unknown>) => j.status === 'running' || j.status === 'queued').length;
+            activeJobCount = jobs.filter(
+              (j: Record<string, unknown>) => j.status === 'running' || j.status === 'queued',
+            ).length;
           }
 
           return {

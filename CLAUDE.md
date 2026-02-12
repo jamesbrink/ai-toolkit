@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Preferences
+
+- **Code quality is a priority.** Always fix ESLint warnings, TypeScript errors, and other linting issues when encountered — don't leave them for later. When making changes to a file, fix any existing warnings in that file as well. Prefer fixing all warnings in a single pass rather than deferring "low-priority" ones.
+
 ## Project Overview
 
 AI Toolkit (by Ostris) is a training suite for diffusion models supporting image and video generation. It handles LoRA, LoKr, and full fine-tuning across multiple model architectures (FLUX, SDXL, SD 1.5/3.5, WAN 2.1/2.2, Lumina, CHROMA, CogView4, OmniGen2, etc.). This is a fork of the upstream repo.

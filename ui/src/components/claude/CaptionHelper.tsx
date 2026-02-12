@@ -243,6 +243,7 @@ export default function CaptionHelper({
                     }`}
                   >
                     <div className="flex items-start gap-3">
+                      {/* eslint-disable-next-line @next/next/no-img-element -- dynamic API-served dataset image */}
                       <img
                         src={`${getImageUrlPrefix(hostId)}${encodeURIComponent(result.imagePath)}`}
                         alt=""

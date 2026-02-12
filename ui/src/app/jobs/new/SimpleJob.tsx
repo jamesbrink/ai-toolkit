@@ -14,7 +14,7 @@ import { objectCopy } from '@/utils/basic';
 import { TextInput, SelectInput, Checkbox, FormGroup, NumberInput, SliderInput } from '@/components/formInputs';
 import Card from '@/components/Card';
 import { X } from 'lucide-react';
-import AddSingleImageModal, { openAddImageModal } from '@/components/AddSingleImageModal';
+import AddSingleImageModal from '@/components/AddSingleImageModal';
 import SampleControlImage from '@/components/SampleControlImage';
 import { FlipHorizontal2, FlipVertical2 } from 'lucide-react';
 import { handleModelArchChange } from './utils';
@@ -33,8 +33,6 @@ type Props = {
   deviceType: DeviceType;
 };
 
-const isDev = process.env.NODE_ENV === 'development';
-
 export default function SimpleJob({
   jobConfig,
   setJobConfig,
@@ -47,13 +45,17 @@ export default function SimpleJob({
   datasetOptions,
   deviceType,
 }: Props) {
+  const currentProcess = jobConfig.config.process[0];
+  const currentModelArch = currentProcess.model.arch;
+  const currentProcessType = currentProcess.type;
+
   const modelArch = useMemo(() => {
-    return modelArchs.find(a => a.name === jobConfig.config.process[0].model.arch) as ModelArch;
-  }, [jobConfig.config.process[0].model.arch]);
+    return modelArchs.find(a => a.name === currentModelArch) as ModelArch;
+  }, [currentModelArch]);
 
   const jobType = useMemo(() => {
-    return jobTypeOptions.find(j => j.value === jobConfig.config.process[0].type);
-  }, [jobConfig.config.process[0].type]);
+    return jobTypeOptions.find(j => j.value === currentProcessType);
+  }, [currentProcessType]);
 
   const disableSections = useMemo(() => {
     let sections: string[] = [];
@@ -391,7 +393,7 @@ export default function SimpleJob({
                     label="Conv Rank"
                     value={jobConfig.config.process[0].network.conv}
                     onChange={value => {
-                        setJobConfig(value, 'config.process[0].network.conv');
+                      setJobConfig(value, 'config.process[0].network.conv');
                       setJobConfig(value, 'config.process[0].network.conv_alpha');
                     }}
                     placeholder="eg. 16"
@@ -965,7 +967,7 @@ export default function SimpleJob({
                                   key={res}
                                   label={res.toString()}
                                   checked={dataset.resolution.includes(res)}
-                                  onChange={value => {
+                                  onChange={() => {
                                     const resolutions = dataset.resolution.includes(res)
                                       ? dataset.resolution.filter(r => r !== res)
                                       : [...dataset.resolution, res];

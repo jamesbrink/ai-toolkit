@@ -19,7 +19,7 @@ export async function GET() {
       settingsObject.DATASETS_FOLDER = defaultDatasetsFolder;
     }
     return NextResponse.json(settingsObject);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to fetch settings' }, { status: 500 });
   }
 }
@@ -58,7 +58,7 @@ export async function POST(request: Request) {
     flushCache();
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to update settings' }, { status: 500 });
   }
 }

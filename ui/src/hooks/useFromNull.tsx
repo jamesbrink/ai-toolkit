@@ -13,5 +13,6 @@ export function useFromNull(effect: () => void | (() => void), deps: Array<unkno
     }
 
     prevDepsRef.current = deps;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- deps is intentionally spread as the dependency array; this hook dynamically forwards caller-provided deps
   }, deps);
 }

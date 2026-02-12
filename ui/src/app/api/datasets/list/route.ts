@@ -78,7 +78,7 @@ export async function GET() {
       });
 
     return NextResponse.json(folders);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to fetch datasets' }, { status: 500 });
   }
 }

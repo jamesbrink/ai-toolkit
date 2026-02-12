@@ -189,25 +189,6 @@ export default function JobLossGraph({ job, hostId }: Props) {
     return [lo, hi];
   }, [clipOutliers, chartData, activeKeys, showSmoothed]);
 
-  const latestSummary = useMemo(() => {
-    // Provide a simple “latest” readout for the first active series
-    const firstKey = activeKeys[0];
-    if (!firstKey) return null;
-
-    const s = perSeries[firstKey];
-    if (!s) return null;
-
-    const lastRaw = s.raw.length ? s.raw[s.raw.length - 1] : null;
-    const lastSmooth = s.smooth.length ? s.smooth[s.smooth.length - 1] : null;
-
-    return {
-      key: firstKey,
-      step: lastRaw?.step ?? lastSmooth?.step ?? null,
-      raw: lastRaw?.value ?? null,
-      smooth: lastSmooth?.value ?? null,
-    };
-  }, [activeKeys, perSeries]);
-
   return (
     <div className="bg-gray-900 rounded-xl shadow-lg overflow-hidden border border-gray-800 flex flex-col">
       <div className="bg-gray-800 px-4 py-3 flex items-center justify-between">
@@ -270,7 +251,7 @@ export default function JobLossGraph({ job, hostId }: Props) {
                     fontSize: 12,
                   }}
                   labelStyle={{ color: 'rgba(255,255,255,0.75)' }}
-                  labelFormatter={(label) => `step ${label}`}
+                  labelFormatter={label => `step ${label}`}
                   formatter={(value, name) => [formatNum(Number(value)), name]}
                 />
 

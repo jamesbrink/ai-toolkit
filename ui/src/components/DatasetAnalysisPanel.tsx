@@ -430,6 +430,7 @@ export default function DatasetAnalysisPanel({
                                 }`}
                                 onClick={() => toggleQualitySelect(imgPath)}
                               >
+                                {/* eslint-disable-next-line @next/next/no-img-element -- dynamic API-served image; next/image optimization not applicable */}
                                 <img
                                   src={`/api/img/${encodeURIComponent(imgPath)}`}
                                   alt=""

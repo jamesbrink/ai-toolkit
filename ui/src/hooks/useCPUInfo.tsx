@@ -1,7 +1,7 @@
 'use client';
 
 import { CpuInfo } from '@/types';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { apiClient } from '@/utils/api';
 import { remoteApi } from '@/utils/remoteApi';
 
@@ -11,7 +11,7 @@ export default function useCPUInfo(reloadInterval: null | number = null, hostId?
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const didInitialLoadRef = useRef(false);
 
-  const fetchCpuInfo = async () => {
+  const fetchCpuInfo = useCallback(async () => {
     if (!didInitialLoadRef.current) {
       setStatus('loading');
     }
@@ -29,7 +29,7 @@ export default function useCPUInfo(reloadInterval: null | number = null, hostId?
     } finally {
       setIsLoaded(true);
     }
-  };
+  }, [hostId]);
 
   useEffect(() => {
     didInitialLoadRef.current = false;
@@ -44,7 +44,7 @@ export default function useCPUInfo(reloadInterval: null | number = null, hostId?
         clearInterval(interval);
       };
     }
-  }, [reloadInterval, hostId]);
+  }, [fetchCpuInfo, reloadInterval]);
 
   return { cpuInfo, isCPUInfoLoaded, status, refreshCpuInfo: fetchCpuInfo };
 }

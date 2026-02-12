@@ -28,8 +28,6 @@ import { startQueueOnHost } from '@/utils/remoteActions';
 import { useClaudeChat } from '@/components/claude/ClaudeChatContext';
 import { configTools } from '@/components/claude/tools/configTools';
 
-const isDev = process.env.NODE_ENV === 'development';
-
 export default function TrainingForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -132,7 +130,8 @@ export default function TrainingForm() {
         }
       }
     }
-  }, [activeDatasets, activeSettings, activeSettingsLoaded, activeDatasetStatus]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- setJobConfig is a useState setter (stable); jobConfig.config.process is intentionally excluded to prevent re-running when the config we're setting changes
+  }, [activeDatasets, activeSettings, activeSettingsLoaded, activeDatasetStatus, setJobConfig]);
 
   // clone existing job (local or remote)
   useEffect(() => {
@@ -151,7 +150,7 @@ export default function TrainingForm() {
         })
         .catch(error => console.error('Error fetching training:', error));
     }
-  }, [cloneId, sourceHostId]);
+  }, [cloneId, sourceHostId, setJobConfig]);
 
   useEffect(() => {
     if (runId) {
@@ -164,7 +163,7 @@ export default function TrainingForm() {
         })
         .catch(error => console.error('Error fetching training:', error));
     }
-  }, [runId]);
+  }, [runId, setJobConfig]);
 
   // Auto-select first GPU when data loads or target changes
   useEffect(() => {
@@ -192,7 +191,8 @@ export default function TrainingForm() {
       // Gradual model loading avoids peak memory on unified memory
       setJobConfig(true, 'config.process[0].model.low_vram');
     }
-  }, [activeGpuLoaded, activeDeviceType, targetHost]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- setJobConfig is stable; cloneId/runId/jobConfig.config.process are intentionally excluded to only apply MPS defaults on device detection, not on config changes
+  }, [activeGpuLoaded, activeDeviceType, targetHost, setJobConfig]);
 
   // Set device in config based on active device type
   useEffect(() => {
@@ -203,14 +203,15 @@ export default function TrainingForm() {
         setJobConfig('cuda', 'config.process[0].device');
       }
     }
-  }, [activeGpuLoaded, activeDeviceType, targetHost]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- setJobConfig is stable; cloneId/runId are intentionally excluded to only set device on detection change
+  }, [activeGpuLoaded, activeDeviceType, targetHost, setJobConfig]);
 
   // Set training folder from active settings
   useEffect(() => {
     if (activeSettingsLoaded) {
       setJobConfig(activeSettings.TRAINING_FOLDER, 'config.process[0].training_folder');
     }
-  }, [activeSettings, activeSettingsLoaded]);
+  }, [activeSettings, activeSettingsLoaded, setJobConfig]);
 
   /** Check if datasets referenced in the job config exist on the remote host */
   const checkRemoteDatasets = (): string[] => {
@@ -330,7 +331,7 @@ export default function TrainingForm() {
                 options={
                   activeDeviceType === 'mps'
                     ? [{ value: 'mps', label: 'Apple Silicon (MPS)' }]
-                    : activeGpuList.map((gpu) => ({ value: `${gpu.index}`, label: `GPU #${gpu.index}` }))
+                    : activeGpuList.map(gpu => ({ value: `${gpu.index}`, label: `GPU #${gpu.index}` }))
                 }
               />
             </div>

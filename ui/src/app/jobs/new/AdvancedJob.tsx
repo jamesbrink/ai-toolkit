@@ -21,8 +21,6 @@ type Props = {
   deviceType: DeviceType;
 };
 
-const isDev = process.env.NODE_ENV === 'development';
-
 const yamlConfig: YAML.DocumentOptions &
   YAML.SchemaOptions &
   YAML.ParseOptions &

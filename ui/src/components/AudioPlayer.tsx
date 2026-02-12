@@ -440,6 +440,7 @@ export default function AudioPlayer({
       el.removeEventListener('ended', onEnded);
       el.removeEventListener('error', onError);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- safePlay uses refs internally and is stable in behavior; adding it would re-attach all listeners every render
   }, [dragging, autoPlay]);
 
   // Exclusive playback listener
@@ -461,6 +462,7 @@ export default function AudioPlayer({
   useEffect(() => {
     if (isPlaying) startLoop();
     else stopLoop();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- startLoop/stopLoop use refs and are stable in behavior; adding them would cause unnecessary effect re-runs
   }, [isPlaying, duration]);
 
   function ensureAudioGraph() {
@@ -469,7 +471,9 @@ export default function AudioPlayer({
     if (!el) return;
 
     const Ctx = (window.AudioContext ||
-      (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext) as typeof AudioContext | undefined;
+      (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext) as
+      | typeof AudioContext
+      | undefined;
     if (!Ctx) return;
 
     const ctx = new Ctx();

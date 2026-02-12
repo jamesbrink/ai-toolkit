@@ -1,4 +1,4 @@
-import React from 'react';
+import Image from 'next/image';
 import { ConfigDoc } from '@/types';
 import { IoFlaskSharp } from 'react-icons/io5';
 
@@ -144,8 +144,8 @@ const docs: { [key: string]: ConfigDoc } = {
         You can augment your dataset on the fly by flipping the x (horizontal) and/or y (vertical) axis. Flipping a
         single axis will effectively double your dataset. It will result it training on normal images, and the flipped
         versions of the images. This can be very helpful, but keep in mind it can also be destructive. There is no
-        reason to train people upside down, and flipping a face can confuse the model as a person's right side does not
-        look identical to their left side. For text, obviously flipping text is not a good idea.
+        reason to train people upside down, and flipping a face can confuse the model as a person&apos;s right side does
+        not look identical to their left side. For text, obviously flipping text is not a good idea.
         <br />
         <br />
         Control images for a dataset will also be flipped to match the images, so they will always match on the pixel
@@ -264,14 +264,15 @@ const docs: { [key: string]: ConfigDoc } = {
       <>
         Differential Output Preservation (DOP) is a technique to help preserve class of the trained concept during
         training. For this, you must have a trigger word set to differentiate your concept from its class. For instance,
-        You may be training a woman named Alice. Your trigger word may be "Alice". The class is "woman", since Alice is
-        a woman. We want to teach the model to remember what it knows about the class "woman" while teaching it what is
-        different about Alice. During training, the trainer will make a prediction with your LoRA bypassed and your
-        trigger word in the prompt replaced with the class word. Making "photo of Alice" become "photo of woman". This
-        prediction is called the prior prediction. Each step, we will do the normal training step, but also do another
-        step with this prior prediction and the class prompt in order to teach our LoRA to preserve the knowledge of the
-        class. This should not only improve the performance of your trained concept, but also allow you to do things
-        like "Alice standing next to a woman" and not make both of the people look like Alice.
+        You may be training a woman named Alice. Your trigger word may be &quot;Alice&quot;. The class is
+        &quot;woman&quot;, since Alice is a woman. We want to teach the model to remember what it knows about the class
+        &quot;woman&quot; while teaching it what is different about Alice. During training, the trainer will make a
+        prediction with your LoRA bypassed and your trigger word in the prompt replaced with the class word. Making
+        &quot;photo of Alice&quot; become &quot;photo of woman&quot;. This prediction is called the prior prediction.
+        Each step, we will do the normal training step, but also do another step with this prior prediction and the
+        class prompt in order to teach our LoRA to preserve the knowledge of the class. This should not only improve the
+        performance of your trained concept, but also allow you to do things like &quot;Alice standing next to a
+        woman&quot; and not make both of the people look like Alice.
       </>
     ),
   },
@@ -283,8 +284,9 @@ const docs: { [key: string]: ConfigDoc } = {
         This will not only help the model become more flexible, but will also help the quality of your concept during
         inference, especially when a model uses CFG (Classifier Free Guidance) on inference. At each step during
         training, a prior prediction is made with a blank prompt and with the LoRA disabled. This prediction is then
-        used as a target on an additional training step with a blank prompt, to preserve the model's knowledge when no
-        prompt is given. This helps the model to not overfit to the prompt and retain its generalization capabilities.
+        used as a target on an additional training step with a blank prompt, to preserve the model&apos;s knowledge when
+        no prompt is given. This helps the model to not overfit to the prompt and retain its generalization
+        capabilities.
       </>
     ),
   },
@@ -303,7 +305,14 @@ const docs: { [key: string]: ConfigDoc } = {
         actual target, this would make the model learn to hit or overshoot the target instead of falling short.
         <br />
         <br />
-        <img src="/imgs/diff_guidance.png" alt="Differential Guidance Diagram" className="max-w-full mx-auto" />
+        <Image
+          src="/imgs/diff_guidance.png"
+          alt="Differential Guidance Diagram"
+          width={600}
+          height={400}
+          unoptimized
+          className="max-w-full mx-auto"
+        />
       </>
     ),
   },

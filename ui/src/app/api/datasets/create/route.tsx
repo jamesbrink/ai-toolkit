@@ -19,7 +19,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ success: true, name: name });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to create dataset' }, { status: 500 });
   }
 }

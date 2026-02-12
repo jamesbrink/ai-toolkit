@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { Home, Settings, BrainCircuit, Images, Plus, X, Network } from 'lucide-react';
 import { FaXTwitter, FaDiscord, FaYoutube } from 'react-icons/fa6';
 import { Dialog, DialogBackdrop, DialogPanel } from '@headlessui/react';
+import Image from 'next/image';
 import { useSidebar } from './SidebarContext';
 import classNames from 'classnames';
 
@@ -60,10 +61,24 @@ function NavContent({ collapsed, onNavClick }: { collapsed: boolean; onNavClick?
       {/* Logo */}
       <div className={classNames('py-3', collapsed ? 'px-2 flex justify-center' : 'px-4')}>
         {collapsed ? (
-          <img src="/ostris_logo.png" alt="Ostris AI Toolkit" className="w-auto h-7" />
+          <Image
+            src="/ostris_logo.png"
+            alt="Ostris AI Toolkit"
+            width={28}
+            height={28}
+            unoptimized
+            className="w-auto h-7"
+          />
         ) : (
           <h1 className="text-l">
-            <img src="/ostris_logo.png" alt="Ostris AI Toolkit" className="w-auto h-7 mr-3 inline" />
+            <Image
+              src="/ostris_logo.png"
+              alt="Ostris AI Toolkit"
+              width={28}
+              height={28}
+              unoptimized
+              className="w-auto h-7 mr-3 inline"
+            />
             <span className="font-bold uppercase">Ostris</span>
             <span className="ml-2 uppercase text-gray-300">AI-Toolkit</span>
           </h1>

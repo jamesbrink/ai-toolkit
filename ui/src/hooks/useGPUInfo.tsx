@@ -1,7 +1,7 @@
 'use client';
 
 import { DeviceType, GPUApiResponse, GpuInfo } from '@/types';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { apiClient } from '@/utils/api';
 
 export default function useGPUInfo(gpuIds: null | number[] = null, reloadInterval: null | number = null) {
@@ -11,7 +11,7 @@ export default function useGPUInfo(gpuIds: null | number[] = null, reloadInterva
   const [deviceType, setDeviceType] = useState<DeviceType>('none');
   const didInitialLoadRef = useRef(false);
 
-  const fetchGpuInfo = async () => {
+  const fetchGpuInfo = useCallback(async () => {
     if (!didInitialLoadRef.current) {
       setStatus('loading');
     }
@@ -33,7 +33,7 @@ export default function useGPUInfo(gpuIds: null | number[] = null, reloadInterva
     } finally {
       setIsLoaded(true);
     }
-  };
+  }, [gpuIds]);
 
   useEffect(() => {
     didInitialLoadRef.current = false;
@@ -48,7 +48,7 @@ export default function useGPUInfo(gpuIds: null | number[] = null, reloadInterva
         clearInterval(interval);
       };
     }
-  }, [gpuIds, reloadInterval]);
+  }, [fetchGpuInfo, reloadInterval]);
 
   return { gpuList, setGpuList, isGPUInfoLoaded, status, deviceType, refreshGpuInfo: fetchGpuInfo };
 }

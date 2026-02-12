@@ -66,6 +66,7 @@ export default function AddSingleImageModal() {
         setUploadProgress(0);
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- onDone reads addSingleImageModalInfo which is already in deps; adding onDone would cause infinite re-creation since it's not memoized
     [addSingleImageModalInfo],
   );
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { apiClient } from '@/utils/api';
 import { remoteApi } from '@/utils/remoteApi';
 
@@ -14,7 +14,7 @@ export default function useFilesList(jobID: string, reloadInterval: null | numbe
   const didInitialLoadRef = useRef(false);
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error' | 'refreshing'>('idle');
 
-  const refreshFiles = () => {
+  const refreshFiles = useCallback(() => {
     let loadStatus: 'loading' | 'refreshing' = 'loading';
     if (didInitialLoadRef.current) {
       loadStatus = 'refreshing';
@@ -34,7 +34,7 @@ export default function useFilesList(jobID: string, reloadInterval: null | numbe
         console.error('Error fetching files:', error);
         setStatus('error');
       });
-  };
+  }, [jobID, hostId]);
 
   useEffect(() => {
     didInitialLoadRef.current = false;
@@ -49,7 +49,7 @@ export default function useFilesList(jobID: string, reloadInterval: null | numbe
         clearInterval(interval);
       };
     }
-  }, [jobID, hostId]);
+  }, [refreshFiles, reloadInterval]);
 
   return { files, setFiles, status, refreshFiles };
 }

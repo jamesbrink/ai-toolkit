@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { apiClient } from '@/utils/api';
 import { remoteApi } from '@/utils/remoteApi';
 
@@ -9,7 +9,7 @@ export default function useSampleImages(jobID: string, reloadInterval: null | nu
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const didInitialLoadRef = useRef(false);
 
-  const refreshSampleImages = () => {
+  const refreshSampleImages = useCallback(() => {
     if (!didInitialLoadRef.current) {
       setStatus('loading');
     }
@@ -31,7 +31,7 @@ export default function useSampleImages(jobID: string, reloadInterval: null | nu
           setStatus('error');
         }
       });
-  };
+  }, [jobID, hostId]);
 
   useEffect(() => {
     didInitialLoadRef.current = false;
@@ -46,7 +46,7 @@ export default function useSampleImages(jobID: string, reloadInterval: null | nu
         clearInterval(interval);
       };
     }
-  }, [jobID, hostId]);
+  }, [refreshSampleImages, reloadInterval]);
 
   return { sampleImages, setSampleImages, status, refreshSampleImages };
 }

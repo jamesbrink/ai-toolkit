@@ -1,4 +1,3 @@
-import React from 'react';
 import { GpuInfo } from '@/types';
 import { Thermometer, Zap, Clock, HardDrive, Fan, Cpu } from 'lucide-react';
 

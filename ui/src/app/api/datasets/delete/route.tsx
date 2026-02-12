@@ -18,7 +18,7 @@ export async function POST(request: Request) {
     // delete it and return success
     fs.rmSync(datasetPath, { recursive: true });
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to create dataset' }, { status: 500 });
   }
 }

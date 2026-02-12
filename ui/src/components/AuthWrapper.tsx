@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 import { apiClient, isAuthorizedState } from '@/utils/api';
-import { createGlobalState } from 'react-global-hooks';
 
 interface AuthWrapperProps {
   authRequired: boolean;
@@ -27,6 +27,7 @@ export default function AuthWrapper({ authRequired, children }: AuthWrapperProps
     const storedToken = localStorage.getItem('AI_TOOLKIT_AUTH') || '';
     setToken(storedToken);
     checkAuth();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- checkAuth should only run on mount; it reads token from localStorage directly
   }, []);
 
   // auto focus on input when not authorized
@@ -91,7 +92,14 @@ export default function AuthWrapper({ authRequired, children }: AuthWrapperProps
         <div className="mb-4">
           {/* Replace with your own logo */}
           <div className="flex items-center justify-center">
-            <img src="/ostris_logo.png" alt="Ostris AI Toolkit" className="w-auto h-24 inline" />
+            <Image
+              src="/ostris_logo.png"
+              alt="Ostris AI Toolkit"
+              width={96}
+              height={96}
+              unoptimized
+              className="w-auto h-24 inline"
+            />
           </div>
         </div>
         <h1 className="text-4xl mb-6">AI Toolkit</h1>
@@ -103,7 +111,14 @@ export default function AuthWrapper({ authRequired, children }: AuthWrapperProps
           <div className="lg:hidden flex justify-center mb-4">
             {/* Mobile logo */}
             <div className="flex items-center justify-center">
-              <img src="/ostris_logo.png" alt="Ostris AI Toolkit" className="w-auto h-24 inline" />
+              <Image
+                src="/ostris_logo.png"
+                alt="Ostris AI Toolkit"
+                width={96}
+                height={96}
+                unoptimized
+                className="w-auto h-24 inline"
+              />
             </div>
           </div>
 
@@ -128,7 +143,7 @@ export default function AuthWrapper({ authRequired, children }: AuthWrapperProps
               />
               <div className="text-gray-400 text-xs mt-2">
                 The password is set with the environment variable AI_TOOLKIT_AUTH, the default is the super secure
-                secret word "password"
+                secret word &quot;password&quot;
               </div>
             </div>
 

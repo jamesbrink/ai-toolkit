@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { GPUApiResponse, GpuInfo, DeviceType } from '@/types';
 import { remoteApi } from '@/utils/remoteApi';
 
@@ -11,7 +11,7 @@ export default function useRemoteGPUInfo(hostId: string | null, reloadInterval: 
   const [deviceType, setDeviceType] = useState<DeviceType>('none');
   const didInitialLoadRef = useRef(false);
 
-  const fetchGpuInfo = async () => {
+  const fetchGpuInfo = useCallback(async () => {
     if (!hostId) return;
     if (!didInitialLoadRef.current) {
       setStatus('loading');
@@ -31,7 +31,7 @@ export default function useRemoteGPUInfo(hostId: string | null, reloadInterval: 
     } finally {
       setIsLoaded(true);
     }
-  };
+  }, [hostId]);
 
   useEffect(() => {
     if (!hostId) return;
@@ -48,7 +48,7 @@ export default function useRemoteGPUInfo(hostId: string | null, reloadInterval: 
         clearInterval(interval);
       };
     }
-  }, [hostId, reloadInterval]);
+  }, [fetchGpuInfo, reloadInterval, hostId]);
 
   return { gpuList, isLoaded, status, deviceType, refreshGpuInfo: fetchGpuInfo };
 }

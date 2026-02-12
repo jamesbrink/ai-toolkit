@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { GPUApiResponse, SourcedGpuInfo } from '@/types';
+import { GPUApiResponse } from '@/types';
 import { HostInfo } from '@/hooks/useHostList';
 import GPUWidget from '@/components/GPUWidget';
 import { GPUWidgetSkeleton } from '@/components/Skeleton';

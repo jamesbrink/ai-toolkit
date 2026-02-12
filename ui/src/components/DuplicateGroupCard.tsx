@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Check, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { X, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface DuplicateGroupCardProps {
   groupId: number;
@@ -73,10 +73,18 @@ export default function DuplicateGroupCard({
           <span className="text-xs text-gray-400">{imagePaths.length} images</span>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={selectAllExceptFirst} className="text-xs text-blue-400 hover:text-blue-300" aria-label="Keep first image and select others for deletion">
+          <button
+            onClick={selectAllExceptFirst}
+            className="text-xs text-blue-400 hover:text-blue-300"
+            aria-label="Keep first image and select others for deletion"
+          >
             Keep First
           </button>
-          <button onClick={() => onDismiss(groupId)} className="text-xs text-gray-400 hover:text-gray-200" aria-label="Dismiss duplicate group">
+          <button
+            onClick={() => onDismiss(groupId)}
+            className="text-xs text-gray-400 hover:text-gray-200"
+            aria-label="Dismiss duplicate group"
+          >
             Dismiss
           </button>
         </div>
@@ -96,6 +104,7 @@ export default function DuplicateGroupCard({
               onClick={() => toggleSelect(imgPath)}
               title={filename}
             >
+              {/* eslint-disable-next-line @next/next/no-img-element -- dynamic API-served image; next/image optimization not applicable */}
               <img
                 src={`/api/img/${encodeURIComponent(imgPath)}`}
                 alt={filename}

@@ -1,9 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/server/prisma';
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-
+export async function GET() {
   try {
     const queues = await prisma.queue.findMany({
       orderBy: { gpu_ids: 'asc' },

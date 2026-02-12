@@ -1,11 +1,9 @@
-import React from 'react';
 import useFilesList from '@/hooks/useFilesList';
-import Link from 'next/link';
 import { Loader2, AlertCircle, Download, Box, Brain } from 'lucide-react';
 import { getFileUrlPrefix } from '@/utils/remoteApi';
 
 export default function FilesWidget({ jobID, hostId }: { jobID: string; hostId?: string | null }) {
-  const { files, status, refreshFiles } = useFilesList(jobID, 5000, hostId);
+  const { files, status } = useFilesList(jobID, 5000, hostId);
   const fileBaseUrl = getFileUrlPrefix(hostId);
 
   const cleanSize = (size: number) => {

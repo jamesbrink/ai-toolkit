@@ -109,10 +109,7 @@ export default function UniversalTable<T>({
               <thead className={classNames('text-xs uppercase bg-gray-800', theadClassName)}>
                 <tr>
                   {columns.map(column => (
-                    <th
-                      key={column.key}
-                      className={classNames('px-3 py-2', column.className)}
-                    >
+                    <th key={column.key} className={classNames('px-3 py-2', column.className)}>
                       {column.sortable ? (
                         <button
                           type="button"
@@ -123,9 +120,7 @@ export default function UniversalTable<T>({
                           <SortIndicator columnKey={column.key} />
                         </button>
                       ) : (
-                        <span className="inline-flex items-center">
-                          {column.title}
-                        </span>
+                        <span className="inline-flex items-center">{column.title}</span>
                       )}
                     </th>
                   ))}
