@@ -34,9 +34,9 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install nodejs
+# Install Node.js 22 LTS
 WORKDIR /tmp
-RUN curl -sL https://deb.nodesource.com/setup_23.x -o nodesource_setup.sh && \
+RUN curl -sL https://deb.nodesource.com/setup_22.x -o nodesource_setup.sh && \
     bash nodesource_setup.sh && \
     apt-get update && \
     apt-get install -y nodejs && \
@@ -48,33 +48,38 @@ WORKDIR /app
 # Set aliases for python and pip
 RUN ln -s /usr/bin/python3 /usr/bin/python
 
-# install pytorch before cache bust to avoid redownloading pytorch
+# Install pytorch before copying source to leverage docker cache
 RUN pip install --no-cache-dir torch==2.9.1 torchvision==0.24.1 torchaudio==2.9.1 --index-url https://download.pytorch.org/whl/cu128 --break-system-packages
 
-# Fix cache busting by moving CACHEBUST to right before git clone
-ARG CACHEBUST=1234
-ARG GIT_COMMIT=main
-RUN echo "Cache bust: ${CACHEBUST}" && \
-    git clone https://github.com/ostris/ai-toolkit.git && \
-    cd ai-toolkit && \
-    git checkout ${GIT_COMMIT}
+# Copy requirements.txt first to leverage docker cache for pip install
+COPY requirements.txt /app/ai-toolkit/requirements.txt
 
 WORKDIR /app/ai-toolkit
-
-# copy requirements.txt to leverage docker cache
-COPY requirements.txt /app/ai-toolkit/requirements.txt
 
 # Install Python dependencies
 RUN pip install --no-cache-dir --break-system-packages -r requirements.txt && \
     pip install setuptools==69.5.1 --no-cache-dir --break-system-packages
 
-# Build UI
+# Copy UI package files first for npm cache layer
+COPY ui/package.json ui/package-lock.json /app/ai-toolkit/ui/
+
+# Install npm dependencies (cached unless package files change)
 WORKDIR /app/ai-toolkit/ui
-RUN npm install && \
-    npm run build && \
+RUN npm ci
+
+# Copy the rest of the source
+WORKDIR /app/ai-toolkit
+COPY . /app/ai-toolkit/
+
+# Generate Prisma client (must happen before Next.js build, which imports it).
+# DATABASE_URL is required by prisma.config.ts but not used during generate.
+WORKDIR /app/ai-toolkit/ui
+RUN DATABASE_URL="file:./dev.db" npx prisma generate
+
+# Build UI and initialize database
+RUN npm run build && \
     npm run update_db
 
-# Expose port (assuming the application runs on port 3000)
 EXPOSE 8675
 
 WORKDIR /

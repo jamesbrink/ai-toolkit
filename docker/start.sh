@@ -86,9 +86,11 @@ echo "  Database:     $DATABASE_URL"
 echo ""
 
 # --- Ensure DB schema is up to date ---
+# Prisma 7 removed --skip-generate; pass --url directly to avoid needing
+# tsx to load prisma.config.ts at this stage.
 echo "Running prisma db push to ensure schema is up to date..."
 cd /app/ai-toolkit/ui
-if ! npx prisma db push --skip-generate 2>&1; then
+if ! npx prisma db push --url "$DATABASE_URL" 2>&1; then
     echo "Warning: prisma db push failed, DB may need manual setup"
 fi
 

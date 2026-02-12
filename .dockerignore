@@ -1,0 +1,15 @@
+.git
+node_modules
+ui/node_modules
+ui/.next
+ui/dist
+venv
+.venv
+output
+datasets
+__pycache__
+*.pyc
+*.pyo
+result
+.direnv
+.devenv
