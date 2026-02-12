@@ -6,10 +6,11 @@
 #
 # For mDNS host discovery, use host networking:
 #   docker run --network=host ai-toolkit
-{ pkgs
-, lib
-, ai-toolkit
-, ai-toolkit-ui
+{
+  pkgs,
+  lib,
+  ai-toolkit,
+  ai-toolkit-ui,
 }:
 
 pkgs.dockerTools.buildLayeredImage {
@@ -38,7 +39,7 @@ pkgs.dockerTools.buildLayeredImage {
     };
     ExposedPorts = {
       "8675/tcp" = { };
-      "5353/udp" = { };  # mDNS
+      "5353/udp" = { }; # mDNS
     };
     Env = [
       "SSL_CERT_FILE=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"

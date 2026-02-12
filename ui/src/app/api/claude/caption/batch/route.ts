@@ -74,7 +74,13 @@ export async function POST(req: NextRequest) {
             if (!remote) {
               controller.enqueue(
                 encoder.encode(
-                  JSON.stringify({ imagePath, caption: '', error: 'Could not fetch from remote host', index: i, total }) + '\n',
+                  JSON.stringify({
+                    imagePath,
+                    caption: '',
+                    error: 'Could not fetch from remote host',
+                    index: i,
+                    total,
+                  }) + '\n',
                 ),
               );
               continue;

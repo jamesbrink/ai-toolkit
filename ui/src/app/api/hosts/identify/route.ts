@@ -1,11 +1,9 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import prisma from '@/server/prisma';
 import { randomUUID } from 'crypto';
 import os from 'os';
 import { exec } from 'child_process';
 import { promisify } from 'util';
-
-const prisma = new PrismaClient();
 const execAsync = promisify(exec);
 
 async function detectDeviceType(): Promise<string> {

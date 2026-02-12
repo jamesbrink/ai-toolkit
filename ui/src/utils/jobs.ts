@@ -1,5 +1,5 @@
 import { JobConfig, UnifiedJob } from '@/types';
-import { Job } from '@prisma/client';
+import { Job } from '@/server/prismaTypes';
 import { apiClient } from '@/utils/api';
 
 type AnyJob = Job | UnifiedJob;

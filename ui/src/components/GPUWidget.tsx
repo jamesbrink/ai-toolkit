@@ -36,9 +36,7 @@ export default function GPUWidget({ gpu, hostName, isRemote }: GPUWidgetProps) {
           </span>
         </div>
         {isRemote && hostName && (
-          <span className="px-2 py-0.5 bg-blue-900/50 rounded-full text-xs text-blue-300 ml-auto">
-            {hostName}
-          </span>
+          <span className="px-2 py-0.5 bg-blue-900/50 rounded-full text-xs text-blue-300 ml-auto">{hostName}</span>
         )}
       </div>
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Queue } from '@prisma/client';
+import { Queue } from '@/server/prismaTypes';
 import { apiClient } from '@/utils/api';
 
 export default function useQueueList() {

@@ -1,4 +1,4 @@
-import { Job } from '@prisma/client';
+import { Job } from '@/server/prismaTypes';
 import { UnifiedJob } from '@/types';
 import useGPUInfo from '@/hooks/useGPUInfo';
 import useRemoteGPUInfo from '@/hooks/useRemoteGPUInfo';

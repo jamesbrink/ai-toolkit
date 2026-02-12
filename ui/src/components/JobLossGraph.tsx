@@ -1,6 +1,6 @@
 'use client';
 
-import { Job } from '@prisma/client';
+import { Job } from '@/server/prismaTypes';
 import { UnifiedJob } from '@/types';
 import useJobLossLog, { LossPoint } from '@/hooks/useJobLossLog';
 import { useMemo, useState, useEffect } from 'react';

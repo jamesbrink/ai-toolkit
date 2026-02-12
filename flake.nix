@@ -6,12 +6,16 @@
     flake-parts.url = "github:hercules-ci/flake-parts";
     devshell.url = "github:numtide/devshell";
     devshell.inputs.nixpkgs.follows = "nixpkgs";
+    treefmt-nix.url = "github:numtide/treefmt-nix";
+    treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = inputs:
+  outputs =
+    inputs:
     inputs.flake-parts.lib.mkFlake { inherit inputs; } {
       imports = [
         inputs.devshell.flakeModule
+        inputs.treefmt-nix.flakeModule
         ./nix/devshell.nix
       ];
 
@@ -22,7 +26,8 @@
         "aarch64-darwin"
       ];
 
-      perSystem = { lib, system, ... }:
+      perSystem =
+        { lib, system, ... }:
         let
           # Import nixpkgs with unfree packages allowed (required for CUDA on Linux)
           pkgs = import inputs.nixpkgs {
@@ -63,12 +68,31 @@
           # get nixpkgs with allowUnfree = true (required for CUDA on Linux).
           _module.args.pkgs = pkgs;
 
+          # treefmt — provides `nix fmt` and `checks.treefmt`
+          treefmt = {
+            projectRootFile = "flake.nix";
+            programs = {
+              nixfmt.enable = true;
+              prettier = {
+                enable = true;
+                includes = [ "ui/**/*.{ts,tsx,js,jsx,css,json}" ];
+                excludes = [
+                  "ui/node_modules/**"
+                  "ui/.next/**"
+                  "ui/dist/**"
+                  "ui/prisma/generated/**"
+                ];
+              };
+            };
+          };
+
           # nix build / nix build .#default
           packages = {
             default = ai-toolkit-ui;
             ai-toolkit = ai-toolkit;
             ui = ai-toolkit-ui;
-          } // lib.optionalAttrs isLinux {
+          }
+          // lib.optionalAttrs isLinux {
             docker = docker-image;
           };
 

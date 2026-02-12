@@ -3,7 +3,7 @@ set -euo pipefail
 
 UI_DIR="@ui@"
 TOOLKIT_PKG="@toolkit@"
-PRISMA_ENGINES_PKG="@prismaEngines6@"
+PRISMA_ENGINES_PKG="@prismaEngines7@"
 
 # --- Writable data directory ---
 DATA_DIR="${AI_TOOLKIT_UI_DATA:-${XDG_DATA_HOME:-$HOME/.local/share}/ai-toolkit}"

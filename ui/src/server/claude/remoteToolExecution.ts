@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client';
+import prisma from '@/server/prisma';
 import { executeServerTool } from './serverTools';
-
-const prisma = new PrismaClient();
 
 /**
  * Execute a server tool either locally or on a remote host.

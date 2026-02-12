@@ -13,6 +13,7 @@ export default tseslint.config(
       ".next/**",
       "dist/**",
       "prisma/**",
+      "prisma/generated/**",
       "next-env.d.ts",
     ],
   },
@@ -31,7 +32,7 @@ export default tseslint.config(
   reactHooksPlugin.configs["recommended-latest"],
 
   // Next.js recommended
-  nextPlugin.flatConfig.recommended,
+  nextPlugin.configs.recommended,
 
   // Prettier — must be last to override formatting rules
   eslintConfigPrettier,

@@ -50,7 +50,11 @@ export default function TrainingForm() {
 
   // Remote data sources (only fetch when targeting a remote host)
   const { settings: remoteSettings, isSettingsLoaded: remoteSettingsLoaded } = useRemoteSettings(remoteHostId);
-  const { gpuList: remoteGpuList, isLoaded: remoteGpuLoaded, deviceType: remoteDeviceType } = useRemoteGPUInfo(remoteHostId);
+  const {
+    gpuList: remoteGpuList,
+    isLoaded: remoteGpuLoaded,
+    deviceType: remoteDeviceType,
+  } = useRemoteGPUInfo(remoteHostId);
   const { datasets: remoteDatasets, status: remoteDatasetStatus } = useRemoteDatasetList(remoteHostId);
 
   // Active data sources — switch based on target
@@ -280,8 +284,8 @@ export default function TrainingForm() {
         const targetName = onlineHosts.find(h => h.id === remoteHostId)?.name || 'the remote host';
         const proceed = window.confirm(
           `The following datasets were not found on ${targetName}:\n\n` +
-          missing.map(n => `  - ${n}`).join('\n') +
-          `\n\nYou can push them from the Datasets page. Create the job anyway?`
+            missing.map(n => `  - ${n}`).join('\n') +
+            `\n\nYou can push them from the Datasets page. Create the job anyway?`,
         );
         if (!proceed) return;
       }
@@ -312,11 +316,7 @@ export default function TrainingForm() {
         {onlineHosts.length > 0 && !runId && (
           <>
             <div>
-              <SelectInput
-                value={targetHost}
-                onChange={value => setTargetHost(value)}
-                options={targetHostOptions}
-              />
+              <SelectInput value={targetHost} onChange={value => setTargetHost(value)} options={targetHostOptions} />
             </div>
             <div className="mx-4 bg-gray-200 dark:bg-gray-800 w-1 h-6"></div>
           </>

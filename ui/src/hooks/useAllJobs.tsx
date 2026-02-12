@@ -65,9 +65,7 @@ export default function useAllJobs(hosts: HostInfo[], onlyActive = false, reload
         }
       }
 
-      const filtered = onlyActive
-        ? merged.filter(j => ['running', 'queued', 'stopping'].includes(j.status))
-        : merged;
+      const filtered = onlyActive ? merged.filter(j => ['running', 'queued', 'stopping'].includes(j.status)) : merged;
 
       setAllJobs(filtered);
     } catch (err) {

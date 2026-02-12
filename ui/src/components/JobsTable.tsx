@@ -7,7 +7,7 @@ import Link from 'next/link';
 import UniversalTable, { TableColumn } from '@/components/UniversalTable';
 import { GpuInfo, JobConfig, UnifiedJob, UnifiedQueue, SourcedGpuInfo, DataSource } from '@/types';
 import JobActionBar from './JobActionBar';
-import { Job, Queue } from '@prisma/client';
+import { Job, Queue } from '@/server/prismaTypes';
 import useQueueList from '@/hooks/useQueueList';
 import classNames from 'classnames';
 import { startQueue, stopQueue } from '@/utils/queue';

@@ -26,9 +26,7 @@ export default function useJobLog(jobID: string, reloadInterval: null | number =
       loadStatus = 'refreshing';
     }
     setStatus(loadStatus);
-    const request = hostId
-      ? remoteApi.get(hostId, `jobs/${jobID}/log`)
-      : apiClient.get(`/api/jobs/${jobID}/log`);
+    const request = hostId ? remoteApi.get(hostId, `jobs/${jobID}/log`) : apiClient.get(`/api/jobs/${jobID}/log`);
     request
       .then(res => res.data)
       .then(data => {

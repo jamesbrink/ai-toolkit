@@ -1,6 +1,6 @@
 import prisma from '../prisma';
 
-import { Job, Queue } from '@prisma/client';
+import { Job, Queue } from '../../prisma/generated/prisma/client';
 import startJob from './startJob';
 
 export default async function processQueue() {

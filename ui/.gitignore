@@ -41,3 +41,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 aitk_db.db
+
+# prisma generated client
+/prisma/generated/

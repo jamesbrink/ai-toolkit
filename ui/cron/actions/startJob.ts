@@ -1,5 +1,5 @@
 import prisma from '../prisma';
-import { Job } from '@prisma/client';
+import { Job } from '../../prisma/generated/prisma/client';
 import { spawn } from 'child_process';
 import path from 'path';
 import fs from 'fs';

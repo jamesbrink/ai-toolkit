@@ -81,9 +81,7 @@ export default function DatasetPushModal({ isOpen, onClose, datasetName, hosts }
                     style={{ width: `${progressPercent}%` }}
                   />
                 </div>
-                {progress.currentFile && (
-                  <p className="text-xs text-gray-500 truncate">{progress.currentFile}</p>
-                )}
+                {progress.currentFile && <p className="text-xs text-gray-500 truncate">{progress.currentFile}</p>}
               </div>
             )}
 

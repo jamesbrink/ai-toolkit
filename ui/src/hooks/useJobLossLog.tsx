@@ -67,7 +67,7 @@ export default function useJobLossLog(jobID: string, reloadInterval: null | numb
     try {
       // Step 1: get key list (we can do this by calling endpoint once; it returns keys)
       // Keep it cheap: limit=1.
-      const first = await fetchLoss(`jobs/${jobID}/loss`, { key: 'loss', limit: 1 }) as { keys?: string[] };
+      const first = (await fetchLoss(`jobs/${jobID}/loss`, { key: 'loss', limit: 1 })) as { keys?: string[] };
 
       const newKeys = first.keys ?? [];
       setKeys(newKeys);

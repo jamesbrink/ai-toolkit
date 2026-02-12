@@ -27,15 +27,14 @@ function formatBytes(bytes: number): string {
   return `${value < 10 ? value.toFixed(1) : Math.round(value)} ${units[i]}`;
 }
 
-export default function DatasetPage({ params }: { params: { datasetName: string } }) {
+export default function DatasetPage({ params }: { params: Promise<{ datasetName: string }> }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const hostId = searchParams.get('hostId');
   const isRemote = !!hostId;
 
   const [imgList, setImgList] = useState<{ img_path: string }[]>([]);
-  const usableParams = use(params as any) as { datasetName: string };
-  const datasetName = usableParams.datasetName;
+  const { datasetName } = use(params);
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [captionModalOpen, setCaptionModalOpen] = useState(false);
   const [analysisModalOpen, setAnalysisModalOpen] = useState(false);

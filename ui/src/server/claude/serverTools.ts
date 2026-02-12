@@ -1,14 +1,12 @@
 import fs from 'fs/promises';
 import fsSync from 'fs';
 import path from 'path';
-import { PrismaClient } from '@prisma/client';
+import prisma from '@/server/prisma';
 import { TOOLKIT_ROOT } from '@/paths';
 import { getDatasetsRoot, getTrainingFolder, getAnthropicAuth } from '@/server/settings';
 import { createAnthropicClient, getClaudeCaptionModel } from '@/server/claude/client';
 import { analyzeDataset, getStoredAnalysis, deleteAnalyzedImages } from '@/server/datasetAnalysis';
 import { runPythonAnalysis } from '@/server/pythonAnalysis';
-
-const prisma = new PrismaClient();
 
 // Tool definitions sent to the Claude API
 export const serverToolDefinitions = [

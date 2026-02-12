@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { Job } from '@prisma/client';
+import { Job } from '@/server/prismaTypes';
 import { apiClient } from '@/utils/api';
 import { remoteApi } from '@/utils/remoteApi';
 
@@ -14,9 +14,7 @@ export default function useJob(jobID: string, reloadInterval: null | number = nu
     if (!didInitialLoadRef.current) {
       setStatus('loading');
     }
-    const request = hostId
-      ? remoteApi.get(hostId, `jobs?id=${jobID}`)
-      : apiClient.get(`/api/jobs?id=${jobID}`);
+    const request = hostId ? remoteApi.get(hostId, `jobs?id=${jobID}`) : apiClient.get(`/api/jobs?id=${jobID}`);
     request
       .then(res => res.data)
       .then(data => {

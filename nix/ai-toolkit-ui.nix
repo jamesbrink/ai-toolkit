@@ -1,15 +1,16 @@
 # Next.js UI package for ai-toolkit
 # Build with: nix build .#ui
 # Run with:   nix run .#ui
-{ lib
-, buildNpmPackage
-, nodejs_22
-, makeWrapper
-, python3
-, pkg-config
-, sqlite
-, prisma-engines_6
-, ai-toolkit
+{
+  lib,
+  buildNpmPackage,
+  nodejs_22,
+  makeWrapper,
+  python3,
+  pkg-config,
+  sqlite,
+  prisma-engines_7,
+  ai-toolkit,
 }:
 
 buildNpmPackage {
@@ -18,18 +19,26 @@ buildNpmPackage {
 
   src = lib.cleanSourceWith {
     src = ./../ui;
-    filter = path: type:
-      let baseName = baseNameOf path; in
-      !(baseName == "node_modules" || baseName == ".next"
-        || baseName == "dist" || baseName == ".env"
-        || baseName == "aitk_db.db" || baseName == ".turbo");
+    filter =
+      path: type:
+      let
+        baseName = baseNameOf path;
+      in
+      !(
+        baseName == "node_modules"
+        || baseName == ".next"
+        || baseName == "dist"
+        || baseName == ".env"
+        || baseName == "aitk_db.db"
+        || baseName == ".turbo"
+      );
   };
 
-  npmDepsHash = "sha256-9ZmCmzA9sULoZqqJ/1ADK19ekXMq6ayvWrMfceyF1ak=";
+  npmDepsHash = "sha256-vgqo91JmGaOlpAP0ZEJECf/vmYnht6whdHSC2cgWPf0=";
 
   nodejs = nodejs_22;
 
-  # Native module build dependencies (sqlite3 uses node-gyp)
+  # Native module build dependencies (better-sqlite3 uses node-gyp)
   nativeBuildInputs = [
     makeWrapper
     python3
@@ -44,14 +53,14 @@ buildNpmPackage {
   makeCacheWritable = true;
 
   # Prisma engine configuration — avoids network downloads in the sandbox.
-  # NOTE: prisma-engines_6 version in nixpkgs must be compatible with the
-  # @prisma/client version in package.json (currently ^6.19.1).
-  # If the build fails with a version mismatch, override prisma-engines_6.
+  # Prisma 7 uses a driver adapter (better-sqlite3) at runtime, so the query
+  # engine binary/library is no longer needed. We still need the schema engine
+  # for `prisma generate` and `prisma db push`.
   env = {
-    PRISMA_SCHEMA_ENGINE_BINARY = "${prisma-engines_6}/bin/schema-engine";
-    PRISMA_QUERY_ENGINE_BINARY = "${prisma-engines_6}/bin/query-engine";
-    PRISMA_QUERY_ENGINE_LIBRARY = "${prisma-engines_6}/lib/libquery_engine.node";
-    PRISMA_FMT_BINARY = "${prisma-engines_6}/bin/prisma-fmt";
+    PRISMA_SCHEMA_ENGINE_BINARY = "${prisma-engines_7}/bin/schema-engine";
+    PRISMA_QUERY_ENGINE_BINARY = "${prisma-engines_7}/bin/query-engine";
+    PRISMA_QUERY_ENGINE_LIBRARY = "${prisma-engines_7}/lib/libquery_engine.node";
+    PRISMA_FMT_BINARY = "${prisma-engines_7}/bin/prisma-fmt";
     PRISMA_ENGINES_CHECKSUM_IGNORE_MISSING = "1";
     # Dummy DATABASE_URL for prisma generate (not used at runtime)
     DATABASE_URL = "file:./dev.db";
@@ -100,7 +109,7 @@ buildNpmPackage {
     substitute ${./ai-toolkit-ui-wrapper.sh} $out/bin/ai-toolkit-ui \
       --subst-var-by ui "$out/lib/ai-toolkit-ui" \
       --subst-var-by toolkit "${ai-toolkit}" \
-      --subst-var-by prismaEngines6 "${prisma-engines_6}"
+      --subst-var-by prismaEngines7 "${prisma-engines_7}"
     chmod +x $out/bin/ai-toolkit-ui
 
     wrapProgram $out/bin/ai-toolkit-ui \

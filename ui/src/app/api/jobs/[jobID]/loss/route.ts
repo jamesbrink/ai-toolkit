@@ -1,37 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import prisma from '@/server/prisma';
 import path from 'path';
 import fs from 'fs';
 import { getTrainingFolder } from '@/server/settings';
 
-import sqlite3 from 'sqlite3';
+import Database from 'better-sqlite3';
 
 export const runtime = 'nodejs';
 
-const prisma = new PrismaClient();
-
-function openDb(filename: string) {
-  const db = new sqlite3.Database(filename);
-  db.configure('busyTimeout', 30_000);
-  return db;
-}
-
-function all<T = any>(db: sqlite3.Database, sql: string, params: any[] = []) {
-  return new Promise<T[]>((resolve, reject) => {
-    db.all(sql, params, (err, rows) => {
-      if (err) reject(err);
-      else resolve(rows as T[]);
-    });
-  });
-}
-
-function closeDb(db: sqlite3.Database) {
-  return new Promise<void>((resolve, reject) => {
-    db.close(err => (err ? reject(err) : resolve()));
-  });
-}
-
-export async function GET(request: NextRequest, { params }: { params: { jobID: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ jobID: string }> }) {
   // this must be awaited to avoid TS error
   const { jobID } = await params;
 
@@ -53,20 +30,16 @@ export async function GET(request: NextRequest, { params }: { params: { jobID: s
   const sinceStep = sinceStepParam != null ? Number(sinceStepParam) : null;
   const stride = Math.max(1, Number(url.searchParams.get('stride') ?? 1));
 
-  const db = openDb(logPath);
+  const db = new Database(logPath, { readonly: true });
+  db.pragma('busy_timeout = 30000');
 
   try {
-    const keysRows = await all<{ key: string }>(db, `SELECT key FROM metric_keys ORDER BY key ASC`);
+    const keysRows = db.prepare(`SELECT key FROM metric_keys ORDER BY key ASC`).all() as { key: string }[];
     const keys = keysRows.map(r => r.key);
 
-    const points = await all<{
-      step: number;
-      wall_time: number;
-      value: number | null;
-      value_text: string | null;
-    }>(
-      db,
-      `
+    const points = db
+      .prepare(
+        `
       SELECT
         m.step AS step,
         s.wall_time AS wall_time,
@@ -80,8 +53,13 @@ export async function GET(request: NextRequest, { params }: { params: { jobID: s
       ORDER BY m.step ASC
       LIMIT ?
       `,
-      [key, sinceStep, sinceStep, stride, limit],
-    );
+      )
+      .all(key, sinceStep, sinceStep, stride, limit) as {
+      step: number;
+      wall_time: number;
+      value: number | null;
+      value_text: string | null;
+    }[];
 
     return NextResponse.json({
       key,
@@ -93,6 +71,6 @@ export async function GET(request: NextRequest, { params }: { params: { jobID: s
       })),
     });
   } finally {
-    await closeDb(db);
+    db.close();
   }
 }

@@ -2,9 +2,7 @@ import { NextRequest } from 'next/server';
 import { readdir, readFile, stat } from 'fs/promises';
 import { join, extname } from 'path';
 import { getDatasetsRoot } from '@/server/settings';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '@/server/prisma';
 
 const IMAGE_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif']);
 const CAPTION_EXTENSION = '.txt';
@@ -18,9 +16,7 @@ async function listDatasetFiles(datasetDir: string): Promise<string[]> {
     if (IMAGE_EXTENSIONS.has(ext) || ext === CAPTION_EXTENSION) {
       // Build relative path from dataset root
       const parentDir = entry.parentPath || entry.path || '';
-      const relativePath = parentDir
-        ? join(parentDir, entry.name).replace(datasetDir + '/', '')
-        : entry.name;
+      const relativePath = parentDir ? join(parentDir, entry.name).replace(datasetDir + '/', '') : entry.name;
       files.push(relativePath);
     }
   }

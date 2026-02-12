@@ -20,9 +20,7 @@ export default function useFilesList(jobID: string, reloadInterval: null | numbe
       loadStatus = 'refreshing';
     }
     setStatus(loadStatus);
-    const request = hostId
-      ? remoteApi.get(hostId, `jobs/${jobID}/files`)
-      : apiClient.get(`/api/jobs/${jobID}/files`);
+    const request = hostId ? remoteApi.get(hostId, `jobs/${jobID}/files`) : apiClient.get(`/api/jobs/${jobID}/files`);
     request
       .then(res => res.data)
       .then(data => {

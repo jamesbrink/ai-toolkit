@@ -16,9 +16,7 @@ export default function useCPUInfo(reloadInterval: null | number = null, hostId?
       setStatus('loading');
     }
     try {
-      const request = hostId
-        ? remoteApi.get(hostId, 'cpu')
-        : apiClient.get('/api/cpu');
+      const request = hostId ? remoteApi.get(hostId, 'cpu') : apiClient.get('/api/cpu');
       const data: CpuInfo = await request.then(res => res.data);
       setCpuInfo(data);
       setStatus('success');

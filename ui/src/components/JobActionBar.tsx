@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { Eye, Trash2, Pen, Play, Pause, Cog, X } from 'lucide-react';
 import { Button } from '@headlessui/react';
 import { openConfirm } from '@/components/ConfirmModal';
-import { Job } from '@prisma/client';
+import { Job } from '@/server/prismaTypes';
 import { DataSource, UnifiedJob } from '@/types';
 import { startJob, stopJob, deleteJob, getAvaliableJobActions, markJobAsStopped } from '@/utils/jobs';
 import { startQueue } from '@/utils/queue';

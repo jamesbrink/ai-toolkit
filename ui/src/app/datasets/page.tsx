@@ -47,11 +47,7 @@ export default function Datasets() {
 
   // Use aggregated datasets when hosts exist, local-only otherwise
   const { datasets: localDatasets, status: localStatus, refreshDatasets: refreshLocal } = useDatasetList();
-  const {
-    allDatasets,
-    isLoading: allLoading,
-    refreshAllDatasets,
-  } = useAllDatasets(hosts);
+  const { allDatasets, isLoading: allLoading, refreshAllDatasets } = useAllDatasets(hosts);
 
   // Merge: when hosts exist, use allDatasets; otherwise fall back to local
   const datasets: SourcedDatasetInfo[] = hasHosts

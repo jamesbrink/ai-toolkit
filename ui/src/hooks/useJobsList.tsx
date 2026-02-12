@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Job } from '@prisma/client';
+import { Job } from '@/server/prismaTypes';
 import { apiClient } from '@/utils/api';
 
 export default function useJobsList(onlyActive = false, reloadInterval: null | number = null) {

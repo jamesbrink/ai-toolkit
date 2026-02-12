@@ -1,12 +1,10 @@
 import fs from 'fs/promises';
 import fsSync from 'fs';
 import path from 'path';
-import { PrismaClient } from '@prisma/client';
+import prisma from '@/server/prisma';
 import { getDatasetsRoot } from '@/server/settings';
 import { computePerceptualHash, findDuplicateGroups, ImageMetrics } from '@/server/imageAnalysis';
 import { runPythonAnalysis, PythonAnalysisResult } from '@/server/pythonAnalysis';
-
-const prisma = new PrismaClient();
 
 const IMAGE_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif']);
 

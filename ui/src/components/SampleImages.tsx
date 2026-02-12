@@ -1,7 +1,7 @@
 import { useMemo, useState, useRef, useEffect } from 'react';
 import useSampleImages from '@/hooks/useSampleImages';
 import SampleImageCard from './SampleImageCard';
-import { Job } from '@prisma/client';
+import { Job } from '@/server/prismaTypes';
 import { JobConfig, UnifiedJob } from '@/types';
 import { LuImageOff, LuLoader, LuBan } from 'react-icons/lu';
 import { Button } from '@headlessui/react';

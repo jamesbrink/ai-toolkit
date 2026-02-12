@@ -1,7 +1,8 @@
 # numtide/devshell module — categorized command menu for `nix develop`
 { lib, ... }:
 {
-  perSystem = { pkgs, system, ... }:
+  perSystem =
+    { pkgs, system, ... }:
     let
       isDarwin = pkgs.stdenv.isDarwin;
       isLinux = pkgs.stdenv.isLinux;
@@ -33,9 +34,35 @@
             category = "development";
           }
           {
-            name = "format";
-            command = "cd ui && npm run format";
-            help = "Run Prettier on the web UI";
+            name = "fmt";
+            command = "nix fmt";
+            help = "Format all files (Nix + JS/TS) via treefmt";
+            category = "development";
+          }
+          {
+            name = "fmt-check";
+            command = "nix fmt -- --fail-on-change";
+            help = "Check formatting without modifying files";
+            category = "development";
+          }
+          {
+            name = "test";
+            command = "cd ui && npm test";
+            help = "Run Vitest tests";
+            category = "development";
+          }
+          {
+            name = "check";
+            command = ''
+              echo "==> Checking formatting..."
+              nix fmt -- --fail-on-change
+              echo "==> Running ESLint..."
+              cd ui && npm run lint
+              echo "==> Running tests..."
+              cd ui && npm test
+              echo "All checks passed."
+            '';
+            help = "Run all checks (format, lint, test)";
             category = "development";
           }
 
@@ -100,7 +127,8 @@
 
         # ── Packages ───────────────────────────────────────────
 
-        packages = with pkgs;
+        packages =
+          with pkgs;
           [
             # build tools
             cmake
@@ -144,12 +172,17 @@
 
         devshell.startup.setup.text = ''
           ${lib.optionalString isLinux ''
-            export LD_LIBRARY_PATH="${lib.makeLibraryPath (with pkgs; [
-              stdenv.cc.cc.lib
-              libGL
-              glib
-              cudaPackages.cudatoolkit
-            ])}"''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+            export LD_LIBRARY_PATH="${
+              lib.makeLibraryPath (
+                with pkgs;
+                [
+                  stdenv.cc.cc.lib
+                  libGL
+                  glib
+                  cudaPackages.cudatoolkit
+                ]
+              )
+            }"''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
           ''}
 
           # Use the same data directory as nix run / Docker for parity

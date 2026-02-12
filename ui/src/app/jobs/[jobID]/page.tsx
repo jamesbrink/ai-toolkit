@@ -12,7 +12,7 @@ import JobActionBar from '@/components/JobActionBar';
 import JobConfigViewer from '@/components/JobConfigViewer';
 import JobLossGraph from '@/components/JobLossGraph';
 import { JobOverviewSkeleton } from '@/components/Skeleton';
-import { Job } from '@prisma/client';
+import { Job } from '@/server/prismaTypes';
 import { UnifiedJob } from '@/types';
 import { useClaudeChat } from '@/components/claude/ClaudeChatContext';
 
@@ -54,9 +54,8 @@ const pages: Page[] = [
   },
 ];
 
-export default function JobPage({ params }: { params: { jobID: string } }) {
-  const usableParams = use(params as any) as { jobID: string };
-  const jobID = usableParams.jobID;
+export default function JobPage({ params }: { params: Promise<{ jobID: string }> }) {
+  const { jobID } = use(params);
   const searchParams = useSearchParams();
   const hostId = searchParams.get('hostId');
   const { job, status, refreshJob } = useJob(jobID, 5000, hostId);

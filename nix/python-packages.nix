@@ -2,11 +2,13 @@
 # Adds missing packages and pins versions that diverge significantly from nixpkgs
 { pkgs, lib }:
 
-self: super: {
+self: super:
+{
   # === CUDA-enabled PyTorch on Linux ===
   # Use pre-built wheels (torch-bin) that include CUDA runtime libraries.
   # This aliases torch → torch-bin so all transitive dependencies also get CUDA.
-} // lib.optionalAttrs pkgs.stdenv.isLinux {
+}
+// lib.optionalAttrs pkgs.stdenv.isLinux {
   torch = super.torch-bin.overridePythonAttrs (old: {
     passthru = (old.passthru or { }) // {
       # Attributes expected by downstream packages (e.g. bitsandbytes)
@@ -18,7 +20,8 @@ self: super: {
   });
   torchvision = super.torchvision-bin;
   torchaudio = super.torchaudio-bin;
-} // {
+}
+// {
   # === Missing packages (not in nixpkgs) ===
 
   lycoris-lora = self.buildPythonPackage rec {
@@ -37,8 +40,15 @@ self: super: {
     pythonRelaxDeps = true;
 
     dependencies = with self; [
-      torch torchvision einops safetensors
-      transformers diffusers timm peft accelerate
+      torch
+      torchvision
+      einops
+      safetensors
+      transformers
+      diffusers
+      timm
+      peft
+      accelerate
     ];
 
     doCheck = false;
@@ -77,11 +87,21 @@ self: super: {
     build-system = [ self.setuptools ];
     nativeBuildInputs = [ self.pythonRelaxDepsHook ];
     pythonRelaxDeps = true;
-    pythonRemoveDeps = [ "opencv-python" "opencv-python-headless" ];
+    pythonRemoveDeps = [
+      "opencv-python"
+      "opencv-python-headless"
+    ];
 
     dependencies = with self; [
-      torch transformers pillow opencv4 scipy
-      timm huggingface-hub einops scikit-image
+      torch
+      transformers
+      pillow
+      opencv4
+      scipy
+      timm
+      huggingface-hub
+      einops
+      scikit-image
       importlib-metadata
     ];
 
@@ -104,7 +124,11 @@ self: super: {
     pythonRelaxDeps = true;
 
     dependencies = with self; [
-      torch torchvision scipy pillow numpy
+      torch
+      torchvision
+      scipy
+      pillow
+      numpy
     ];
 
     doCheck = false;
@@ -122,12 +146,18 @@ self: super: {
       hash = "sha256-Kc7v2ltBH7OkqTb67wdvALy7kGWieoZKihQEl+syPRY=";
     };
 
-    build-system = [ self.setuptools self.setuptools-scm ];
+    build-system = [
+      self.setuptools
+      self.setuptools-scm
+    ];
     nativeBuildInputs = [ self.pythonRelaxDepsHook ];
     pythonRelaxDeps = true;
 
     dependencies = with self; [
-      torch safetensors packaging ninja
+      torch
+      safetensors
+      packaging
+      ninja
     ];
 
     doCheck = false;
@@ -150,7 +180,10 @@ self: super: {
     pythonRelaxDeps = true;
 
     dependencies = with self; [
-      torch numpy pywavelets six
+      torch
+      numpy
+      pywavelets
+      six
     ];
 
     dontUseCmakeConfigure = true;
@@ -175,11 +208,20 @@ self: super: {
     build-system = [ self.setuptools ];
     nativeBuildInputs = [ self.pythonRelaxDepsHook ];
     pythonRelaxDeps = true;
-    pythonRemoveDeps = [ "opencv-python" "opencv-python-headless" "eval-type-backport" ];
+    pythonRemoveDeps = [
+      "opencv-python"
+      "opencv-python-headless"
+      "eval-type-backport"
+    ];
 
     dependencies = with self; [
-      numpy scipy scikit-image opencv4
-      pyyaml pydantic albucore
+      numpy
+      scipy
+      scikit-image
+      opencv4
+      pyyaml
+      pydantic
+      albucore
     ];
 
     doCheck = false;
@@ -199,9 +241,15 @@ self: super: {
     build-system = [ self.setuptools ];
     nativeBuildInputs = [ self.pythonRelaxDepsHook ];
     pythonRelaxDeps = true;
-    pythonRemoveDeps = [ "opencv-python-headless" "opencv-python" ];
+    pythonRemoveDeps = [
+      "opencv-python-headless"
+      "opencv-python"
+    ];
 
-    dependencies = with self; [ numpy opencv4 ];
+    dependencies = with self; [
+      numpy
+      opencv4
+    ];
 
     doCheck = false;
     pythonImportsCheck = [ "albucore" ];
@@ -231,12 +279,15 @@ self: super: {
   });
 
   # rapidfuzz C extension fails on macOS (libatomic not available with clang)
-  rapidfuzz = super.rapidfuzz.overridePythonAttrs (old: lib.optionalAttrs pkgs.stdenv.isDarwin {
-    env = (old.env or { }) // {
-      RAPIDFUZZ_BUILD_EXTENSION = "0";
-    };
-    doCheck = false;
-  });
+  rapidfuzz = super.rapidfuzz.overridePythonAttrs (
+    old:
+    lib.optionalAttrs pkgs.stdenv.isDarwin {
+      env = (old.env or { }) // {
+        RAPIDFUZZ_BUILD_EXTENSION = "0";
+      };
+      doCheck = false;
+    }
+  );
 
   # diffusers pinned to specific git commit
   diffusers = super.diffusers.overridePythonAttrs (old: {
