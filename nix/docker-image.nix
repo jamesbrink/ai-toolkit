@@ -55,6 +55,10 @@ pkgs.dockerTools.streamLayeredImage {
   };
 
   extraCommands = ''
+    # /usr/bin/env is required by scripts using #!/usr/bin/env bash shebangs
+    mkdir -p usr/bin
+    ln -s /bin/env usr/bin/env
+
     # sshd requires these directories and files
     mkdir -p run/sshd
     mkdir -p etc/ssh
