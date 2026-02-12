@@ -13,6 +13,7 @@ const defaultSettings: Settings = {
   CLAUDE_CAPTION_MODEL: '',
   MDNS_ENABLED: 'true',
   RUNPOD_API_KEY: '',
+  RUNPOD_SSH_PUBLIC_KEY: '',
 };
 
 export default function useRemoteSettings(hostId: string | null) {
@@ -40,6 +41,7 @@ export default function useRemoteSettings(hostId: string | null) {
           CLAUDE_CAPTION_MODEL: data.CLAUDE_CAPTION_MODEL || '',
           MDNS_ENABLED: data.MDNS_ENABLED ?? 'true',
           RUNPOD_API_KEY: data.RUNPOD_API_KEY || '',
+          RUNPOD_SSH_PUBLIC_KEY: data.RUNPOD_SSH_PUBLIC_KEY || '',
         });
         setIsLoaded(true);
       })

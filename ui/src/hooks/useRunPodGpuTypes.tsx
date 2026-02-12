@@ -3,6 +3,18 @@
 import { useEffect, useState } from 'react';
 import { apiClient } from '@/utils/api';
 
+export interface GpuTypeLowestPriceInfo {
+  stockStatus: string | null;
+  rentedCount: number;
+  totalCount: number;
+}
+
+export interface GpuTypeDatacenterInfo {
+  id: string;
+  name: string;
+  location: string;
+}
+
 export interface GpuTypeInfo {
   id: string;
   displayName: string;
@@ -11,6 +23,13 @@ export interface GpuTypeInfo {
   communityCloud: boolean;
   communityPrice: number | null;
   securePrice: number | null;
+  lowestPrice: GpuTypeLowestPriceInfo | null;
+  communitySpotPrice: number | null;
+  secureSpotPrice: number | null;
+  maxGpuCount: number;
+  maxGpuCountCommunityCloud: number;
+  maxGpuCountSecureCloud: number;
+  nodeGroupDatacenters: GpuTypeDatacenterInfo[];
 }
 
 export default function useRunPodGpuTypes(enabled = true) {

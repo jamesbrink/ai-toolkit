@@ -104,30 +104,35 @@ model Host {
 }
 
 model RunPodPod {
-  id                String    @id @default(uuid())
-  runpodId          String    @unique         // RunPod's pod ID
-  name              String
-  gpuTypeId         String                    // e.g. "NVIDIA RTX 4090"
-  gpuTypeDisplay    String    @default("")
-  gpuCount          Int       @default(1)
-  cloudType         String    @default("COMMUNITY") // "COMMUNITY" | "SECURE"
-  volumeInGb        Int       @default(50)
-  containerDiskInGb Int       @default(20)
-  costPerHr         Float     @default(0)
-  desiredStatus     String    @default("RUNNING")
-  currentStatus     String    @default("deploying") // deploying|running|stopped|terminated|error
-  publicIp          String    @default("")
-  publicPort        Int       @default(0)
-  hostId            String?   @unique         // FK to Host.id (set on auto-register)
-  authPassword      String    @default("")    // Generated auth for the remote instance
-  startedAt         DateTime?
-  totalUptimeSeconds Int      @default(0)
-  estimatedSpend    Float     @default(0)
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-  terminatedAt      DateTime?
-  lastPolledAt      DateTime?
-  errorMessage      String    @default("")
+  id                  String    @id @default(uuid())
+  runpodId            String    @unique         // RunPod's pod ID
+  name                String
+  gpuTypeId           String                    // e.g. "NVIDIA RTX 4090"
+  gpuTypeDisplay      String    @default("")
+  gpuCount            Int       @default(1)
+  cloudType           String    @default("COMMUNITY") // "COMMUNITY" | "SECURE"
+  volumeInGb          Int       @default(50)
+  containerDiskInGb   Int       @default(20)
+  costPerHr           Float     @default(0)
+  desiredStatus       String    @default("RUNNING")
+  currentStatus       String    @default("deploying") // deploying|running|stopped|terminated|error
+  publicIp            String    @default("")
+  publicPort          Int       @default(0)
+  hostId              String?   @unique         // FK to Host.id (set on auto-register)
+  authPassword        String    @default("")    // Generated auth for the remote instance
+  dataCenterId        String    @default("")
+  dataCenterName      String    @default("")
+  dataCenterRegion    String    @default("")
+  instanceType        String    @default("ON_DEMAND") // "ON_DEMAND" | "SPOT"
+  bidPerGpu           Float     @default(0)
+  startedAt           DateTime?
+  totalUptimeSeconds  Int       @default(0)
+  estimatedSpend      Float     @default(0)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  terminatedAt        DateTime?
+  lastPolledAt        DateTime?
+  errorMessage        String    @default("")
 
   @@index([currentStatus])
   @@index([hostId])

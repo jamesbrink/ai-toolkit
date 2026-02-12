@@ -137,17 +137,29 @@ export default function RunPodPodCard({ pod, onRefresh }: RunPodPodCardProps) {
           </div>
         </div>
 
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-1">
           <span className="text-sm text-gray-400">Spend: {formatCost(pod.estimatedSpend)}</span>
-          <span
-            className={classNames(
-              'px-2 py-0.5 rounded-full text-xs',
-              pod.cloudType === 'SECURE' ? 'bg-blue-900 text-blue-300' : 'bg-gray-700 text-gray-300',
+          <div className="flex items-center space-x-1">
+            {pod.instanceType === 'SPOT' && (
+              <span className="px-2 py-0.5 rounded-full text-xs bg-green-900 text-green-300">Spot</span>
             )}
-          >
-            {pod.cloudType === 'SECURE' ? 'Secure' : 'Community'}
-          </span>
+            <span
+              className={classNames(
+                'px-2 py-0.5 rounded-full text-xs',
+                pod.cloudType === 'SECURE' ? 'bg-blue-900 text-blue-300' : 'bg-gray-700 text-gray-300',
+              )}
+            >
+              {pod.cloudType === 'SECURE' ? 'Secure' : 'Community'}
+            </span>
+          </div>
         </div>
+
+        {pod.dataCenterName && (
+          <p className="text-xs text-gray-400">
+            {pod.dataCenterName}
+            {pod.dataCenterRegion ? ` — ${pod.dataCenterRegion}` : ''}
+          </p>
+        )}
 
         {pod.hostId && <p className="text-xs text-gray-400">Linked to host</p>}
 

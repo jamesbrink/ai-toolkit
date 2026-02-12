@@ -20,6 +20,11 @@ export interface RunPodPodInfo {
   publicPort: number;
   hostId: string | null;
   authPassword: string;
+  dataCenterId: string;
+  dataCenterName: string;
+  dataCenterRegion: string;
+  instanceType: string;
+  bidPerGpu: number;
   startedAt: string | null;
   totalUptimeSeconds: number;
   estimatedSpend: number;

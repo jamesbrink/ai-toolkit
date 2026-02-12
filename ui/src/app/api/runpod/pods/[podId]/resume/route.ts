@@ -13,7 +13,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
       return NextResponse.json({ error: 'Pod is not stopped' }, { status: 400 });
     }
 
-    await resumePod(pod.runpodId);
+    await resumePod(pod.runpodId, pod.gpuCount);
     const updated = await prisma.runPodPod.update({
       where: { id: podId },
       data: { desiredStatus: 'RUNNING', currentStatus: 'deploying' },

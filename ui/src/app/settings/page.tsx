@@ -202,6 +202,24 @@ export default function Settings() {
                 <div className="pt-4 border-t border-gray-700">
                   <h2 className="text-sm font-semibold text-gray-300 uppercase tracking-wide mb-4">Cloud Providers</h2>
                   <div>
+                    <label htmlFor="RUNPOD_SSH_PUBLIC_KEY" className="block text-sm font-medium mb-2">
+                      SSH Public Key
+                      <div className="text-gray-400 text-sm ml-1">
+                        SSH key for accessing RunPod pods. Pre-populated in the deploy modal for convenience.
+                      </div>
+                    </label>
+                    <textarea
+                      id="RUNPOD_SSH_PUBLIC_KEY"
+                      name="RUNPOD_SSH_PUBLIC_KEY"
+                      value={settings.RUNPOD_SSH_PUBLIC_KEY}
+                      onChange={e => setSettings(prev => ({ ...prev, RUNPOD_SSH_PUBLIC_KEY: e.target.value }))}
+                      rows={3}
+                      className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent text-xs font-mono"
+                      placeholder="ssh-ed25519 AAAA..."
+                    />
+                  </div>
+
+                  <div>
                     <label htmlFor="RUNPOD_API_KEY" className="block text-sm font-medium mb-2">
                       RunPod API Key
                       <div className="text-gray-400 text-sm ml-1">

@@ -3,6 +3,7 @@ import NodeCache from 'node-cache';
 
 const RUNPOD_API_URL = 'https://api.runpod.io/graphql';
 const gpuCache = new NodeCache({ stdTTL: 300 }); // 5 min cache for GPU types
+const accountCache = new NodeCache({ stdTTL: 60 }); // 1 min cache for account info
 
 /** Default Docker image for deployed pods */
 export const RUNPOD_IMAGE = 'ghcr.io/jamesbrink/ai-toolkit:latest';
@@ -47,8 +48,53 @@ async function runpodFetch<T>(query: string, variables?: Record<string, unknown>
 }
 
 // ---------------------------------------------------------------------------
+// Account Info
+// ---------------------------------------------------------------------------
+
+export interface AccountInfo {
+  clientBalance: number;
+  currentSpendPerHr: number;
+  underBalance: boolean;
+  minBalance: number;
+  spendLimit: number;
+  clientLifetimeSpend: number;
+}
+
+export async function getAccountInfo(): Promise<AccountInfo> {
+  const cached = accountCache.get<AccountInfo>('accountInfo');
+  if (cached) return cached;
+
+  const query = `query {
+    myself {
+      clientBalance
+      currentSpendPerHr
+      underBalance
+      minBalance
+      spendLimit
+      clientLifetimeSpend
+    }
+  }`;
+
+  const data = await runpodFetch<{ myself: AccountInfo }>(query);
+  accountCache.set('accountInfo', data.myself);
+  return data.myself;
+}
+
+// ---------------------------------------------------------------------------
 // GPU Types
 // ---------------------------------------------------------------------------
+
+export interface GpuTypeLowestPrice {
+  stockStatus: string | null;
+  rentedCount: number;
+  totalCount: number;
+}
+
+export interface GpuTypeDatacenter {
+  id: string;
+  name: string;
+  location: string;
+}
 
 export interface GpuType {
   id: string;
@@ -58,6 +104,13 @@ export interface GpuType {
   communityCloud: boolean;
   communityPrice: number | null;
   securePrice: number | null;
+  lowestPrice: GpuTypeLowestPrice | null;
+  communitySpotPrice: number | null;
+  secureSpotPrice: number | null;
+  maxGpuCount: number;
+  maxGpuCountCommunityCloud: number;
+  maxGpuCountSecureCloud: number;
+  nodeGroupDatacenters: GpuTypeDatacenter[];
 }
 
 export async function listGpuTypes(): Promise<GpuType[]> {
@@ -73,6 +126,21 @@ export async function listGpuTypes(): Promise<GpuType[]> {
       communityCloud
       communityPrice
       securePrice
+      lowestPrice {
+        stockStatus
+        rentedCount
+        totalCount
+      }
+      communitySpotPrice
+      secureSpotPrice
+      maxGpuCount
+      maxGpuCountCommunityCloud
+      maxGpuCountSecureCloud
+      nodeGroupDatacenters {
+        id
+        name
+        location
+      }
     }
   }`;
 
@@ -92,6 +160,7 @@ export interface DeployPodInput {
   cloudType?: 'COMMUNITY' | 'SECURE';
   volumeInGb?: number;
   containerDiskInGb?: number;
+  dataCenterId?: string;
   authPassword: string;
   publicKey?: string;
   env?: Record<string, string>;
@@ -116,6 +185,22 @@ export async function deployPod(input: DeployPodInput): Promise<DeployedPod> {
     }
   }
 
+  const mutationInput: Record<string, unknown> = {
+    name: input.name,
+    imageName: RUNPOD_IMAGE,
+    gpuTypeId: input.gpuTypeId,
+    gpuCount: input.gpuCount || 1,
+    cloudType: input.cloudType || 'COMMUNITY',
+    volumeInGb: input.volumeInGb || 50,
+    containerDiskInGb: input.containerDiskInGb || 20,
+    ports: '8675/http,22/tcp',
+    volumeMountPath: '/workspace',
+    env: envVars,
+  };
+  if (input.dataCenterId) {
+    mutationInput.dataCenterId = input.dataCenterId;
+  }
+
   const data = await runpodFetch<{ podFindAndDeployOnDemand: DeployedPod }>(
     `
     mutation ($input: PodFindAndDeployOnDemandInput!) {
@@ -128,26 +213,70 @@ export async function deployPod(input: DeployPodInput): Promise<DeployedPod> {
       }
     }
   `,
-    {
-      input: {
-        name: input.name,
-        imageName: RUNPOD_IMAGE,
-        gpuTypeId: input.gpuTypeId,
-        gpuCount: input.gpuCount || 1,
-        cloudType: input.cloudType || 'COMMUNITY',
-        volumeInGb: input.volumeInGb || 50,
-        containerDiskInGb: input.containerDiskInGb || 20,
-        ports: '8675/http,22/tcp',
-        volumeMountPath: '/workspace',
-        env: envVars,
-      },
-    },
+    { input: mutationInput },
   );
 
   if (!data.podFindAndDeployOnDemand) {
     throw new Error('No GPU available for the selected type and cloud. Try a different GPU or cloud type.');
   }
   return data.podFindAndDeployOnDemand;
+}
+
+// ---------------------------------------------------------------------------
+// Deploy Spot Pod
+// ---------------------------------------------------------------------------
+
+export interface DeploySpotPodInput extends DeployPodInput {
+  bidPerGpu: number;
+}
+
+export async function deploySpotPod(input: DeploySpotPodInput): Promise<DeployedPod> {
+  const envVars: Array<{ key: string; value: string }> = [{ key: 'AI_TOOLKIT_AUTH', value: input.authPassword }];
+  if (input.publicKey) {
+    envVars.push({ key: 'PUBLIC_KEY', value: input.publicKey });
+  }
+  if (input.env) {
+    for (const [key, value] of Object.entries(input.env)) {
+      envVars.push({ key, value });
+    }
+  }
+
+  const mutationInput: Record<string, unknown> = {
+    name: input.name,
+    imageName: RUNPOD_IMAGE,
+    gpuTypeId: input.gpuTypeId,
+    gpuCount: input.gpuCount || 1,
+    cloudType: input.cloudType || 'COMMUNITY',
+    volumeInGb: input.volumeInGb || 50,
+    containerDiskInGb: input.containerDiskInGb || 20,
+    bidPerGpu: input.bidPerGpu,
+    ports: '8675/http,22/tcp',
+    volumeMountPath: '/workspace',
+    env: envVars,
+  };
+  if (input.dataCenterId) {
+    mutationInput.dataCenterId = input.dataCenterId;
+  }
+
+  const data = await runpodFetch<{ podRentInterruptable: DeployedPod }>(
+    `
+    mutation ($input: PodRentInterruptableInput!) {
+      podRentInterruptable(input: $input) {
+        id
+        name
+        desiredStatus
+        imageName
+        costPerHr
+      }
+    }
+  `,
+    { input: mutationInput },
+  );
+
+  if (!data.podRentInterruptable) {
+    throw new Error('No spot GPU available. Try a different GPU type, higher bid, or switch to on-demand.');
+  }
+  return data.podRentInterruptable;
 }
 
 // ---------------------------------------------------------------------------
@@ -176,6 +305,8 @@ export interface PodStatus {
   lastStatusChange: string;
   imageName: string;
   costPerHr: number;
+  machineId: string | null;
+  machine: { dataCenterId: string } | null;
   runtime: PodRuntime | null;
 }
 
@@ -186,6 +317,10 @@ const POD_STATUS_FIELDS = `
   lastStatusChange
   imageName
   costPerHr
+  machineId
+  machine {
+    dataCenterId
+  }
   runtime {
     uptimeInSeconds
     ports {
@@ -252,7 +387,7 @@ export async function stopPod(podId: string): Promise<void> {
   );
 }
 
-export async function resumePod(podId: string): Promise<void> {
+export async function resumePod(podId: string, gpuCount = 1): Promise<void> {
   await runpodFetch(
     `
     mutation ($input: PodResumeInput!) {
@@ -263,7 +398,7 @@ export async function resumePod(podId: string): Promise<void> {
       }
     }
   `,
-    { input: { podId, gpuCount: 1 } },
+    { input: { podId, gpuCount } },
   );
 }
 

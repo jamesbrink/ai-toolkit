@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import prisma from '@/server/prisma';
-import { deployPod } from '@/server/runpod';
+import { deployPod, deploySpotPod } from '@/server/runpod';
 
 export async function GET() {
   try {
@@ -18,7 +18,22 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, gpuTypeId, gpuTypeDisplay, gpuCount, cloudType, volumeInGb, containerDiskInGb, publicKey } = body;
+    const {
+      name,
+      gpuTypeId,
+      gpuTypeDisplay,
+      gpuCount,
+      cloudType,
+      volumeInGb,
+      containerDiskInGb,
+      dataCenterId,
+      dataCenterName,
+      dataCenterRegion,
+      instanceType,
+      bidPerGpu,
+      publicKey,
+      env,
+    } = body;
 
     if (!name || !gpuTypeId) {
       return NextResponse.json({ error: 'name and gpuTypeId are required' }, { status: 400 });
@@ -27,17 +42,23 @@ export async function POST(request: Request) {
     // Generate a secure auth password for the remote instance
     const authPassword = crypto.randomBytes(18).toString('base64url');
 
-    // Deploy via RunPod API
-    const deployed = await deployPod({
+    const baseInput = {
       name,
       gpuTypeId,
       gpuCount: gpuCount || 1,
       cloudType: cloudType || 'COMMUNITY',
       volumeInGb: volumeInGb || 50,
       containerDiskInGb: containerDiskInGb || 20,
+      dataCenterId: dataCenterId || undefined,
       authPassword,
       publicKey,
-    });
+      env,
+    };
+
+    const isSpot = instanceType === 'SPOT';
+    const deployed = isSpot
+      ? await deploySpotPod({ ...baseInput, bidPerGpu: bidPerGpu || 0 })
+      : await deployPod(baseInput);
 
     // Create local tracking record
     const pod = await prisma.runPodPod.create({
@@ -53,6 +74,11 @@ export async function POST(request: Request) {
         costPerHr: deployed.costPerHr || 0,
         desiredStatus: 'RUNNING',
         currentStatus: 'deploying',
+        dataCenterId: dataCenterId || '',
+        dataCenterName: dataCenterName || '',
+        dataCenterRegion: dataCenterRegion || '',
+        instanceType: isSpot ? 'SPOT' : 'ON_DEMAND',
+        bidPerGpu: isSpot ? bidPerGpu || 0 : 0,
         authPassword,
         startedAt: new Date(),
       },

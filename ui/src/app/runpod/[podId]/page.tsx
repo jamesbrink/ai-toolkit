@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { TopBar, MainContent } from '@/components/layout';
-import { ArrowLeft, Square, Play, Trash2, Download } from 'lucide-react';
+import { ArrowLeft, Square, Play, Trash2, Download, Cpu } from 'lucide-react';
 import classNames from 'classnames';
 import { RunPodPodInfo } from '@/hooks/useRunPodPods';
 import { openConfirm } from '@/components/ConfirmModal';
@@ -16,6 +16,27 @@ const statusConfig: Record<string, { color: string; label: string }> = {
   error: { color: 'bg-red-900 text-red-300', label: 'Error' },
   terminated: { color: 'bg-gray-700 text-gray-400', label: 'Terminated' },
 };
+
+interface LiveGpu {
+  id: string;
+  gpuUtilPerc: number;
+  memoryUtilPerc: number;
+}
+
+interface LivePodData {
+  runtime: {
+    uptimeInSeconds: number;
+    gpus: LiveGpu[] | null;
+    ports: Array<{
+      ip: string;
+      isIpPublic: boolean;
+      privatePort: number;
+      publicPort: number;
+    }> | null;
+  } | null;
+  machineId: string | null;
+  machine: { dataCenterId: string } | null;
+}
 
 function formatUptime(seconds: number): string {
   if (seconds < 60) return `${seconds}s`;
@@ -32,7 +53,9 @@ export default function RunPodPodDetailPage() {
   const params = useParams<{ podId: string }>();
   const router = useRouter();
   const [pod, setPod] = useState<RunPodPodInfo | null>(null);
+  const [liveData, setLiveData] = useState<LivePodData | null>(null);
   const [loading, setLoading] = useState(true);
+  const currentStatus = pod?.currentStatus;
 
   const fetchPod = useCallback(async () => {
     try {
@@ -45,11 +68,27 @@ export default function RunPodPodDetailPage() {
     }
   }, [params.podId]);
 
+  const fetchLive = useCallback(async () => {
+    try {
+      const res = await apiClient.get(`/api/runpod/pods/${params.podId}/live`);
+      setLiveData(res.data.live);
+    } catch {
+      // Live data is best-effort
+    }
+  }, [params.podId]);
+
   useEffect(() => {
     fetchPod();
     const interval = setInterval(fetchPod, 5000);
     return () => clearInterval(interval);
   }, [fetchPod]);
+
+  useEffect(() => {
+    if (!currentStatus || currentStatus === 'terminated' || currentStatus === 'stopped') return;
+    fetchLive();
+    const interval = setInterval(fetchLive, 5000);
+    return () => clearInterval(interval);
+  }, [fetchLive, currentStatus]);
 
   const handleStop = () => {
     openConfirm({
@@ -140,6 +179,7 @@ export default function RunPodPodDetailPage() {
   const isActive = pod.currentStatus === 'running' || pod.currentStatus === 'deploying';
   const isStopped = pod.currentStatus === 'stopped';
   const isTerminated = pod.currentStatus === 'terminated';
+  const gpus = liveData?.runtime?.gpus;
 
   return (
     <>
@@ -154,6 +194,9 @@ export default function RunPodPodDetailPage() {
         <div className="flex items-center space-x-3">
           <h1 className="text-lg">{pod.name}</h1>
           <span className={classNames('px-2 py-0.5 rounded-full text-xs', status.color)}>{status.label}</span>
+          {pod.instanceType === 'SPOT' && (
+            <span className="px-2 py-0.5 rounded-full text-xs bg-green-900 text-green-300">Spot</span>
+          )}
         </div>
         <div className="flex-1"></div>
         <div className="flex items-center space-x-2">
@@ -197,6 +240,44 @@ export default function RunPodPodDetailPage() {
       </TopBar>
       <MainContent>
         <div className="max-w-2xl space-y-6">
+          {/* GPU Utilization */}
+          {gpus && gpus.length > 0 && (
+            <div className="bg-gray-900 rounded-xl border border-gray-800 p-4">
+              <div className="flex items-center space-x-2 mb-3">
+                <Cpu className="w-4 h-4 text-gray-400" />
+                <h3 className="text-sm font-medium text-gray-300">GPU Utilization</h3>
+              </div>
+              <div className="space-y-3">
+                {gpus.map((gpu, i) => (
+                  <div key={gpu.id} className="space-y-1">
+                    <div className="flex items-center justify-between text-xs text-gray-400">
+                      <span>GPU {i}{gpus.length > 1 ? ` (${gpu.id})` : ''}</span>
+                      <span>{gpu.gpuUtilPerc}% compute &middot; {gpu.memoryUtilPerc}% memory</span>
+                    </div>
+                    <div className="flex space-x-2">
+                      <div className="flex-1">
+                        <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-blue-500 rounded-full transition-all duration-500"
+                            style={{ width: `${gpu.gpuUtilPerc}%` }}
+                          />
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-purple-500 rounded-full transition-all duration-500"
+                            style={{ width: `${gpu.memoryUtilPerc}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Metadata Table */}
           <div className="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden">
             <table className="w-full">
@@ -204,11 +285,28 @@ export default function RunPodPodDetailPage() {
                 <MetaRow label="RunPod ID" value={pod.runpodId} />
                 <MetaRow label="GPU" value={`${pod.gpuTypeDisplay}${pod.gpuCount > 1 ? ` x${pod.gpuCount}` : ''}`} />
                 <MetaRow label="Cloud Type" value={pod.cloudType === 'SECURE' ? 'Secure Cloud' : 'Community Cloud'} />
+                <MetaRow
+                  label="Instance Type"
+                  value={
+                    pod.instanceType === 'SPOT'
+                      ? `Spot (bid: $${pod.bidPerGpu.toFixed(2)}/hr per GPU)`
+                      : 'On-Demand'
+                  }
+                />
                 <MetaRow label="Cost" value={`$${pod.costPerHr.toFixed(2)}/hr`} />
                 <MetaRow label="Uptime" value={formatUptime(pod.totalUptimeSeconds)} />
                 <MetaRow label="Total Spend" value={`$${pod.estimatedSpend.toFixed(2)}`} />
                 <MetaRow label="Volume" value={`${pod.volumeInGb} GB`} />
                 <MetaRow label="Container Disk" value={`${pod.containerDiskInGb} GB`} />
+                {pod.dataCenterName && (
+                  <MetaRow
+                    label="Datacenter"
+                    value={`${pod.dataCenterName}${pod.dataCenterRegion ? ` — ${pod.dataCenterRegion}` : ''}`}
+                  />
+                )}
+                {liveData?.machine?.dataCenterId && !pod.dataCenterName && (
+                  <MetaRow label="Datacenter ID" value={liveData.machine.dataCenterId} />
+                )}
                 {pod.publicIp && <MetaRow label="Endpoint" value={`${pod.publicIp}:${pod.publicPort}`} />}
                 <MetaRow label="Created" value={new Date(pod.createdAt).toLocaleString()} />
                 {pod.terminatedAt && <MetaRow label="Terminated" value={new Date(pod.terminatedAt).toLocaleString()} />}

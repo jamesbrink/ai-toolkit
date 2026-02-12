@@ -9,9 +9,11 @@ import DeployPodModal from '@/components/DeployPodModal';
 import useHostList from '@/hooks/useHostList';
 import useRunPodPods from '@/hooks/useRunPodPods';
 import useRunPodGpuTypes from '@/hooks/useRunPodGpuTypes';
+import useRunPodAccount from '@/hooks/useRunPodAccount';
 import useSettings from '@/hooks/useSettings';
 import { openConfirm } from '@/components/ConfirmModal';
 import { apiClient } from '@/utils/api';
+import RunPodAccountWidget from '@/components/RunPodAccountWidget';
 import { Plus, Network, Cloud, Settings } from 'lucide-react';
 
 export default function HostsPage() {
@@ -20,6 +22,7 @@ export default function HostsPage() {
   const hasRunPodKey = isSettingsLoaded && settings.RUNPOD_API_KEY.length > 0;
   const { pods, refreshPods } = useRunPodPods(5000, hasRunPodKey);
   const { gpuTypes } = useRunPodGpuTypes(hasRunPodKey);
+  const { account } = useRunPodAccount(hasRunPodKey);
   const [deployOpen, setDeployOpen] = useState(false);
   const activePods = pods.filter(p => p.currentStatus !== 'terminated');
 
@@ -71,6 +74,7 @@ export default function HostsPage() {
         {/* Cloud Pods Section */}
         <div className="mb-8">
           <h2 className="text-sm font-semibold text-gray-300 uppercase tracking-wide mb-4">Cloud Pods</h2>
+          {account && <RunPodAccountWidget account={account} />}
           {!hasRunPodKey ? (
             <div className="bg-gray-900 rounded-xl border border-gray-800 p-6 text-center">
               <Cloud className="w-8 h-8 text-gray-600 mx-auto mb-3" />
@@ -123,6 +127,7 @@ export default function HostsPage() {
         onClose={() => setDeployOpen(false)}
         gpuTypes={gpuTypes}
         onDeployed={refreshPods}
+        defaultSshKey={settings.RUNPOD_SSH_PUBLIC_KEY}
       />
     </>
   );

@@ -118,6 +118,16 @@ export const getRunPodApiKey = async (): Promise<string> => {
   return apiKey;
 };
 
+export const getRunPodSshKey = async (): Promise<string> => {
+  const key = 'RUNPOD_SSH_PUBLIC_KEY';
+  let sshKey = myCache.get(key) as string;
+  if (sshKey !== undefined) return sshKey;
+  const row = await prisma.settings.findFirst({ where: { key } });
+  sshKey = row?.value && row.value !== '' ? row.value : '';
+  myCache.set(key, sshKey);
+  return sshKey;
+};
+
 const DEFAULT_CHAT_MODEL = 'claude-sonnet-4-5-20250929';
 const DEFAULT_CAPTION_MODEL = 'claude-haiku-4-5-20251001';
 
