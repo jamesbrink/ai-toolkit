@@ -243,19 +243,6 @@ export default function RunPodPodDetailPage() {
         </div>
       </TopBar>
 
-      {/* Tab bar */}
-      <div className="bg-gray-800 absolute top-12 left-0 w-full h-10 flex items-center px-2 text-sm overflow-x-auto">
-        {tabs.map(tab => (
-          <Button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={classNames('px-4 py-2 h-10 whitespace-nowrap shrink-0', activeTab === tab.key && 'bg-gray-700')}
-          >
-            {tab.label}
-          </Button>
-        ))}
-      </div>
-
       <MainContent className="pt-24">
         {activeTab === 'overview' && <PodOverviewTab pod={pod} liveData={liveData} />}
         {activeTab === 'logs' && (
@@ -275,6 +262,19 @@ export default function RunPodPodDetailPage() {
           />
         )}
       </MainContent>
+
+      {/* Tab bar — must be after MainContent in DOM so it stacks on top */}
+      <div className="bg-gray-800 absolute top-12 left-0 w-full h-10 flex items-center px-2 text-sm overflow-x-auto">
+        {tabs.map(tab => (
+          <Button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className={classNames('px-4 py-2 h-10 whitespace-nowrap shrink-0', activeTab === tab.key && 'bg-gray-700')}
+          >
+            {tab.label}
+          </Button>
+        ))}
+      </div>
     </>
   );
 }
