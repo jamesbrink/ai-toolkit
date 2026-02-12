@@ -58,23 +58,44 @@ export async function POST(request: Request) {
 
     const instanceId = remoteInstanceId || randomUUID();
 
-    // Check if a host with this instanceId already exists
-    const existing = await prisma.host.findUnique({
+    // Check if a host already exists at this address:port (prevents duplicates when
+    // a remote instance restarts with a new instanceId)
+    const existingByAddress = await prisma.host.findFirst({
+      where: { address, port },
+    });
+
+    if (existingByAddress) {
+      const updated = await prisma.host.update({
+        where: { id: existingByAddress.id },
+        data: {
+          name: remoteName,
+          instanceId,
+          authToken: authToken || existingByAddress.authToken,
+          deviceType: remoteDeviceType,
+          isOnline: remoteInstanceId !== null,
+          lastSeen: remoteInstanceId !== null ? new Date() : existingByAddress.lastSeen,
+          source: 'manual',
+        },
+      });
+      return NextResponse.json(updated);
+    }
+
+    // Also check by instanceId (same instance, different address — e.g. IP change)
+    const existingByInstance = await prisma.host.findUnique({
       where: { instanceId },
     });
 
-    if (existing) {
-      // Update the existing host instead of creating a duplicate
+    if (existingByInstance) {
       const updated = await prisma.host.update({
         where: { instanceId },
         data: {
           address,
           port,
           name: remoteName,
-          authToken: authToken || existing.authToken,
+          authToken: authToken || existingByInstance.authToken,
           deviceType: remoteDeviceType,
           isOnline: remoteInstanceId !== null,
-          lastSeen: remoteInstanceId !== null ? new Date() : existing.lastSeen,
+          lastSeen: remoteInstanceId !== null ? new Date() : existingByInstance.lastSeen,
           source: 'manual',
         },
       });

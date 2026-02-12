@@ -11,6 +11,9 @@ let bonjour: InstanceType<typeof Bonjour> | null = null;
 let browser: ReturnType<InstanceType<typeof Bonjour>['find']> | null = null;
 let instanceId: string = '';
 
+// Debounce concurrent mDNS events for the same address:port
+const pendingUpserts = new Set<string>();
+
 async function getOrCreateInstanceId(): Promise<string> {
   const existing = await prisma.settings.findUnique({
     where: { key: 'INSTANCE_ID' },
@@ -58,7 +61,37 @@ async function handleServiceUp(service: {
       ? service.addresses.find((a: string) => !a.includes(':')) || service.addresses[0]
       : service.host;
 
+  // Debounce: skip if we're already processing this address:port
+  const addrKey = `${address}:${service.port}`;
+  if (pendingUpserts.has(addrKey)) return;
+  pendingUpserts.add(addrKey);
+
   try {
+    // Check if a host already exists at this address:port (handles instanceId rotation
+    // when a remote instance restarts and generates a new instanceId)
+    const existingByAddress = await prisma.host.findFirst({
+      where: { address, port: service.port },
+    });
+
+    if (existingByAddress) {
+      // Update the existing row — including instanceId if it changed
+      await prisma.host.update({
+        where: { id: existingByAddress.id },
+        data: {
+          name: service.name,
+          instanceId: remoteInstanceId,
+          source: 'mdns',
+          isOnline: true,
+          lastSeen: new Date(),
+        },
+      });
+      if (existingByAddress.instanceId !== remoteInstanceId) {
+        console.log(`[mDNS] Updated host (instanceId rotated): ${service.name} at ${addrKey}`);
+      }
+      return;
+    }
+
+    // No existing host at this address:port — also check by instanceId
     await prisma.host.upsert({
       where: { instanceId: remoteInstanceId },
       update: {
@@ -79,9 +112,11 @@ async function handleServiceUp(service: {
         lastSeen: new Date(),
       },
     });
-    console.log(`[mDNS] Discovered host: ${service.name} at ${address}:${service.port}`);
+    console.log(`[mDNS] Discovered host: ${service.name} at ${addrKey}`);
   } catch (err) {
     console.error('[mDNS] Error upserting host:', err);
+  } finally {
+    pendingUpserts.delete(addrKey);
   }
 }
 
@@ -103,12 +138,36 @@ async function handleServiceDown(service: { txt?: Record<string, string> }) {
   }
 }
 
+/** Remove duplicate Host rows that share the same address:port, keeping the most recently seen. */
+async function deduplicateHosts(): Promise<void> {
+  const hosts = await prisma.host.findMany({ orderBy: { lastSeen: 'desc' } });
+  const seen = new Map<string, string>(); // "address:port" -> id to keep
+  const toDelete: string[] = [];
+
+  for (const host of hosts) {
+    const key = `${host.address}:${host.port}`;
+    if (seen.has(key)) {
+      toDelete.push(host.id);
+    } else {
+      seen.set(key, host.id);
+    }
+  }
+
+  if (toDelete.length > 0) {
+    await prisma.host.deleteMany({ where: { id: { in: toDelete } } });
+    console.log(`[mDNS] Cleaned up ${toDelete.length} duplicate host(s)`);
+  }
+}
+
 export async function startMdns(): Promise<void> {
   const enabled = await isMdnsEnabled();
   if (!enabled) {
     console.log('[mDNS] Disabled by configuration, skipping');
     return;
   }
+
+  // Clean up any duplicate hosts from previous runs (e.g. instanceId rotation)
+  await deduplicateHosts();
 
   instanceId = await getOrCreateInstanceId();
   const hostname = os.hostname();
