@@ -12,6 +12,7 @@ export default function useAllDatasets(hosts: HostInfo[]) {
   const [allDatasets, setAllDatasets] = useState<SourcedDatasetInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const isFetchingRef = useRef(false);
+  const refetchRequestedRef = useRef(false);
   const hostsRef = useRef(hosts);
   hostsRef.current = hosts;
 
@@ -27,8 +28,14 @@ export default function useAllDatasets(hosts: HostInfo[]) {
   );
 
   const fetchAll = useCallback(async () => {
-    if (isFetchingRef.current) return;
+    if (isFetchingRef.current) {
+      // A fetch is already running — flag that we need to re-fetch when it finishes
+      // (e.g. hosts changed while the initial local-only fetch was in-flight)
+      refetchRequestedRef.current = true;
+      return;
+    }
     isFetchingRef.current = true;
+    refetchRequestedRef.current = false;
 
     try {
       const onlineHosts = hostsRef.current.filter(h => h.isOnline);
@@ -71,11 +78,18 @@ export default function useAllDatasets(hosts: HostInfo[]) {
     } finally {
       isFetchingRef.current = false;
       setIsLoading(false);
+
+      // If hosts changed while we were fetching, re-fetch with the updated host list
+      if (refetchRequestedRef.current) {
+        refetchRequestedRef.current = false;
+        fetchAll();
+      }
     }
   }, []);
 
   const refreshAllDatasets = useCallback(() => {
     isFetchingRef.current = false;
+    refetchRequestedRef.current = false;
     fetchAll();
   }, [fetchAll]);
 
