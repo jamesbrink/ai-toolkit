@@ -4,8 +4,15 @@ services:
   ai-toolkit:
     image: ostris/aitoolkit:latest
     restart: unless-stopped
+    # For mDNS discovery to work, use host networking:
+    #   network_mode: host
+    # When using host networking, remove the 'ports' section below
+    # (the container shares the host's network stack directly).
     ports:
       - "8675:8675"
+      # mDNS requires UDP 5353 (only needed with bridge networking;
+      # host networking exposes all ports automatically)
+      - "5353:5353/udp"
     volumes:
       - ~/.cache/huggingface/hub:/root/.cache/huggingface/hub
       - ./aitk_db.db:/app/ai-toolkit/aitk_db.db
@@ -16,6 +23,16 @@ services:
       - AI_TOOLKIT_AUTH=${AI_TOOLKIT_AUTH:-password}
       - NODE_ENV=production
       - TZ=UTC
+      - PORT=8675
+      - DATABASE_URL=file:/app/ai-toolkit/aitk_db.db
+      - DATASETS_FOLDER=/app/ai-toolkit/datasets
+      - TRAINING_FOLDER=/app/ai-toolkit/output
+      - DATA_ROOT=/app/ai-toolkit/data
+      # mDNS network discovery (set to "false" to disable)
+      - AI_TOOLKIT_MDNS=${AI_TOOLKIT_MDNS:-true}
+      # Claude AI integration (optional)
+      # - ANTHROPIC_API_KEY=
+      # - CLAUDE_CODE_OAUTH_TOKEN=
     deploy:
       resources:
         reservations:

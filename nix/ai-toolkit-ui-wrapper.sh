@@ -10,7 +10,7 @@ DATA_DIR="${AI_TOOLKIT_UI_DATA:-${XDG_DATA_HOME:-$HOME/.local/share}/ai-toolkit}
 mkdir -p "$DATA_DIR"
 
 # --- Database ---
-export DATABASE_URL="file:${DATA_DIR}/aitk_db.db"
+export DATABASE_URL="${DATABASE_URL:-file:${DATA_DIR}/aitk_db.db}"
 
 # --- Toolkit root (where run.py lives, read-only in Nix store) ---
 export TOOLKIT_ROOT="${TOOLKIT_ROOT:-${TOOLKIT_PKG}/lib/ai-toolkit}"

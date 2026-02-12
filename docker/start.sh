@@ -7,7 +7,6 @@ set -e  # Exit the script if any statement returns a non-true return value
 #                          Function Definitions                                #
 # ---------------------------------------------------------------------------- #
 
-
 # Setup ssh
 setup_ssh() {
     if [[ $PUBLIC_KEY ]]; then
@@ -61,10 +60,38 @@ export_env_vars() {
 #                               Main Program                                   #
 # ---------------------------------------------------------------------------- #
 
-
 echo "Pod Started"
 
 setup_ssh
 export_env_vars
+
+# --- Writable data directories ---
+export DATASETS_FOLDER="${DATASETS_FOLDER:-/app/ai-toolkit/datasets}"
+export TRAINING_FOLDER="${TRAINING_FOLDER:-/app/ai-toolkit/output}"
+export DATA_ROOT="${DATA_ROOT:-/app/ai-toolkit/data}"
+mkdir -p "$DATASETS_FOLDER" "$TRAINING_FOLDER" "$DATA_ROOT"
+
+# --- Database ---
+export DATABASE_URL="${DATABASE_URL:-file:/app/ai-toolkit/aitk_db.db}"
+
+# --- Port ---
+export PORT="${PORT:-8675}"
+
+echo ""
+echo "AI Toolkit UI starting..."
+echo "  Port:         $PORT"
+echo "  Datasets:     $DATASETS_FOLDER"
+echo "  Output:       $TRAINING_FOLDER"
+echo "  Database:     $DATABASE_URL"
+echo ""
+
+# --- Ensure DB schema is up to date ---
+echo "Running prisma db push to ensure schema is up to date..."
+cd /app/ai-toolkit/ui
+if ! npx prisma db push --skip-generate 2>&1; then
+    echo "Warning: prisma db push failed, DB may need manual setup"
+fi
+
+# --- Start UI (worker + Next.js server via concurrently) ---
 echo "Starting AI Toolkit UI..."
-cd /app/ai-toolkit/ui && npm run start 
+exec npm run start
