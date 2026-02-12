@@ -53,7 +53,7 @@ echo "  UI dir:       $UI_DIR"
 echo ""
 
 # --- Start worker and server ---
-node "$UI_DIR/dist/cron/worker.js" &
+node --import tsx/esm "$UI_DIR/cron/worker.ts" &
 WORKER_PID=$!
 
 node "$UI_DIR/server.js" &

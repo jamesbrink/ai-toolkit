@@ -34,7 +34,7 @@ buildNpmPackage {
       );
   };
 
-  npmDepsHash = "sha256-vgqo91JmGaOlpAP0ZEJECf/vmYnht6whdHSC2cgWPf0=";
+  npmDepsHash = "sha256-2T7r7SB76GHKEOTNyNchK/JWK2dnMCC2m16/x5WD9yE=";
 
   nodejs = nodejs_22;
 
@@ -71,9 +71,9 @@ buildNpmPackage {
     npx prisma generate
   '';
 
-  # Default npmBuildScript = "build" runs: tsc -p tsconfig.worker.json && next build
+  # Default npmBuildScript = "build" runs: next build (worker runs from source via tsx)
 
-  # Custom install phase — ship Next.js standalone output + compiled worker
+  # Custom install phase — ship Next.js standalone output + worker source
   installPhase = ''
     runHook preInstall
 
@@ -91,12 +91,12 @@ buildNpmPackage {
       cp -r public $out/lib/ai-toolkit-ui/public
     fi
 
-    # --- Compiled cron worker ---
-    mkdir -p $out/lib/ai-toolkit-ui/dist/cron
-    cp -r dist/cron/. $out/lib/ai-toolkit-ui/dist/cron/
+    # --- Cron worker TypeScript source (runs via tsx at runtime) ---
+    cp -r cron $out/lib/ai-toolkit-ui/cron
 
-    # --- Prisma schema + generated client (needed at runtime) ---
+    # --- Prisma schema + generated client + config (needed at runtime) ---
     cp -r prisma $out/lib/ai-toolkit-ui/prisma
+    cp prisma.config.ts $out/lib/ai-toolkit-ui/prisma.config.ts
 
     # Merge the full build's node_modules over the standalone output.
     # The standalone output includes a minimal node_modules, but the Prisma

@@ -6,8 +6,10 @@ const nextConfig: NextConfig = {
     // Remove this. Build fails because of route types
     ignoreBuildErrors: true,
   },
-  serverActions: {
-    bodySizeLimit: '100gb',
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '100gb',
+    },
   },
 };
 
