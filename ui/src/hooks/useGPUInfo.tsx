@@ -1,7 +1,7 @@
 'use client';
 
 import { DeviceType, GPUApiResponse, GpuInfo } from '@/types';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { apiClient } from '@/utils/api';
 
 export default function useGPUInfo(gpuIds: null | number[] = null, reloadInterval: null | number = null) {
@@ -9,9 +9,12 @@ export default function useGPUInfo(gpuIds: null | number[] = null, reloadInterva
   const [isGPUInfoLoaded, setIsLoaded] = useState(false);
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [deviceType, setDeviceType] = useState<DeviceType>('none');
+  const didInitialLoadRef = useRef(false);
 
   const fetchGpuInfo = async () => {
-    setStatus('loading');
+    if (!didInitialLoadRef.current) {
+      setStatus('loading');
+    }
     try {
       const data: GPUApiResponse = await apiClient.get('/api/gpu').then(res => res.data);
       setDeviceType(data.deviceType || (data.hasNvidiaSmi ? 'nvidia' : 'none'));
@@ -21,30 +24,31 @@ export default function useGPUInfo(gpuIds: null | number[] = null, reloadInterva
       }
       setGpuList(gpus);
       setStatus('success');
+      didInitialLoadRef.current = true;
     } catch (err) {
       console.error(`Failed to fetch GPU data: ${err instanceof Error ? err.message : String(err)}`);
-      setStatus('error');
+      if (!didInitialLoadRef.current) {
+        setStatus('error');
+      }
     } finally {
       setIsLoaded(true);
     }
   };
 
   useEffect(() => {
-    // Fetch immediately on component mount
+    didInitialLoadRef.current = false;
     fetchGpuInfo();
 
-    // Set up interval if specified
     if (reloadInterval) {
       const interval = setInterval(() => {
         fetchGpuInfo();
       }, reloadInterval);
 
-      // Cleanup interval on unmount
       return () => {
         clearInterval(interval);
       };
     }
-  }, [gpuIds, reloadInterval]); // Added dependencies
+  }, [gpuIds, reloadInterval]);
 
   return { gpuList, setGpuList, isGPUInfoLoaded, status, deviceType, refreshGpuInfo: fetchGpuInfo };
 }

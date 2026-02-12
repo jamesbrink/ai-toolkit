@@ -2,7 +2,7 @@ import { useMemo, useState, useRef, useEffect } from 'react';
 import useSampleImages from '@/hooks/useSampleImages';
 import SampleImageCard from './SampleImageCard';
 import { Job } from '@prisma/client';
-import { JobConfig } from '@/types';
+import { JobConfig, UnifiedJob } from '@/types';
 import { LuImageOff, LuLoader, LuBan } from 'react-icons/lu';
 import { Button } from '@headlessui/react';
 import { FaDownload } from 'react-icons/fa';
@@ -10,13 +10,18 @@ import { apiClient } from '@/utils/api';
 import classNames from 'classnames';
 import { FaCaretDown, FaCaretUp } from 'react-icons/fa';
 import SampleImageViewer from './SampleImageViewer';
+import { getImageUrlPrefix } from '@/utils/remoteApi';
 
 interface SampleImagesMenuProps {
-  job?: Job | null;
+  job?: Job | UnifiedJob | null;
+  hostId?: string | null;
 }
 
-export const SampleImagesMenu = ({ job }: SampleImagesMenuProps) => {
+export const SampleImagesMenu = ({ job, hostId }: SampleImagesMenuProps) => {
   const [isZipping, setIsZipping] = useState(false);
+
+  // ZIP download not supported for remote jobs
+  if (hostId) return null;
 
   const downloadZip = async () => {
     if (isZipping) return;
@@ -59,11 +64,13 @@ export const SampleImagesMenu = ({ job }: SampleImagesMenuProps) => {
 };
 
 interface SampleImagesProps {
-  job: Job;
+  job: Job | UnifiedJob;
+  hostId?: string | null;
 }
 
-export default function SampleImages({ job }: SampleImagesProps) {
-  const { sampleImages, status, refreshSampleImages } = useSampleImages(job.id, 5000);
+export default function SampleImages({ job, hostId }: SampleImagesProps) {
+  const { sampleImages, status, refreshSampleImages } = useSampleImages(job.id, 5000, hostId);
+  const imageBaseUrl = getImageUrlPrefix(hostId);
   const [selectedSamplePath, setSelectedSamplePath] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const didFirstScroll = useRef(false);
@@ -207,6 +214,7 @@ export default function SampleImages({ job }: SampleImagesProps) {
                     alt="Sample Image"
                     onClick={() => setSelectedSamplePath(sample)}
                     observerRoot={containerRef.current}
+                    imageBaseUrl={imageBaseUrl}
                   />
 
                   {isEndOfGroup &&
@@ -227,6 +235,8 @@ export default function SampleImages({ job }: SampleImagesProps) {
         onChange={setPath => setSelectedSamplePath(setPath)}
         sampleConfig={sampleConfig}
         refreshSampleImages={refreshSampleImages}
+        imageBaseUrl={imageBaseUrl}
+        hostId={hostId}
       />
       <div
         className="fixed top-20 mt-4 right-6 w-10 h-10 rounded-full bg-gray-900 shadow-lg flex items-center justify-center text-white opacity-80 hover:opacity-100 cursor-pointer"

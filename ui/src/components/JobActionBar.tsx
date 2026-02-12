@@ -138,7 +138,7 @@ export default function JobActionBar({
       )}
       {!hideView && isRemote && source?.hostId && (
         <Link
-          href={`/hosts/${source.hostId}`}
+          href={`/jobs/${job.id}?hostId=${source.hostId}`}
           className="ml-1 p-2.5 rounded-lg hover:bg-gray-700 text-gray-200 hover:text-gray-100 flex items-center justify-center"
           title={`View on ${source.hostName}`}
         >

@@ -7,6 +7,7 @@ import { Cog } from 'lucide-react';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import { openConfirm } from './ConfirmModal';
 import { apiClient } from '@/utils/api';
+import { remoteApi } from '@/utils/remoteApi';
 import { isVideo } from '@/utils/basic';
 
 interface Props {
@@ -16,6 +17,10 @@ interface Props {
   sampleConfig: SampleConfig | null;
   onChange: (nextPath: string | null) => void; // parent setter
   refreshSampleImages?: () => void;
+  /** base URL for images, e.g. '/api/img/' or '/api/hosts/{id}/proxy/img/' */
+  imageBaseUrl?: string;
+  /** when set, delete actions route through the proxy */
+  hostId?: string | null;
 }
 
 export default function SampleImageViewer({
@@ -25,6 +30,8 @@ export default function SampleImageViewer({
   sampleConfig,
   onChange,
   refreshSampleImages,
+  imageBaseUrl = '/api/img/',
+  hostId,
 }: Props) {
   const [mounted, setMounted] = useState(false);
   const [isOpen, setIsOpen] = useState(Boolean(imgPath));
@@ -242,7 +249,7 @@ export default function SampleImageViewer({
               {imgPath &&
                 (isVideo(imgPath) ? (
                   <video
-                    src={`/api/img/${encodeURIComponent(imgPath)}`}
+                    src={`${imageBaseUrl}${encodeURIComponent(imgPath)}`}
                     className="w-auto h-auto max-w-[95vw] max-h-[82vh] object-contain"
                     preload="none"
                     playsInline
@@ -252,7 +259,7 @@ export default function SampleImageViewer({
                   />
                 ) : (
                   <img
-                    src={`/api/img/${encodeURIComponent(imgPath)}`}
+                    src={`${imageBaseUrl}${encodeURIComponent(imgPath)}`}
                     alt="Sample Image"
                     className="w-auto h-auto max-w-[95vw] max-h-[82vh] object-contain"
                   />
@@ -275,7 +282,7 @@ export default function SampleImageViewer({
                   {controlImages.map((ci, idx) => (
                     <img
                       key={idx}
-                      src={`/api/img/${encodeURIComponent(ci)}`}
+                      src={`${imageBaseUrl}${encodeURIComponent(ci)}`}
                       alt={`Control ${idx + 1}`}
                       className="max-h-12 max-w-12 object-contain bg-black border border-gray-700 rounded"
                     />
@@ -315,8 +322,10 @@ export default function SampleImageViewer({
                           type: 'warning',
                           confirmText: 'Delete',
                           onConfirm: () => {
-                            apiClient
-                              .post('/api/img/delete', { imgPath: imgPath })
+                            const deleteRequest = hostId
+                              ? remoteApi.post(hostId, 'img/delete', { imgPath: imgPath })
+                              : apiClient.post('/api/img/delete', { imgPath: imgPath });
+                            deleteRequest
                               .then(() => {
                                 console.log('Image deleted:', imgPath);
                                 onChange(null);

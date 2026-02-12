@@ -2,13 +2,14 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { apiClient } from '@/utils/api';
+import { remoteApi } from '@/utils/remoteApi';
 
 interface FileObject {
   path: string;
   size: number;
 }
 
-export default function useFilesList(jobID: string, reloadInterval: null | number = null) {
+export default function useFilesList(jobID: string, reloadInterval: null | number = null, hostId?: string | null) {
   const [files, setFiles] = useState<FileObject[]>([]);
   const didInitialLoadRef = useRef(false);
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error' | 'refreshing'>('idle');
@@ -19,8 +20,10 @@ export default function useFilesList(jobID: string, reloadInterval: null | numbe
       loadStatus = 'refreshing';
     }
     setStatus(loadStatus);
-    apiClient
-      .get(`/api/jobs/${jobID}/files`)
+    const request = hostId
+      ? remoteApi.get(hostId, `jobs/${jobID}/files`)
+      : apiClient.get(`/api/jobs/${jobID}/files`);
+    request
       .then(res => res.data)
       .then(data => {
         console.log('Fetched files:', data);
@@ -31,12 +34,13 @@ export default function useFilesList(jobID: string, reloadInterval: null | numbe
         didInitialLoadRef.current = true;
       })
       .catch(error => {
-        console.error('Error fetching datasets:', error);
+        console.error('Error fetching files:', error);
         setStatus('error');
       });
   };
 
   useEffect(() => {
+    didInitialLoadRef.current = false;
     refreshFiles();
 
     if (reloadInterval) {
@@ -48,7 +52,7 @@ export default function useFilesList(jobID: string, reloadInterval: null | numbe
         clearInterval(interval);
       };
     }
-  }, [jobID]);
+  }, [jobID, hostId]);
 
   return { files, setFiles, status, refreshFiles };
 }

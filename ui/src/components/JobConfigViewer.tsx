@@ -4,9 +4,11 @@ import YAML from 'yaml';
 import Editor from '@monaco-editor/react';
 
 import { Job } from '@prisma/client';
+import { UnifiedJob } from '@/types';
 
 interface Props {
-  job: Job;
+  job: Job | UnifiedJob;
+  hostId?: string | null;
 }
 
 const yamlConfig: YAML.DocumentOptions &

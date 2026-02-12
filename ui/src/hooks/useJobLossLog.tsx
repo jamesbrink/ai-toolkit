@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { apiClient } from '@/utils/api';
+import { remoteApi } from '@/utils/remoteApi';
 
 export interface LossPoint {
   step: number;
@@ -17,7 +18,15 @@ function isLossKey(key: string) {
   return /loss/i.test(key);
 }
 
-export default function useJobLossLog(jobID: string, reloadInterval: null | number = null) {
+function buildQueryString(params: Record<string, any>): string {
+  const parts: string[] = [];
+  for (const [k, v] of Object.entries(params)) {
+    if (v != null) parts.push(`${encodeURIComponent(k)}=${encodeURIComponent(v)}`);
+  }
+  return parts.length ? `?${parts.join('&')}` : '';
+}
+
+export default function useJobLossLog(jobID: string, reloadInterval: null | number = null, hostId?: string | null) {
   const [series, setSeries] = useState<SeriesMap>({});
   const [keys, setKeys] = useState<string[]>([]);
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error' | 'refreshing'>('idle');
@@ -35,6 +44,17 @@ export default function useJobLossLog(jobID: string, reloadInterval: null | numb
     return base.sort();
   }, [keys]);
 
+  const fetchLoss = useCallback(
+    (path: string, params?: Record<string, any>) => {
+      if (hostId) {
+        const qs = params ? buildQueryString(params) : '';
+        return remoteApi.get(hostId, `${path}${qs}`).then(res => res.data);
+      }
+      return apiClient.get(`/api/${path}`, params ? { params } : undefined).then(res => res.data);
+    },
+    [hostId],
+  );
+
   const refreshLoss = useCallback(async () => {
     if (!jobID) return;
 
@@ -47,9 +67,7 @@ export default function useJobLossLog(jobID: string, reloadInterval: null | numb
     try {
       // Step 1: get key list (we can do this by calling endpoint once; it returns keys)
       // Keep it cheap: limit=1.
-      const first = await apiClient
-        .get(`/api/jobs/${jobID}/loss`, { params: { key: 'loss', limit: 1 } })
-        .then(res => res.data as { keys?: string[] });
+      const first = await fetchLoss(`jobs/${jobID}/loss`, { key: 'loss', limit: 1 }) as { keys?: string[] };
 
       const newKeys = first.keys ?? [];
       setKeys(newKeys);
@@ -64,12 +82,7 @@ export default function useJobLossLog(jobID: string, reloadInterval: null | numb
           params.since_step = lastStepByKeyRef.current[k];
         }
 
-        // keep default limit from server (or set explicitly if you want)
-        // params.limit = 2000;
-
-        return apiClient
-          .get(`/api/jobs/${jobID}/loss`, { params })
-          .then(res => res.data as { key: string; points?: LossPoint[] });
+        return fetchLoss(`jobs/${jobID}/loss`, params) as Promise<{ key: string; points?: LossPoint[] }>;
       });
 
       const results = await Promise.all(requests);
@@ -120,7 +133,7 @@ export default function useJobLossLog(jobID: string, reloadInterval: null | numb
     } finally {
       inFlightRef.current = false;
     }
-  }, [jobID, reloadInterval]);
+  }, [jobID, reloadInterval, fetchLoss]);
 
   useEffect(() => {
     // reset when job changes

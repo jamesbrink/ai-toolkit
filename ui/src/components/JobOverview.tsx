@@ -1,5 +1,7 @@
 import { Job } from '@prisma/client';
+import { UnifiedJob } from '@/types';
 import useGPUInfo from '@/hooks/useGPUInfo';
+import useRemoteGPUInfo from '@/hooks/useRemoteGPUInfo';
 import useCPUInfo from '@/hooks/useCPUInfo';
 import GPUWidget from '@/components/GPUWidget';
 import CPUWidget from '@/components/CPUWidget';
@@ -11,19 +13,26 @@ import useJobLog from '@/hooks/useJobLog';
 import { useClaudeChat } from '@/components/claude/ClaudeChatContext';
 
 interface JobOverviewProps {
-  job: Job;
+  job: Job | UnifiedJob;
+  hostId?: string | null;
 }
 
-export default function JobOverview({ job }: JobOverviewProps) {
+export default function JobOverview({ job, hostId }: JobOverviewProps) {
   const isMpsJob = job.gpu_ids === 'mps';
   const gpuIds = useMemo(() => (isMpsJob ? null : job.gpu_ids.split(',').map(id => parseInt(id))), [job.gpu_ids]);
-  const { log, setLog, status: statusLog, refresh: refreshLog } = useJobLog(job.id, 2000);
+  const { log, setLog, status: statusLog, refresh: refreshLog } = useJobLog(job.id, 2000, hostId);
   const logRef = useRef<HTMLDivElement>(null);
   // Track whether we should auto-scroll to bottom
   const [isScrolledToBottom, setIsScrolledToBottom] = useState(true);
 
-  const { gpuList, isGPUInfoLoaded } = useGPUInfo(gpuIds, 5000);
-  const { cpuInfo, isCPUInfoLoaded } = useCPUInfo(5000);
+  // Local GPU/CPU hooks (no-op when hostId is set)
+  const localGpu = useGPUInfo(hostId ? null : gpuIds, hostId ? null : 5000);
+  // Remote GPU hook (no-op when hostId is not set)
+  const remoteGpu = useRemoteGPUInfo(hostId ?? null, hostId ? 5000 : null);
+  const gpuList = hostId ? remoteGpu.gpuList : localGpu.gpuList;
+  const isGPUInfoLoaded = hostId ? remoteGpu.isLoaded : localGpu.isGPUInfoLoaded;
+
+  const { cpuInfo, isCPUInfoLoaded } = useCPUInfo(5000, hostId);
   const { isConfigured, openPanel, sendMessage, setContext } = useClaudeChat();
 
   // Provide job context to Claude when log updates
@@ -206,7 +215,7 @@ export default function JobOverview({ job }: JobOverviewProps) {
         <div>{isCPUInfoLoaded && cpuInfo && <CPUWidget cpu={cpuInfo} />}</div>
         <div className="mt-4">{isGPUInfoLoaded && gpuList.length > 0 && <GPUWidget gpu={gpuList[0]} />}</div>
         <div className="mt-4">
-          <FilesWidget jobID={job.id} />
+          <FilesWidget jobID={job.id} hostId={hostId} />
         </div>
       </div>
     </div>

@@ -14,6 +14,8 @@ interface SampleImageCardProps {
   observerRoot?: Element | null;
   /** optional: tweak pre-load buffer */
   rootMargin?: string; // default '200px 0px'
+  /** base URL for images, e.g. '/api/img/' or '/api/hosts/{id}/proxy/img/' */
+  imageBaseUrl?: string;
 }
 
 const SampleImageCard: React.FC<SampleImageCardProps> = ({
@@ -26,6 +28,7 @@ const SampleImageCard: React.FC<SampleImageCardProps> = ({
   onClick = () => {},
   observerRoot = null,
   rootMargin = '200px 0px',
+  imageBaseUrl = '/api/img/',
 }) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -66,7 +69,7 @@ const SampleImageCard: React.FC<SampleImageCardProps> = ({
             isVideo(imageUrl) ? (
               <video
                 ref={videoRef}
-                src={`/api/img/${encodeURIComponent(imageUrl)}`}
+                src={`${imageBaseUrl}${encodeURIComponent(imageUrl)}`}
                 className="w-full h-full object-cover"
                 preload="none"
                 onLoad={handleLoad}
@@ -78,7 +81,7 @@ const SampleImageCard: React.FC<SampleImageCardProps> = ({
               />
             ) : (
               <img
-                src={`/api/img/${encodeURIComponent(imageUrl)}`}
+                src={`${imageBaseUrl}${encodeURIComponent(imageUrl)}`}
                 alt={alt}
                 onLoad={handleLoad}
                 loading="lazy"

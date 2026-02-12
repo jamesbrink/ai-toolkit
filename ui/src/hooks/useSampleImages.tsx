@@ -1,31 +1,40 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { apiClient } from '@/utils/api';
+import { remoteApi } from '@/utils/remoteApi';
 
-export default function useSampleImages(jobID: string, reloadInterval: null | number = null) {
+export default function useSampleImages(jobID: string, reloadInterval: null | number = null, hostId?: string | null) {
   const [sampleImages, setSampleImages] = useState<string[]>([]);
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const didInitialLoadRef = useRef(false);
 
   const refreshSampleImages = () => {
-    setStatus('loading');
-    apiClient
-      .get(`/api/jobs/${jobID}/samples`)
+    if (!didInitialLoadRef.current) {
+      setStatus('loading');
+    }
+    const request = hostId
+      ? remoteApi.get(hostId, `jobs/${jobID}/samples`)
+      : apiClient.get(`/api/jobs/${jobID}/samples`);
+    request
       .then(res => res.data)
       .then(data => {
-        console.log('Fetched sample images:', data);
         if (data.samples) {
           setSampleImages(data.samples);
         }
         setStatus('success');
+        didInitialLoadRef.current = true;
       })
       .catch(error => {
-        console.error('Error fetching datasets:', error);
-        setStatus('error');
+        console.error('Error fetching samples:', error);
+        if (!didInitialLoadRef.current) {
+          setStatus('error');
+        }
       });
   };
 
   useEffect(() => {
+    didInitialLoadRef.current = false;
     refreshSampleImages();
 
     if (reloadInterval) {
@@ -37,7 +46,7 @@ export default function useSampleImages(jobID: string, reloadInterval: null | nu
         clearInterval(interval);
       };
     }
-  }, [jobID]);
+  }, [jobID, hostId]);
 
   return { sampleImages, setSampleImages, status, refreshSampleImages };
 }

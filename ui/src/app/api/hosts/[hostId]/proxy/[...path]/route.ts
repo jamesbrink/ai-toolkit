@@ -36,9 +36,13 @@ async function proxyRequest(request: NextRequest, context: RouteContext): Promis
     headers['Authorization'] = `Bearer ${host.authToken}`;
   }
 
+  // Longer timeout for file/image serving, default 10s for API calls
+  const isFileServing = joinedPath.startsWith('files/') || joinedPath.startsWith('img/');
+  const timeoutMs = isFileServing ? 120000 : 10000;
+
   // Forward request with timeout
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 10000);
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
     const fetchOptions: RequestInit = {
@@ -70,12 +74,17 @@ async function proxyRequest(request: NextRequest, context: RouteContext): Promis
 
     if (isBinary) {
       const buffer = await response.arrayBuffer();
+      const headers: Record<string, string> = {
+        'Content-Type': contentType,
+        'Content-Length': String(buffer.byteLength),
+      };
+      const contentDisposition = response.headers.get('content-disposition');
+      if (contentDisposition) {
+        headers['Content-Disposition'] = contentDisposition;
+      }
       return new NextResponse(buffer, {
         status: response.status,
-        headers: {
-          'Content-Type': contentType,
-          'Content-Length': String(buffer.byteLength),
-        },
+        headers,
       });
     }
 

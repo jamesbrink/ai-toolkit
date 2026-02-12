@@ -1,12 +1,14 @@
 'use client';
 
 import { Job } from '@prisma/client';
+import { UnifiedJob } from '@/types';
 import useJobLossLog, { LossPoint } from '@/hooks/useJobLossLog';
 import { useMemo, useState, useEffect } from 'react';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from 'recharts';
 
 interface Props {
-  job: Job;
+  job: Job | UnifiedJob;
+  hostId?: string | null;
 }
 
 function formatNum(v: number) {
@@ -64,8 +66,8 @@ function strokeForKey(key: string) {
   return PALETTE[hashToIndex(key, PALETTE.length)];
 }
 
-export default function JobLossGraph({ job }: Props) {
-  const { series, lossKeys, status, refreshLoss } = useJobLossLog(job.id, 2000);
+export default function JobLossGraph({ job, hostId }: Props) {
+  const { series, lossKeys, status, refreshLoss } = useJobLossLog(job.id, 2000, hostId);
 
   // Controls
   const [useLogScale, setUseLogScale] = useState(false);

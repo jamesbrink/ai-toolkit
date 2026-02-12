@@ -2,9 +2,11 @@ import React from 'react';
 import useFilesList from '@/hooks/useFilesList';
 import Link from 'next/link';
 import { Loader2, AlertCircle, Download, Box, Brain } from 'lucide-react';
+import { getFileUrlPrefix } from '@/utils/remoteApi';
 
-export default function FilesWidget({ jobID }: { jobID: string }) {
-  const { files, status, refreshFiles } = useFilesList(jobID, 5000);
+export default function FilesWidget({ jobID, hostId }: { jobID: string; hostId?: string | null }) {
+  const { files, status, refreshFiles } = useFilesList(jobID, 5000, hostId);
+  const fileBaseUrl = getFileUrlPrefix(hostId);
 
   const cleanSize = (size: number) => {
     if (size < 1024) {
@@ -52,7 +54,7 @@ export default function FilesWidget({ jobID }: { jobID: string }) {
                   key={index}
                   target="_blank"
                   rel="noreferrer"
-                  href={`/api/files/${encodeURIComponent(file.path)}`}
+                  href={`${fileBaseUrl}${encodeURIComponent(file.path)}`}
                   className="group flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-gray-800 transition-all duration-200"
                 >
                   <div className="flex items-center space-x-2 min-w-0">

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { apiClient } from '@/utils/api';
+import { remoteApi } from '@/utils/remoteApi';
 
 interface FileObject {
   path: string;
@@ -14,7 +15,7 @@ const clean = (text: string): string => {
   return text;
 };
 
-export default function useJobLog(jobID: string, reloadInterval: null | number = null) {
+export default function useJobLog(jobID: string, reloadInterval: null | number = null, hostId?: string | null) {
   const [log, setLog] = useState<string>('');
   const didInitialLoadRef = useRef(false);
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error' | 'refreshing'>('idle');
@@ -25,8 +26,10 @@ export default function useJobLog(jobID: string, reloadInterval: null | number =
       loadStatus = 'refreshing';
     }
     setStatus(loadStatus);
-    apiClient
-      .get(`/api/jobs/${jobID}/log`)
+    const request = hostId
+      ? remoteApi.get(hostId, `jobs/${jobID}/log`)
+      : apiClient.get(`/api/jobs/${jobID}/log`);
+    request
       .then(res => res.data)
       .then(data => {
         if (data.log) {
@@ -43,6 +46,7 @@ export default function useJobLog(jobID: string, reloadInterval: null | number =
   };
 
   useEffect(() => {
+    didInitialLoadRef.current = false;
     refresh();
 
     if (reloadInterval) {
@@ -54,7 +58,7 @@ export default function useJobLog(jobID: string, reloadInterval: null | number =
         clearInterval(interval);
       };
     }
-  }, [jobID]);
+  }, [jobID, hostId]);
 
   return { log, setLog, status, refresh };
 }

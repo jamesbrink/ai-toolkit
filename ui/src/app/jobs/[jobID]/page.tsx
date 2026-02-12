@@ -7,12 +7,13 @@ import { TopBar, MainContent } from '@/components/layout';
 import useJob from '@/hooks/useJob';
 import SampleImages, { SampleImagesMenu } from '@/components/SampleImages';
 import JobOverview from '@/components/JobOverview';
-import { redirect } from 'next/navigation';
+import { redirect, useSearchParams } from 'next/navigation';
 import JobActionBar from '@/components/JobActionBar';
 import JobConfigViewer from '@/components/JobConfigViewer';
 import JobLossGraph from '@/components/JobLossGraph';
 import { JobOverviewSkeleton } from '@/components/Skeleton';
 import { Job } from '@prisma/client';
+import { UnifiedJob } from '@/types';
 import { useClaudeChat } from '@/components/claude/ClaudeChatContext';
 
 type PageKey = 'overview' | 'samples' | 'config' | 'loss_log';
@@ -20,8 +21,8 @@ type PageKey = 'overview' | 'samples' | 'config' | 'loss_log';
 interface Page {
   name: string;
   value: PageKey;
-  component: React.ComponentType<{ job: Job }>;
-  menuItem?: React.ComponentType<{ job?: Job | null }> | null;
+  component: React.ComponentType<{ job: Job | UnifiedJob; hostId?: string | null }>;
+  menuItem?: React.ComponentType<{ job?: Job | UnifiedJob | null; hostId?: string | null }> | null;
   mainCss?: string;
 }
 
@@ -56,7 +57,9 @@ const pages: Page[] = [
 export default function JobPage({ params }: { params: { jobID: string } }) {
   const usableParams = use(params as any) as { jobID: string };
   const jobID = usableParams.jobID;
-  const { job, status, refreshJob } = useJob(jobID, 5000);
+  const searchParams = useSearchParams();
+  const hostId = searchParams.get('hostId');
+  const { job, status, refreshJob } = useJob(jobID, 5000, hostId);
   const [pageKey, setPageKey] = useState<PageKey>('overview');
   const { setContext, isConfigured } = useClaudeChat();
 
@@ -80,13 +83,17 @@ export default function JobPage({ params }: { params: { jobID: string } }) {
             <FaChevronLeft />
           </Button>
         </div>
-        <div>
+        <div className="flex items-center gap-2">
           <h1 className="text-lg">Job: {job?.name}</h1>
+          {hostId && (
+            <span className="px-2 py-0.5 bg-blue-500/20 text-blue-400 text-xs rounded-full font-medium">Remote</span>
+          )}
         </div>
         <div className="flex-1"></div>
         {job && (
           <JobActionBar
             job={job}
+            source={hostId ? { type: 'remote', hostId } : undefined}
             onRefresh={refreshJob}
             hideView
             afterDelete={() => {
@@ -103,7 +110,7 @@ export default function JobPage({ params }: { params: { jobID: string } }) {
           <>
             {pages.map(page => {
               const Component = page.component;
-              return page.value === pageKey ? <Component key={page.value} job={job} /> : null;
+              return page.value === pageKey ? <Component key={page.value} job={job} hostId={hostId} /> : null;
             })}
           </>
         )}
@@ -121,7 +128,7 @@ export default function JobPage({ params }: { params: { jobID: string } }) {
         {page?.menuItem && (
           <>
             <div className="flex-grow"></div>
-            <page.menuItem job={job} />
+            <page.menuItem job={job} hostId={hostId} />
           </>
         )}
       </div>
