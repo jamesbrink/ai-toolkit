@@ -16,6 +16,7 @@ export default function useJobLog(jobID: string, reloadInterval: null | number =
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error' | 'refreshing'>('idle');
 
   const refresh = useCallback(() => {
+    if (!jobID) return;
     let loadStatus: 'loading' | 'refreshing' = 'loading';
     if (didInitialLoadRef.current) {
       loadStatus = 'refreshing';
