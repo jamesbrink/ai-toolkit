@@ -51,7 +51,6 @@ pkgs.dockerTools.buildImage {
       "/bin"
       "/lib"
       "/share"
-      "/etc"
     ];
   };
 
