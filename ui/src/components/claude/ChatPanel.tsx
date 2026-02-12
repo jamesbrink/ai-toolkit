@@ -23,29 +23,28 @@ const MAX_WIDTH = 480;
 const DEFAULT_WIDTH = 384; // 24rem = w-96
 const WIDTH_STORAGE_KEY = 'claude_chat_width';
 
-function loadWidth(): number {
-  if (typeof window === 'undefined') return DEFAULT_WIDTH;
-  try {
-    const stored = localStorage.getItem(WIDTH_STORAGE_KEY);
-    if (stored) {
-      const n = parseInt(stored, 10);
-      if (n >= MIN_WIDTH && n <= MAX_WIDTH) return n;
-    }
-  } catch {
-    /* ignore */
-  }
-  return DEFAULT_WIDTH;
-}
-
 export default function ChatPanel() {
   const { isOpen, closePanel, messages, isStreaming, activeToolName, sendMessage, clearMessages, stopStreaming } =
     useClaudeChat();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const isNearBottomRef = useRef(true);
-  const [width, setWidth] = useState(loadWidth);
+  const [width, setWidth] = useState(DEFAULT_WIDTH);
   const [isDragging, setIsDragging] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+
+  // Restore persisted width from localStorage after hydration
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(WIDTH_STORAGE_KEY);
+      if (stored) {
+        const n = parseInt(stored, 10);
+        if (n >= MIN_WIDTH && n <= MAX_WIDTH) setWidth(n);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   // Track viewport to gate Dialog open state (prevents scroll-lock/focus-trap on desktop)
   useEffect(() => {
