@@ -6,6 +6,7 @@ import classNames from 'classnames';
 import { apiClient } from '@/utils/api';
 import AudioPlayer from './AudioPlayer';
 import { isVideo, isAudio } from '@/utils/basic';
+import { proxyApiPath } from '@/utils/proxyPath';
 
 interface DatasetImageCardProps {
   imageUrl: string;
@@ -14,6 +15,7 @@ interface DatasetImageCardProps {
   className?: string;
   onDelete?: () => void;
   showAiCaption?: boolean;
+  hostId?: string;
 }
 
 const DatasetImageCard: React.FC<DatasetImageCardProps> = ({
@@ -21,9 +23,11 @@ const DatasetImageCard: React.FC<DatasetImageCardProps> = ({
   alt,
   children,
   className = '',
-  onDelete = () => {},
+  onDelete,
   showAiCaption = false,
+  hostId,
 }) => {
+  const isRemote = !!hostId;
   const cardRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState<boolean>(false);
   const [inViewport, setInViewport] = useState<boolean>(false);
@@ -70,7 +74,7 @@ const DatasetImageCard: React.FC<DatasetImageCardProps> = ({
     if (isGettingCaption.current || isCaptionLoaded) return;
     isGettingCaption.current = true;
     apiClient
-      .post(`/api/caption/get`, { imgPath: imageUrl })
+      .post(proxyApiPath('/api/caption/get', hostId), { imgPath: imageUrl })
       .then(res => res.data)
       .then(data => {
         console.log('Caption fetched:', data);
@@ -91,6 +95,7 @@ const DatasetImageCard: React.FC<DatasetImageCardProps> = ({
   };
 
   const saveCaption = () => {
+    if (isRemote) return; // Read-only for remote
     const trimmedCaption = caption.trim();
     if (trimmedCaption === savedCaption) return;
     apiClient
@@ -176,7 +181,7 @@ const DatasetImageCard: React.FC<DatasetImageCardProps> = ({
             <>
               {isItAVideo && (
                 <video
-                  src={`/api/img/${encodeURIComponent(imageUrl)}`}
+                  src={proxyApiPath(`/api/img/${encodeURIComponent(imageUrl)}`, hostId)}
                   className={`w-full h-full object-contain`}
                   autoPlay={false}
                   loop
@@ -186,13 +191,13 @@ const DatasetImageCard: React.FC<DatasetImageCardProps> = ({
               )}
               {isItAudio && (
                 <AudioPlayer
-                  src={`/api/img/${encodeURIComponent(imageUrl)}`}
+                  src={proxyApiPath(`/api/img/${encodeURIComponent(imageUrl)}`, hostId)}
                   title={imageUrl.replace(/^.*[\\/]/, '')}
                 />
               )}
               {isItImage && (
                 <img
-                  src={`/api/img/${encodeURIComponent(imageUrl)}`}
+                  src={proxyApiPath(`/api/img/${encodeURIComponent(imageUrl)}`, hostId)}
                   alt={alt}
                   onLoad={handleLoad}
                   className={`w-full h-full object-contain transition-opacity duration-300 ${
@@ -209,7 +214,7 @@ const DatasetImageCard: React.FC<DatasetImageCardProps> = ({
           )}
           {children && <div className="absolute inset-0 flex items-center justify-center">{children}</div>}
           <div className="absolute top-1 right-1 flex space-x-2 z-10">
-            {showAiCaption && isItImage && (
+            {showAiCaption && isItImage && !isRemote && (
               <button
                 className="bg-gray-800 rounded-full p-2 text-purple-400 hover:text-purple-300 transition-colors"
                 onClick={generateAiCaption}
@@ -223,30 +228,32 @@ const DatasetImageCard: React.FC<DatasetImageCardProps> = ({
                 )}
               </button>
             )}
-            <button
-              className="bg-gray-800 rounded-full p-2"
-              onClick={() => {
-                openConfirm({
-                  title: `Delete ${isItAVideo ? 'video' : 'image'}`,
-                  message: `Are you sure you want to delete this ${isItAVideo ? 'video' : 'image'}? This action cannot be undone.`,
-                  type: 'warning',
-                  confirmText: 'Delete',
-                  onConfirm: () => {
-                    apiClient
-                      .post('/api/img/delete', { imgPath: imageUrl })
-                      .then(() => {
-                        console.log('Image deleted:', imageUrl);
-                        onDelete();
-                      })
-                      .catch(error => {
-                        console.error('Error deleting image:', error);
-                      });
-                  },
-                });
-              }}
-            >
-              <FaTrashAlt />
-            </button>
+            {!isRemote && onDelete && (
+              <button
+                className="bg-gray-800 rounded-full p-2"
+                onClick={() => {
+                  openConfirm({
+                    title: `Delete ${isItAVideo ? 'video' : 'image'}`,
+                    message: `Are you sure you want to delete this ${isItAVideo ? 'video' : 'image'}? This action cannot be undone.`,
+                    type: 'warning',
+                    confirmText: 'Delete',
+                    onConfirm: () => {
+                      apiClient
+                        .post('/api/img/delete', { imgPath: imageUrl })
+                        .then(() => {
+                          console.log('Image deleted:', imageUrl);
+                          onDelete();
+                        })
+                        .catch(error => {
+                          console.error('Error deleting image:', error);
+                        });
+                    },
+                  });
+                }}
+              >
+                <FaTrashAlt />
+              </button>
+            )}
           </div>
         </div>
         {inViewport && isVisible && !isItAudio && (
@@ -261,7 +268,7 @@ const DatasetImageCard: React.FC<DatasetImageCardProps> = ({
           'border-transparent border-2': isCaptionCurrent,
         })}
       >
-        {inViewport && isVisible && isCaptionLoaded && (
+        {inViewport && isVisible && isCaptionLoaded && !isRemote && (
           <form
             onSubmit={e => {
               e.preventDefault();
@@ -277,6 +284,11 @@ const DatasetImageCard: React.FC<DatasetImageCardProps> = ({
               onKeyDown={handleKeyDown}
             />
           </form>
+        )}
+        {inViewport && isVisible && isCaptionLoaded && isRemote && (
+          <div className="w-full text-gray-300 text-xs overflow-y-auto h-full">
+            {caption || <span className="text-gray-500 italic">No caption</span>}
+          </div>
         )}
         {(!inViewport || !isVisible) && isCaptionLoaded && (
           <div className="w-full h-full flex items-center justify-center text-gray-400">

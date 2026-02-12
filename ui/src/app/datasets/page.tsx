@@ -5,6 +5,9 @@ import { Modal } from '@/components/Modal';
 import Link from 'next/link';
 import { TextInput } from '@/components/formInputs';
 import useDatasetList, { DatasetInfo } from '@/hooks/useDatasetList';
+import useHostList from '@/hooks/useHostList';
+import useAllDatasets from '@/hooks/useAllDatasets';
+import { SourcedDatasetInfo } from '@/types';
 import { Button } from '@headlessui/react';
 import { FaRegTrashAlt, FaPen, FaCopy } from 'react-icons/fa';
 import { Download } from 'lucide-react';
@@ -38,7 +41,24 @@ function formatRelativeTime(epochMs: number | null): string {
 
 export default function Datasets() {
   const router = useRouter();
-  const { datasets, status, refreshDatasets } = useDatasetList();
+  const { hosts } = useHostList();
+  const hasHosts = hosts.length > 0;
+
+  // Use aggregated datasets when hosts exist, local-only otherwise
+  const { datasets: localDatasets, status: localStatus, refreshDatasets: refreshLocal } = useDatasetList();
+  const {
+    allDatasets,
+    isLoading: allLoading,
+    refreshAllDatasets,
+  } = useAllDatasets(hosts);
+
+  // Merge: when hosts exist, use allDatasets; otherwise fall back to local
+  const datasets: SourcedDatasetInfo[] = hasHosts
+    ? allDatasets
+    : localDatasets.map(d => ({ ...d, source: { type: 'local' as const } }));
+  const isLoading = hasHosts ? allLoading : localStatus === 'loading';
+  const refreshDatasets = hasHosts ? refreshAllDatasets : refreshLocal;
+
   const [newDatasetName, setNewDatasetName] = useState('');
   const [isNewDatasetModalOpen, setIsNewDatasetModalOpen] = useState(false);
   const [exportingDataset, setExportingDataset] = useState<string | null>(null);
@@ -48,25 +68,47 @@ export default function Datasets() {
       title: 'Dataset Name',
       key: 'name',
       sortable: true,
-      render: (row: DatasetInfo) => (
-        <Link href={`/datasets/${row.name}`} className="text-gray-200 hover:text-gray-100 font-medium">
-          {row.name}
-        </Link>
-      ),
+      render: (row: SourcedDatasetInfo) => {
+        const href =
+          row.source.type === 'remote' && row.source.hostId
+            ? `/datasets/${row.name}?hostId=${row.source.hostId}`
+            : `/datasets/${row.name}`;
+        return (
+          <Link href={href} className="text-gray-200 hover:text-gray-100 font-medium">
+            {row.name}
+          </Link>
+        );
+      },
     },
+    // Conditionally include Host column only when remote hosts exist
+    ...(hasHosts
+      ? [
+          {
+            title: 'Host',
+            key: 'hostName',
+            sortable: true,
+            className: 'w-28',
+            render: (row: SourcedDatasetInfo) => (
+              <span className={row.source.type === 'local' ? 'text-gray-400' : 'text-blue-300'}>
+                {row.source.type === 'local' ? 'Local' : row.source.hostName}
+              </span>
+            ),
+          } as TableColumn,
+        ]
+      : []),
     {
       title: 'Images',
       key: 'imageCount',
       sortable: true,
       className: 'w-24 text-right tabular-nums',
-      render: (row: DatasetInfo) => <span className="text-gray-300">{row.imageCount.toLocaleString()}</span>,
+      render: (row: SourcedDatasetInfo) => <span className="text-gray-300">{row.imageCount.toLocaleString()}</span>,
     },
     {
       title: 'Captioned',
       key: 'captionCount',
       sortable: true,
       className: 'w-28 text-right',
-      render: (row: DatasetInfo) => {
+      render: (row: SourcedDatasetInfo) => {
         if (row.imageCount === 0) return <span className="text-gray-500">-</span>;
         const pct = Math.round((row.captionCount / row.imageCount) * 100);
         const color = pct === 100 ? 'text-green-400' : pct > 0 ? 'text-yellow-400' : 'text-gray-500';
@@ -82,52 +124,70 @@ export default function Datasets() {
       key: 'totalSizeBytes',
       sortable: true,
       className: 'w-24 text-right tabular-nums',
-      render: (row: DatasetInfo) => <span className="text-gray-400">{formatBytes(row.totalSizeBytes)}</span>,
+      render: (row: SourcedDatasetInfo) => <span className="text-gray-400">{formatBytes(row.totalSizeBytes)}</span>,
     },
     {
       title: 'Modified',
       key: 'lastModified',
       sortable: true,
       className: 'w-28 text-right',
-      render: (row: DatasetInfo) => <span className="text-gray-400">{formatRelativeTime(row.lastModified)}</span>,
+      render: (row: SourcedDatasetInfo) => (
+        <span className="text-gray-400">{formatRelativeTime(row.lastModified)}</span>
+      ),
     },
     {
       title: 'Actions',
       key: 'actions',
       className: 'w-40 text-right',
-      render: (row: DatasetInfo) => (
-        <div className="flex items-center justify-end gap-1">
-          <button
-            className="text-gray-400 hover:text-gray-200 p-2 rounded-full transition-colors disabled:opacity-40"
-            onClick={() => handleExportDataset(row.name)}
-            disabled={exportingDataset === row.name || row.imageCount === 0}
-            title="Export ZIP"
-          >
-            <Download className="w-4 h-4" />
-          </button>
-          <button
-            className="text-gray-400 hover:text-gray-200 p-2 rounded-full transition-colors"
-            onClick={() => handleCopyDataset(row.name)}
-            title="Duplicate"
-          >
-            <FaCopy className="w-3.5 h-3.5" />
-          </button>
-          <button
-            className="text-gray-400 hover:text-gray-200 p-2 rounded-full transition-colors"
-            onClick={() => handleRenameDataset(row.name)}
-            title="Rename"
-          >
-            <FaPen className="w-3 h-3" />
-          </button>
-          <button
-            className="text-gray-400 hover:text-red-400 p-2 rounded-full transition-colors"
-            onClick={() => handleDeleteDataset(row.name)}
-            title="Delete"
-          >
-            <FaRegTrashAlt className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      ),
+      render: (row: SourcedDatasetInfo) => {
+        const isRemote = row.source.type === 'remote';
+        if (isRemote) {
+          return (
+            <div className="flex items-center justify-end gap-1">
+              <Link
+                href={`/datasets/${row.name}?hostId=${row.source.hostId}`}
+                className="text-gray-400 hover:text-gray-200 p-2 rounded-full transition-colors text-xs"
+                title="View remote dataset"
+              >
+                View
+              </Link>
+            </div>
+          );
+        }
+        return (
+          <div className="flex items-center justify-end gap-1">
+            <button
+              className="text-gray-400 hover:text-gray-200 p-2 rounded-full transition-colors disabled:opacity-40"
+              onClick={() => handleExportDataset(row.name)}
+              disabled={exportingDataset === row.name || row.imageCount === 0}
+              title="Export ZIP"
+            >
+              <Download className="w-4 h-4" />
+            </button>
+            <button
+              className="text-gray-400 hover:text-gray-200 p-2 rounded-full transition-colors"
+              onClick={() => handleCopyDataset(row.name)}
+              title="Duplicate"
+            >
+              <FaCopy className="w-3.5 h-3.5" />
+            </button>
+            <button
+              className="text-gray-400 hover:text-gray-200 p-2 rounded-full transition-colors"
+              onClick={() => handleRenameDataset(row.name)}
+              title="Rename"
+            >
+              <FaPen className="w-3 h-3" />
+            </button>
+            <button
+              className="text-gray-400 hover:text-red-400 p-2 rounded-full transition-colors"
+              onClick={() => handleDeleteDataset(row.name)}
+              title="Delete"
+            >
+              <FaRegTrashAlt className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        );
+      },
     },
   ];
 
@@ -259,6 +319,8 @@ export default function Datasets() {
     });
   };
 
+  const onlineHosts = hosts.filter(h => h.isOnline);
+
   return (
     <>
       <TopBar>
@@ -266,6 +328,11 @@ export default function Datasets() {
           <h1 className="text-2xl font-semibold text-gray-100">Datasets</h1>
         </div>
         <div className="flex-1"></div>
+        {onlineHosts.length > 0 && (
+          <span className="text-xs text-gray-400 mr-3">
+            {onlineHosts.length} remote host{onlineHosts.length !== 1 ? 's' : ''} connected
+          </span>
+        )}
         <div>
           <Button
             className="text-gray-200 bg-slate-600 px-4 py-2 rounded-md hover:bg-slate-500 transition-colors"
@@ -280,7 +347,7 @@ export default function Datasets() {
         <UniversalTable
           columns={columns}
           rows={datasets}
-          isLoading={status === 'loading'}
+          isLoading={isLoading}
           defaultSortKey="name"
           defaultSortDir="asc"
           onRefresh={refreshDatasets}

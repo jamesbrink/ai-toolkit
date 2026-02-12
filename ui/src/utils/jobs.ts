@@ -1,6 +1,8 @@
-import { JobConfig } from '@/types';
+import { JobConfig, UnifiedJob } from '@/types';
 import { Job } from '@prisma/client';
 import { apiClient } from '@/utils/api';
+
+type AnyJob = Job | UnifiedJob;
 
 export const startJob = (jobID: string) => {
   return new Promise<void>((resolve, reject) => {
@@ -66,11 +68,11 @@ export const markJobAsStopped = (jobID: string) => {
   });
 };
 
-export const getJobConfig = (job: Job) => {
+export const getJobConfig = (job: AnyJob) => {
   return JSON.parse(job.job_config) as JobConfig;
 };
 
-export const getAvaliableJobActions = (job: Job) => {
+export const getAvaliableJobActions = (job: AnyJob) => {
   const jobConfig = getJobConfig(job);
   const isStopping = job.stop && job.status === 'running';
   const canDelete = ['queued', 'completed', 'stopped', 'error'].includes(job.status) && !isStopping;
@@ -85,12 +87,12 @@ export const getAvaliableJobActions = (job: Job) => {
   return { canDelete, canEdit, canStop, canStart, canRemoveFromQueue };
 };
 
-export const getNumberOfSamples = (job: Job) => {
+export const getNumberOfSamples = (job: AnyJob) => {
   const jobConfig = getJobConfig(job);
   return jobConfig.config.process[0].sample?.prompts?.length || 0;
 };
 
-export const getTotalSteps = (job: Job) => {
+export const getTotalSteps = (job: AnyJob) => {
   const jobConfig = getJobConfig(job);
   return jobConfig.config.process[0].train.steps;
 };

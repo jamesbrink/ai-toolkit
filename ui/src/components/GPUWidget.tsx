@@ -4,9 +4,11 @@ import { Thermometer, Zap, Clock, HardDrive, Fan, Cpu } from 'lucide-react';
 
 interface GPUWidgetProps {
   gpu: GpuInfo;
+  hostName?: string;
+  isRemote?: boolean;
 }
 
-export default function GPUWidget({ gpu }: GPUWidgetProps) {
+export default function GPUWidget({ gpu, hostName, isRemote }: GPUWidgetProps) {
   const formatMemory = (mb: number): string => {
     return mb >= 1024 ? `${(mb / 1024).toFixed(1)} GB` : `${mb} MB`;
   };
@@ -33,6 +35,11 @@ export default function GPUWidget({ gpu }: GPUWidgetProps) {
             {gpu.isMps ? 'MPS' : `# ${gpu.index}`}
           </span>
         </div>
+        {isRemote && hostName && (
+          <span className="px-2 py-0.5 bg-blue-900/50 rounded-full text-xs text-blue-300 ml-auto">
+            {hostName}
+          </span>
+        )}
       </div>
 
       <div className="p-4 space-y-4">

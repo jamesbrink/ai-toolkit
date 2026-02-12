@@ -3,13 +3,21 @@ import { Eye, Trash2, Pen, Play, Pause, Cog, X } from 'lucide-react';
 import { Button } from '@headlessui/react';
 import { openConfirm } from '@/components/ConfirmModal';
 import { Job } from '@prisma/client';
+import { DataSource, UnifiedJob } from '@/types';
 import { startJob, stopJob, deleteJob, getAvaliableJobActions, markJobAsStopped } from '@/utils/jobs';
 import { startQueue } from '@/utils/queue';
+import {
+  startJobOnHost,
+  stopJobOnHost,
+  deleteJobOnHost,
+  markJobAsStoppedOnHost,
+  startQueueOnHost,
+} from '@/utils/remoteActions';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
-import { redirect } from 'next/navigation';
 
 interface JobActionBarProps {
-  job: Job;
+  job: Job | UnifiedJob;
+  source?: DataSource;
   onRefresh?: () => void;
   afterDelete?: () => void;
   hideView?: boolean;
@@ -19,6 +27,7 @@ interface JobActionBarProps {
 
 export default function JobActionBar({
   job,
+  source,
   onRefresh,
   afterDelete,
   className,
@@ -26,8 +35,49 @@ export default function JobActionBar({
   autoStartQueue = false,
 }: JobActionBarProps) {
   const { canStart, canStop, canDelete, canEdit, canRemoveFromQueue } = getAvaliableJobActions(job);
+  const isRemote = source?.type === 'remote';
 
   if (!afterDelete) afterDelete = onRefresh;
+
+  const doStartJob = async () => {
+    if (isRemote) {
+      await startJobOnHost(source!, job.id);
+    } else {
+      await startJob(job.id);
+    }
+  };
+
+  const doStopJob = async () => {
+    if (isRemote) {
+      await stopJobOnHost(source!, job.id);
+    } else {
+      await stopJob(job.id);
+    }
+  };
+
+  const doDeleteJob = async () => {
+    if (isRemote) {
+      await deleteJobOnHost(source!, job.id);
+    } else {
+      await deleteJob(job.id);
+    }
+  };
+
+  const doMarkStopped = async () => {
+    if (isRemote) {
+      await markJobAsStoppedOnHost(source!, job.id);
+    } else {
+      await markJobAsStopped(job.id);
+    }
+  };
+
+  const doStartQueue = async (gpuIds: string) => {
+    if (isRemote) {
+      await startQueueOnHost(source!, gpuIds);
+    } else {
+      await startQueue(gpuIds);
+    }
+  };
 
   return (
     <div className={`flex items-center ${className ?? ''}`}>
@@ -35,10 +85,9 @@ export default function JobActionBar({
         <Button
           onClick={async () => {
             if (!canStart) return;
-            await startJob(job.id);
-            // start the queue as well
+            await doStartJob();
             if (autoStartQueue) {
-              await startQueue(job.gpu_ids);
+              await doStartQueue(job.gpu_ids);
             }
             if (onRefresh) onRefresh();
           }}
@@ -51,7 +100,7 @@ export default function JobActionBar({
         <Button
           onClick={async () => {
             if (!canRemoveFromQueue) return;
-            await markJobAsStopped(job.id);
+            await doMarkStopped();
             if (onRefresh) onRefresh();
           }}
           className="ml-1 p-2.5 rounded-lg hover:bg-gray-700 flex items-center justify-center"
@@ -69,7 +118,7 @@ export default function JobActionBar({
               type: 'info',
               confirmText: 'Stop',
               onConfirm: async () => {
-                await stopJob(job.id);
+                await doStopJob();
                 if (onRefresh) onRefresh();
               },
             });
@@ -79,7 +128,7 @@ export default function JobActionBar({
           <Pause className="w-5 h-5" />
         </Button>
       )}
-      {!hideView && (
+      {!hideView && !isRemote && (
         <Link
           href={`/jobs/${job.id}`}
           className="ml-1 p-2.5 rounded-lg hover:bg-gray-700 text-gray-200 hover:text-gray-100 flex items-center justify-center"
@@ -87,7 +136,16 @@ export default function JobActionBar({
           <Eye className="w-5 h-5" />
         </Link>
       )}
-      {canEdit && (
+      {!hideView && isRemote && source?.hostId && (
+        <Link
+          href={`/hosts/${source.hostId}`}
+          className="ml-1 p-2.5 rounded-lg hover:bg-gray-700 text-gray-200 hover:text-gray-100 flex items-center justify-center"
+          title={`View on ${source.hostName}`}
+        >
+          <Eye className="w-5 h-5" />
+        </Link>
+      )}
+      {canEdit && !isRemote && (
         <Link
           href={`/jobs/new?id=${job.id}`}
           className="ml-1 p-2.5 rounded-lg hover:bg-gray-700 hover:text-gray-100 flex items-center justify-center"
@@ -97,7 +155,7 @@ export default function JobActionBar({
       )}
       <Button
         onClick={() => {
-          let message = `Are you sure you want to delete the job "${job.name}"? This will also permanently remove it from your disk.`;
+          let message = `Are you sure you want to delete the job "${job.name}"? This will also permanently remove it from ${isRemote ? source?.hostName || 'the remote host' : 'your disk'}.`;
           if (job.status === 'running') {
             message += ' WARNING: The job is currently running. You should stop it first if you can.';
           }
@@ -109,12 +167,12 @@ export default function JobActionBar({
             onConfirm: async () => {
               if (job.status === 'running') {
                 try {
-                  await stopJob(job.id);
+                  await doStopJob();
                 } catch (e) {
                   console.error('Error stopping job before deleting:', e);
                 }
               }
-              await deleteJob(job.id);
+              await doDeleteJob();
               if (afterDelete) afterDelete();
             },
           });
@@ -134,7 +192,7 @@ export default function JobActionBar({
         >
           <MenuItem>
             <Link
-              href={`/jobs/new?cloneId=${job.id}`}
+              href={`/jobs/new?cloneId=${job.id}${isRemote ? '&remoteClone=true' : ''}`}
               className="cursor-pointer px-4 py-1 hover:bg-gray-800 rounded block text-gray-200"
             >
               Clone Job
@@ -151,7 +209,7 @@ export default function JobActionBar({
                   type: 'warning',
                   confirmText: 'Mark as Stopped',
                   onConfirm: async () => {
-                    await markJobAsStopped(job.id);
+                    await doMarkStopped();
                     onRefresh && onRefresh();
                   },
                 });

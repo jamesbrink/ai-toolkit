@@ -14,7 +14,8 @@ import FullscreenDropOverlay from '@/components/FullscreenDropOverlay';
 import CaptionHelper from '@/components/claude/CaptionHelper';
 import DatasetAnalysisPanel from '@/components/DatasetAnalysisPanel';
 import { useClaudeChat } from '@/components/claude/ClaudeChatContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { proxyApiPath } from '@/utils/proxyPath';
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 B';
@@ -26,6 +27,10 @@ function formatBytes(bytes: number): string {
 
 export default function DatasetPage({ params }: { params: { datasetName: string } }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const hostId = searchParams.get('hostId');
+  const isRemote = !!hostId;
+
   const [imgList, setImgList] = useState<{ img_path: string }[]>([]);
   const usableParams = use(params as any) as { datasetName: string };
   const datasetName = usableParams.datasetName;
@@ -34,21 +39,33 @@ export default function DatasetPage({ params }: { params: { datasetName: string 
   const [analysisModalOpen, setAnalysisModalOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [datasetSize, setDatasetSize] = useState<number | null>(null);
+  const [hostName, setHostName] = useState<string>('');
   const { isConfigured, setContext } = useClaudeChat();
 
-  // Set chat context so Claude knows which dataset the user is viewing
+  // Fetch host name for remote banner
   useEffect(() => {
-    if (datasetName) {
+    if (hostId) {
+      apiClient
+        .get(`/api/hosts/${hostId}`)
+        .then(res => setHostName(res.data.name || res.data.address || 'Remote Host'))
+        .catch(() => setHostName('Remote Host'));
+    }
+  }, [hostId]);
+
+  // Set chat context so Claude knows which dataset the user is viewing (local only)
+  useEffect(() => {
+    if (datasetName && !isRemote) {
       setContext({
         page: 'dataset',
         datasetName,
         imageList: imgList.map(img => img.img_path),
       });
     }
-  }, [datasetName, imgList, setContext]);
+  }, [datasetName, imgList, setContext, isRemote]);
 
-  // Refresh when Claude agent modifies the dataset (deletes images, writes captions)
+  // Refresh when Claude agent modifies the dataset (local only)
   useEffect(() => {
+    if (isRemote) return;
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail;
       if (detail?.toolName === 'delete_dataset_images' || detail?.toolName === 'write_file') {
@@ -57,17 +74,14 @@ export default function DatasetPage({ params }: { params: { datasetName: string 
     };
     window.addEventListener('claude-tool-completed', handler);
     return () => window.removeEventListener('claude-tool-completed', handler);
-  }, [datasetName]);
+  }, [datasetName, isRemote]);
 
   const refreshImageList = (dbName: string) => {
     setStatus('loading');
-    console.log('Fetching images for dataset:', dbName);
     apiClient
-      .post('/api/datasets/listImages', { datasetName: dbName })
+      .post(proxyApiPath('/api/datasets/listImages', hostId), { datasetName: dbName })
       .then((res: any) => {
         const data = res.data;
-        console.log('Images:', data.images);
-        // sort
         data.images.sort((a: { img_path: string }, b: { img_path: string }) => a.img_path.localeCompare(b.img_path));
         setImgList(data.images);
         setStatus('success');
@@ -77,6 +91,7 @@ export default function DatasetPage({ params }: { params: { datasetName: string 
         setStatus('error');
       });
   };
+
   useEffect(() => {
     if (datasetName) {
       refreshImageList(datasetName);
@@ -99,7 +114,6 @@ export default function DatasetPage({ params }: { params: { datasetName: string 
       if (!res.ok) throw new Error('Export failed');
 
       const data = await res.json();
-      // Trigger download via the existing file serving API
       const link = document.createElement('a');
       link.href = `/api/files/${encodeURIComponent(data.zipPath)}`;
       link.download = data.fileName;
@@ -115,7 +129,7 @@ export default function DatasetPage({ params }: { params: { datasetName: string 
   useEffect(() => {
     if (datasetName) {
       apiClient
-        .get('/api/datasets/list')
+        .get(proxyApiPath('/api/datasets/list', hostId))
         .then((res: any) => {
           const ds = res.data.find((d: any) => d.name === datasetName);
           if (ds) setDatasetSize(ds.totalSizeBytes);
@@ -201,7 +215,9 @@ export default function DatasetPage({ params }: { params: { datasetName: string 
     if (status == 'success' && imgList.length === 0) {
       icon = <LuImageOff className="w-8 h-8" />;
       text = 'No Images Found';
-      subtitle = 'This dataset is empty. Click "Add Images" to get started.';
+      subtitle = isRemote
+        ? 'This remote dataset is empty.'
+        : 'This dataset is empty. Click "Add Images" to get started.';
       showIt = true;
       bgColor = 'bg-gray-50 dark:bg-gray-800/50';
       textColor = 'text-gray-900 dark:text-gray-100';
@@ -219,7 +235,7 @@ export default function DatasetPage({ params }: { params: { datasetName: string 
         <p className="text-sm opacity-75 leading-relaxed">{subtitle}</p>
       </div>
     );
-  }, [status, imgList.length]);
+  }, [status, imgList.length, isRemote]);
 
   return (
     <>
@@ -232,22 +248,29 @@ export default function DatasetPage({ params }: { params: { datasetName: string 
         </div>
         <div className="flex items-center gap-2">
           <h1 className="text-lg">Dataset: {datasetName}</h1>
-          <button
-            onClick={handleRename}
-            className="text-gray-400 hover:text-gray-200 p-1 rounded transition-colors"
-            title="Rename dataset"
-          >
-            <FaPen className="w-3 h-3" />
-          </button>
+          {!isRemote && (
+            <button
+              onClick={handleRename}
+              className="text-gray-400 hover:text-gray-200 p-1 rounded transition-colors"
+              title="Rename dataset"
+            >
+              <FaPen className="w-3 h-3" />
+            </button>
+          )}
           {status === 'success' && (
             <span className="text-sm text-gray-400 ml-1">
               {imgList.length} image{imgList.length !== 1 ? 's' : ''}
               {datasetSize !== null && ` · ${formatBytes(datasetSize)}`}
             </span>
           )}
+          {isRemote && (
+            <span className="px-2 py-0.5 bg-blue-900/50 rounded-full text-xs text-blue-300 ml-2">
+              {hostName || 'Remote'}
+            </span>
+          )}
         </div>
         <div className="flex-1"></div>
-        {imgList.length > 0 && (
+        {!isRemote && imgList.length > 0 && (
           <div className="mr-2">
             <Button
               className="text-gray-200 bg-teal-700 hover:bg-teal-600 px-3 py-1 rounded-md flex items-center gap-1.5 text-sm"
@@ -258,7 +281,7 @@ export default function DatasetPage({ params }: { params: { datasetName: string 
             </Button>
           </div>
         )}
-        {imgList.length > 0 && (
+        {!isRemote && imgList.length > 0 && (
           <div className="mr-2">
             <Button
               className="text-gray-200 bg-gray-600 hover:bg-gray-500 px-3 py-1 rounded-md flex items-center gap-1.5 text-sm disabled:opacity-50"
@@ -270,16 +293,18 @@ export default function DatasetPage({ params }: { params: { datasetName: string 
             </Button>
           </div>
         )}
-        <div className="mr-2">
-          <Button
-            className="text-gray-200 bg-gray-600 hover:bg-gray-500 px-3 py-1 rounded-md flex items-center gap-1.5 text-sm"
-            onClick={handleDuplicate}
-          >
-            <FaCopy className="w-3.5 h-3.5" />
-            Duplicate
-          </Button>
-        </div>
-        {isConfigured && imgList.length > 0 && (
+        {!isRemote && (
+          <div className="mr-2">
+            <Button
+              className="text-gray-200 bg-gray-600 hover:bg-gray-500 px-3 py-1 rounded-md flex items-center gap-1.5 text-sm"
+              onClick={handleDuplicate}
+            >
+              <FaCopy className="w-3.5 h-3.5" />
+              Duplicate
+            </Button>
+          </div>
+        )}
+        {!isRemote && isConfigured && imgList.length > 0 && (
           <div className="mr-2">
             <Button
               className="text-gray-200 bg-purple-700 hover:bg-purple-600 px-3 py-1 rounded-md flex items-center gap-1.5 text-sm"
@@ -290,16 +315,23 @@ export default function DatasetPage({ params }: { params: { datasetName: string 
             </Button>
           </div>
         )}
-        <div>
-          <Button
-            className="text-gray-200 bg-slate-600 px-3 py-1 rounded-md"
-            onClick={() => openImagesModal(datasetName, () => refreshImageList(datasetName))}
-          >
-            Add Images
-          </Button>
-        </div>
+        {!isRemote && (
+          <div>
+            <Button
+              className="text-gray-200 bg-slate-600 px-3 py-1 rounded-md"
+              onClick={() => openImagesModal(datasetName, () => refreshImageList(datasetName))}
+            >
+              Add Images
+            </Button>
+          </div>
+        )}
       </TopBar>
       <MainContent>
+        {isRemote && (
+          <div className="mb-4 px-4 py-2 bg-blue-900/30 border border-blue-800 rounded-lg text-sm text-blue-200">
+            Viewing remote dataset on <strong>{hostName || 'remote host'}</strong> (read-only)
+          </div>
+        )}
         {PageInfoContent}
         {status === 'success' && imgList.length > 0 && (
           <div className="grid grid-cols-1 @sm:grid-cols-2 @md:grid-cols-3 @lg:grid-cols-4 gap-4">
@@ -308,16 +340,21 @@ export default function DatasetPage({ params }: { params: { datasetName: string 
                 key={img.img_path}
                 alt="image"
                 imageUrl={img.img_path}
-                onDelete={() => setImgList(prev => prev.filter(item => item.img_path !== img.img_path))}
-                showAiCaption={isConfigured}
+                hostId={hostId || undefined}
+                onDelete={
+                  isRemote ? undefined : () => setImgList(prev => prev.filter(item => item.img_path !== img.img_path))
+                }
+                showAiCaption={!isRemote && isConfigured}
               />
             ))}
           </div>
         )}
       </MainContent>
-      <AddImagesModal />
-      <FullscreenDropOverlay datasetName={datasetName} onComplete={() => refreshImageList(datasetName)} />
-      {isConfigured && (
+      {!isRemote && <AddImagesModal />}
+      {!isRemote && (
+        <FullscreenDropOverlay datasetName={datasetName} onComplete={() => refreshImageList(datasetName)} />
+      )}
+      {!isRemote && isConfigured && (
         <CaptionHelper
           isOpen={captionModalOpen}
           onClose={() => setCaptionModalOpen(false)}
@@ -326,12 +363,14 @@ export default function DatasetPage({ params }: { params: { datasetName: string 
           onCaptionsApplied={() => refreshImageList(datasetName)}
         />
       )}
-      <DatasetAnalysisPanel
-        isOpen={analysisModalOpen}
-        onClose={() => setAnalysisModalOpen(false)}
-        datasetName={datasetName}
-        onImagesDeleted={() => refreshImageList(datasetName)}
-      />
+      {!isRemote && (
+        <DatasetAnalysisPanel
+          isOpen={analysisModalOpen}
+          onClose={() => setAnalysisModalOpen(false)}
+          datasetName={datasetName}
+          onImagesDeleted={() => refreshImageList(datasetName)}
+        />
+      )}
     </>
   );
 }

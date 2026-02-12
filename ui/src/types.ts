@@ -268,3 +268,51 @@ export interface GroupedSelectOption {
 }
 
 export type JobStatus = 'queued' | 'running' | 'stopping' | 'stopped' | 'completed' | 'error';
+
+/** Identifies origin of data: local or a specific remote host */
+export interface DataSource {
+  type: 'local' | 'remote';
+  hostId?: string;
+  hostName?: string;
+  isOnline?: boolean;
+}
+
+/** GpuInfo with source tracking */
+export interface SourcedGpuInfo extends GpuInfo {
+  source: DataSource;
+}
+
+/** Unified job — same fields as Prisma Job but with string dates and source */
+export interface UnifiedJob {
+  id: string;
+  name: string;
+  status: string;
+  step: number;
+  speed_string: string;
+  gpu_ids: string;
+  job_config: string;
+  queue_position: number | null;
+  created_at: string;
+  info: string;
+  stop: boolean;
+  return_to_queue: boolean;
+  source: DataSource;
+}
+
+/** Unified queue with source tracking */
+export interface UnifiedQueue {
+  id: number;
+  gpu_ids: string;
+  is_running: boolean;
+  source: DataSource;
+}
+
+/** DatasetInfo with source tracking */
+export interface SourcedDatasetInfo {
+  name: string;
+  imageCount: number;
+  captionCount: number;
+  totalSizeBytes: number;
+  lastModified: number | null;
+  source: DataSource;
+}

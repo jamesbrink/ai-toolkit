@@ -1,10 +1,71 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { GPUApiResponse } from '@/types';
+import { GPUApiResponse, SourcedGpuInfo } from '@/types';
+import { HostInfo } from '@/hooks/useHostList';
 import GPUWidget from '@/components/GPUWidget';
 import { GPUWidgetSkeleton } from '@/components/Skeleton';
 import { apiClient } from '@/utils/api';
+import useAllGPUInfo from '@/hooks/useAllGPUInfo';
 
-const GpuMonitor: React.FC = () => {
+interface GpuMonitorProps {
+  hosts?: HostInfo[];
+}
+
+const GpuMonitor: React.FC<GpuMonitorProps> = ({ hosts }) => {
+  // Multi-host mode
+  if (hosts) {
+    return <MultiHostGpuMonitor hosts={hosts} />;
+  }
+  // Local-only mode (backward compat)
+  return <LocalGpuMonitor />;
+};
+
+function MultiHostGpuMonitor({ hosts }: { hosts: HostInfo[] }) {
+  const { allGpus, isLoading, lastUpdated } = useAllGPUInfo(hosts);
+
+  const content = useMemo(() => {
+    if (isLoading && allGpus.length === 0) {
+      return (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+          <GPUWidgetSkeleton />
+          <GPUWidgetSkeleton />
+        </div>
+      );
+    }
+
+    if (allGpus.length === 0) {
+      return (
+        <div className="bg-yellow-900 border border-yellow-700 text-yellow-300 px-4 py-3 rounded relative" role="alert">
+          <span className="block sm:inline">No GPUs detected on any host.</span>
+        </div>
+      );
+    }
+
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+        {allGpus.map((gpu, idx) => (
+          <GPUWidget
+            key={`${gpu.source.hostId || 'local'}-${gpu.index}-${idx}`}
+            gpu={gpu}
+            hostName={gpu.source.type === 'remote' ? gpu.source.hostName : undefined}
+            isRemote={gpu.source.type === 'remote'}
+          />
+        ))}
+      </div>
+    );
+  }, [isLoading, allGpus]);
+
+  return (
+    <div className="w-full">
+      <div className="flex justify-between items-center mb-2">
+        <h1 className="text-md">GPU Monitor</h1>
+        <div className="text-xs text-gray-400">Last updated: {lastUpdated?.toLocaleTimeString()}</div>
+      </div>
+      {content}
+    </div>
+  );
+}
+
+function LocalGpuMonitor() {
   const [gpuData, setGpuData] = useState<GPUApiResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -35,22 +96,10 @@ const GpuMonitor: React.FC = () => {
         });
     };
 
-    // Fetch immediately on component mount
     fetchGpuInfo();
-
-    // Set up interval to fetch every 1 seconds
     const intervalId = setInterval(fetchGpuInfo, 1000);
-
-    // Clean up interval on component unmount
     return () => clearInterval(intervalId);
   }, []);
-
-  console.log('state', {
-    loading,
-    gpuData,
-    error,
-    lastUpdated,
-  });
 
   const content = useMemo(() => {
     if (loading && !gpuData) {
@@ -115,6 +164,6 @@ const GpuMonitor: React.FC = () => {
       {content}
     </div>
   );
-};
+}
 
 export default GpuMonitor;
