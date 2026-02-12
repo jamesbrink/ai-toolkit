@@ -9,7 +9,7 @@ export async function POST() {
       where: { currentStatus: { not: 'terminated' } },
     });
 
-    const remoteMap = new Map(remotePods.map((p) => [p.id, p]));
+    const remoteMap = new Map(remotePods.map(p => [p.id, p]));
     let synced = 0;
 
     for (const local of localPods) {

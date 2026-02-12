@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/server/prisma';
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ podId: string }> },
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ podId: string }> }) {
   try {
     const { podId } = await params;
     const pod = await prisma.runPodPod.findUnique({ where: { id: podId } });
@@ -38,10 +35,7 @@ export async function POST(
 
     if (!remoteRes.ok) {
       const errText = await remoteRes.text();
-      return NextResponse.json(
-        { error: `Remote download failed: ${errText}` },
-        { status: remoteRes.status },
-      );
+      return NextResponse.json({ error: `Remote download failed: ${errText}` }, { status: remoteRes.status });
     }
 
     // Stream the response back

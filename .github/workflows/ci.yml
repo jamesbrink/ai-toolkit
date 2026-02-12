@@ -21,7 +21,7 @@ jobs:
 
       - name: Lint and typecheck
         run: |
-          nix develop --command bash -c "cd ui && npm ci && npm run typecheck && npm run lint"
+          nix develop --command bash -c "cd ui && npm ci && DATABASE_URL=file:./ci.db npx prisma generate && npm run typecheck && npm run lint"
 
       - name: Check Nix formatting
         run: nix fmt -- --check

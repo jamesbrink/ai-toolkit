@@ -32,11 +32,13 @@ async function runpodFetch<T>(query: string, variables?: Record<string, unknown>
   }
 
   const json = (await response.json()) as GraphQLResponse<T>;
-  if (json.errors?.length) {
-    throw new Error(`RunPod GraphQL error: ${json.errors.map(e => e.message).join(', ')}`);
-  }
+  // GraphQL APIs may return partial data alongside errors (e.g. nullable subfields failing).
+  // Only throw if there's no usable data at all.
   if (!json.data) {
-    throw new Error('RunPod API returned no data');
+    const msg = json.errors?.length
+      ? json.errors.map(e => e.message).join(', ')
+      : 'RunPod API returned no data';
+    throw new Error(`RunPod GraphQL error: ${msg}`);
   }
   return json.data;
 }
@@ -52,7 +54,8 @@ export interface GpuType {
   secureCloud: boolean;
   communityCloud: boolean;
   lowestPrice: {
-    minimumBidInterruptable: number;
+    minimumBidPrice: number;
+    uninterruptablePrice: number;
     stockStatus: string;
   } | null;
 }
@@ -69,7 +72,8 @@ export async function listGpuTypes(): Promise<GpuType[]> {
       secureCloud
       communityCloud
       lowestPrice {
-        minimumBidInterruptable
+        minimumBidPrice
+        uninterruptablePrice
         stockStatus
       }
     }

@@ -30,7 +30,7 @@ export interface RunPodPodInfo {
   errorMessage: string;
 }
 
-export default function useRunPodPods(reloadInterval: number | null = 5000) {
+export default function useRunPodPods(reloadInterval: number | null = 5000, enabled = true) {
   const [pods, setPods] = useState<RunPodPodInfo[]>([]);
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
 
@@ -47,6 +47,7 @@ export default function useRunPodPods(reloadInterval: number | null = 5000) {
   };
 
   useEffect(() => {
+    if (!enabled) return;
     refreshPods();
 
     if (reloadInterval) {
@@ -58,7 +59,7 @@ export default function useRunPodPods(reloadInterval: number | null = 5000) {
         clearInterval(interval);
       };
     }
-  }, [reloadInterval]);
+  }, [reloadInterval, enabled]);
 
   return { pods, status, refreshPods };
 }

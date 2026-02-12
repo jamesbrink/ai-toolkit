@@ -16,12 +16,11 @@ import { Plus, Network, Cloud, Settings } from 'lucide-react';
 
 export default function HostsPage() {
   const { hosts, status, refreshHosts } = useHostList();
-  const { pods, refreshPods } = useRunPodPods();
-  const { gpuTypes } = useRunPodGpuTypes();
   const { settings, isSettingsLoaded } = useSettings();
-  const [deployOpen, setDeployOpen] = useState(false);
-
   const hasRunPodKey = isSettingsLoaded && settings.RUNPOD_API_KEY.length > 0;
+  const { pods, refreshPods } = useRunPodPods(5000, hasRunPodKey);
+  const { gpuTypes } = useRunPodGpuTypes(hasRunPodKey);
+  const [deployOpen, setDeployOpen] = useState(false);
   const activePods = pods.filter(p => p.currentStatus !== 'terminated');
 
   const handleAddHost = () => {
@@ -75,9 +74,7 @@ export default function HostsPage() {
           {!hasRunPodKey ? (
             <div className="bg-gray-900 rounded-xl border border-gray-800 p-6 text-center">
               <Cloud className="w-8 h-8 text-gray-600 mx-auto mb-3" />
-              <p className="text-gray-400 mb-3">
-                Configure your RunPod API key to deploy cloud GPU pods.
-              </p>
+              <p className="text-gray-400 mb-3">Configure your RunPod API key to deploy cloud GPU pods.</p>
               <Link
                 href="/settings"
                 className="inline-flex items-center space-x-1 text-blue-400 hover:text-blue-300 text-sm transition-colors"

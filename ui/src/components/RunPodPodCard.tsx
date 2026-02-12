@@ -149,11 +149,7 @@ export default function RunPodPodCard({ pod, onRefresh }: RunPodPodCardProps) {
           </span>
         </div>
 
-        {pod.hostId && (
-          <p className="text-xs text-gray-400">
-            Linked to host
-          </p>
-        )}
+        {pod.hostId && <p className="text-xs text-gray-400">Linked to host</p>}
 
         {pod.errorMessage && <p className="text-xs text-red-400 truncate">{pod.errorMessage}</p>}
       </div>

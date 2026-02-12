@@ -2,10 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/server/prisma';
 import { terminatePod } from '@/server/runpod';
 
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ podId: string }> },
-) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ podId: string }> }) {
   try {
     const { podId } = await params;
     const pod = await prisma.runPodPod.findUnique({ where: { id: podId } });
@@ -19,10 +16,7 @@ export async function GET(
   }
 }
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ podId: string }> },
-) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ podId: string }> }) {
   try {
     const { podId } = await params;
     const body = await request.json();
@@ -38,10 +32,7 @@ export async function PATCH(
   }
 }
 
-export async function DELETE(
-  _request: NextRequest,
-  { params }: { params: Promise<{ podId: string }> },
-) {
+export async function DELETE(_request: NextRequest, { params }: { params: Promise<{ podId: string }> }) {
   try {
     const { podId } = await params;
     const pod = await prisma.runPodPod.findUnique({ where: { id: podId } });

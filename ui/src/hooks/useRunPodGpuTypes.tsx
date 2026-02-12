@@ -10,28 +10,30 @@ export interface GpuTypeInfo {
   secureCloud: boolean;
   communityCloud: boolean;
   lowestPrice: {
-    minimumBidInterruptable: number;
+    minimumBidPrice: number;
+    uninterruptablePrice: number;
     stockStatus: string;
   } | null;
 }
 
-export default function useRunPodGpuTypes() {
+export default function useRunPodGpuTypes(enabled = true) {
   const [gpuTypes, setGpuTypes] = useState<GpuTypeInfo[]>([]);
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
 
   useEffect(() => {
+    if (!enabled) return;
     setStatus('loading');
     apiClient
       .get('/api/runpod/gpu-types')
-      .then((res) => {
+      .then(res => {
         setGpuTypes(res.data.gpuTypes || []);
         setStatus('success');
       })
-      .catch((err) => {
+      .catch(err => {
         console.error(`Failed to fetch GPU types: ${err instanceof Error ? err.message : String(err)}`);
         setStatus('error');
       });
-  }, []);
+  }, [enabled]);
 
   return { gpuTypes, status };
 }

@@ -206,11 +206,7 @@ export default function Settings() {
                       RunPod API Key
                       <div className="text-gray-400 text-sm ml-1">
                         Deploy and manage cloud GPU pods directly from AI Toolkit. Get a key from{' '}
-                        <a
-                          href="https://www.runpod.io/console/user/settings"
-                          target="_blank"
-                          rel="noreferrer"
-                        >
+                        <a href="https://www.runpod.io/console/user/settings" target="_blank" rel="noreferrer">
                           runpod.io/console/user/settings
                         </a>
                         .

@@ -25,7 +25,7 @@ export default function DeployPodModal({ isOpen, onClose, gpuTypes, onDeployed }
   const selectedGpu = gpuTypes.find(g => g.id === gpuTypeId);
   const filteredGpus = gpuTypes.filter(g => (cloudType === 'SECURE' ? g.secureCloud : g.communityCloud));
 
-  const estimatedCost = selectedGpu?.lowestPrice?.minimumBidInterruptable || 0;
+  const estimatedCost = selectedGpu?.lowestPrice?.uninterruptablePrice || 0;
 
   const handleDeploy = async () => {
     if (!name.trim()) {
@@ -147,7 +147,8 @@ export default function DeployPodModal({ isOpen, onClose, gpuTypes, onDeployed }
                     <option value="">Select GPU...</option>
                     {filteredGpus.map(gpu => (
                       <option key={gpu.id} value={gpu.id}>
-                        {gpu.displayName} ({gpu.memoryInGb}GB) - ${gpu.lowestPrice?.minimumBidInterruptable?.toFixed(2) || '?'}/hr
+                        {gpu.displayName} ({gpu.memoryInGb}GB) - $
+                        {gpu.lowestPrice?.uninterruptablePrice?.toFixed(2) || '?'}/hr
                       </option>
                     ))}
                   </select>
@@ -187,7 +188,8 @@ export default function DeployPodModal({ isOpen, onClose, gpuTypes, onDeployed }
                 {selectedGpu && (
                   <div className="bg-gray-700 rounded-lg p-3">
                     <p className="text-sm text-gray-300">
-                      Estimated cost: <span className="font-semibold text-gray-100">${estimatedCost.toFixed(2)}/hr</span>
+                      Estimated cost:{' '}
+                      <span className="font-semibold text-gray-100">${estimatedCost.toFixed(2)}/hr</span>
                     </p>
                   </div>
                 )}

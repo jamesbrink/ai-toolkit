@@ -89,9 +89,13 @@ export default function RunPodPodDetailPage() {
       type: 'info',
       inputTitle: 'Dataset name',
       confirmText: 'Download',
-      onConfirm: async (value) => {
+      onConfirm: async value => {
         if (!value) return;
-        const res = await apiClient.post(`/api/runpod/pods/${params.podId}/download`, { remotePath: value }, { responseType: 'blob' });
+        const res = await apiClient.post(
+          `/api/runpod/pods/${params.podId}/download`,
+          { remotePath: value },
+          { responseType: 'blob' },
+        );
         const url = window.URL.createObjectURL(res.data);
         const a = document.createElement('a');
         a.href = url;
