@@ -3,28 +3,157 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import useJobLog from '@/hooks/useJobLog';
 import { RemoteJob } from '@/hooks/useRemoteJobs';
+import { RunPodPodInfo } from '@/hooks/useRunPodPods';
+import { LivePodData } from '@/app/runpod/[podId]/page';
 import { Loader2, RefreshCw } from 'lucide-react';
 import classNames from 'classnames';
 
 interface PodLogsTabProps {
+  pod: RunPodPodInfo;
+  liveData: LivePodData | null;
   hostId: string | null;
   activeJob: RemoteJob | null;
   remoteJobsStatus: 'idle' | 'loading' | 'success' | 'error';
   onRetryRemoteJobs: () => void;
 }
 
-function EmptyState({ icon, message, action }: { icon: React.ReactNode; message: string; action?: React.ReactNode }) {
+interface DeployEvent {
+  time: string;
+  message: string;
+  type: 'info' | 'success' | 'waiting';
+}
+
+/** Build a synthetic deployment event log from observable state transitions */
+function buildDeployEvents(pod: RunPodPodInfo, liveData: LivePodData | null, hostId: string | null): DeployEvent[] {
+  const events: DeployEvent[] = [];
+  const createdAt = new Date(pod.createdAt).toLocaleTimeString();
+
+  events.push({
+    time: createdAt,
+    message: `Pod "${pod.name}" created — requesting ${pod.gpuTypeDisplay}`,
+    type: 'info',
+  });
+
+  if (pod.dataCenterName) {
+    events.push({
+      time: createdAt,
+      message: `Datacenter: ${pod.dataCenterName}${pod.dataCenterRegion ? ` (${pod.dataCenterRegion})` : ''}`,
+      type: 'info',
+    });
+  }
+
+  if (pod.instanceType === 'SPOT') {
+    events.push({
+      time: createdAt,
+      message: `Spot instance — bid: $${pod.bidPerGpu.toFixed(2)}/hr per GPU`,
+      type: 'info',
+    });
+  }
+
+  if (liveData?.machineId) {
+    events.push({ time: '', message: `Machine assigned (${liveData.machineId})`, type: 'success' });
+  }
+
+  if (liveData?.runtime) {
+    events.push({ time: '', message: 'Container runtime started', type: 'success' });
+
+    if (liveData.runtime.uptimeInSeconds > 0) {
+      events.push({ time: '', message: `Uptime: ${liveData.runtime.uptimeInSeconds}s`, type: 'info' });
+    }
+
+    if (liveData.runtime.ports && liveData.runtime.ports.length > 0) {
+      const portList = liveData.runtime.ports.map(p => `${p.privatePort}→${p.publicPort}`).join(', ');
+      events.push({ time: '', message: `Ports exposed: ${portList}`, type: 'success' });
+    } else {
+      events.push({ time: '', message: 'Waiting for ports to be assigned...', type: 'waiting' });
+    }
+  } else if (pod.currentStatus === 'deploying') {
+    events.push({ time: '', message: 'Pulling container image and allocating resources...', type: 'waiting' });
+  }
+
+  if (pod.publicIp) {
+    events.push({ time: '', message: `Public endpoint: ${pod.publicIp}:${pod.publicPort}`, type: 'success' });
+  }
+
+  if (hostId) {
+    events.push({ time: '', message: 'AI Toolkit instance connected', type: 'success' });
+  } else if (liveData?.runtime?.ports && liveData.runtime.ports.length > 0) {
+    events.push({ time: '', message: 'Waiting for AI Toolkit to start inside container...', type: 'waiting' });
+  }
+
+  if (pod.errorMessage) {
+    events.push({ time: '', message: `Error: ${pod.errorMessage}`, type: 'info' });
+  }
+
+  return events;
+}
+
+const eventTypeColors: Record<string, string> = {
+  info: 'text-gray-400',
+  success: 'text-green-400',
+  waiting: 'text-yellow-400',
+};
+
+function DeploymentLog({
+  pod,
+  liveData,
+  hostId,
+}: {
+  pod: RunPodPodInfo;
+  liveData: LivePodData | null;
+  hostId: string | null;
+}) {
+  const events = useMemo(() => buildDeployEvents(pod, liveData, hostId), [pod, liveData, hostId]);
+  const logRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (logRef.current) {
+      logRef.current.scrollTop = logRef.current.scrollHeight;
+    }
+  }, [events]);
+
+  const lastEvent = events[events.length - 1];
+  const isWaiting = lastEvent?.type === 'waiting';
+
   return (
-    <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-gray-400">
-      <div className="mb-3">{icon}</div>
-      <p className="text-sm">{message}</p>
-      {action && <div className="mt-3">{action}</div>}
+    <div className="flex flex-col h-full">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-gray-200">Deployment Log</span>
+          <span className="px-2 py-0.5 rounded-full text-xs bg-yellow-900 text-yellow-300">Deploying</span>
+        </div>
+      </div>
+      <div
+        ref={logRef}
+        className="bg-gray-950 rounded-lg font-mono text-xs overflow-y-auto max-h-[calc(100vh-14rem)] flex-1 p-4"
+      >
+        {events.map((event, i) => (
+          <div key={i} className={classNames('py-0.5', eventTypeColors[event.type])}>
+            {event.time && <span className="text-gray-600 mr-2">[{event.time}]</span>}
+            {event.type === 'success' && <span className="mr-1">✓</span>}
+            {event.type === 'waiting' && i === events.length - 1 && <span className="mr-1">⏳</span>}
+            {event.message}
+          </div>
+        ))}
+        {isWaiting && (
+          <div className="flex items-center gap-2 text-gray-500 mt-2">
+            <Loader2 className="w-3 h-3 animate-spin" />
+            <span>Polling for updates every 5s...</span>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
 
-export default function PodLogsTab({ hostId, activeJob, remoteJobsStatus, onRetryRemoteJobs }: PodLogsTabProps) {
-  // Only enable the log hook when we have both a host and an active job
+export default function PodLogsTab({
+  pod,
+  liveData,
+  hostId,
+  activeJob,
+  remoteJobsStatus,
+  onRetryRemoteJobs,
+}: PodLogsTabProps) {
   const jobId = activeJob?.id ?? '';
   const { log, status: logStatus } = useJobLog(jobId, jobId ? 3000 : null, hostId);
 
@@ -54,45 +183,36 @@ export default function PodLogsTab({ hostId, activeJob, remoteJobsStatus, onRetr
     }
   }, [log, isFollowing]);
 
-  // State machine for content
+  // During deployment (no host linked), show synthetic deployment log
   if (!hostId) {
-    return (
-      <EmptyState
-        icon={<Loader2 className="w-6 h-6 animate-spin text-gray-500" />}
-        message="Waiting for pod to come online..."
-      />
-    );
+    return <DeploymentLog pod={pod} liveData={liveData} hostId={hostId} />;
   }
 
   if (remoteJobsStatus === 'loading') {
-    return (
-      <EmptyState
-        icon={<Loader2 className="w-6 h-6 animate-spin text-gray-500" />}
-        message="Connecting to remote instance..."
-      />
-    );
+    return <DeploymentLog pod={pod} liveData={liveData} hostId={hostId} />;
   }
 
   if (remoteJobsStatus === 'error') {
     return (
-      <EmptyState
-        icon={<RefreshCw className="w-6 h-6 text-gray-500" />}
-        message="Could not connect to remote instance"
-        action={
-          <button
-            onClick={onRetryRemoteJobs}
-            className="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm transition-colors"
-          >
-            Retry
-          </button>
-        }
-      />
+      <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-gray-400">
+        <RefreshCw className="w-6 h-6 text-gray-500 mb-3" />
+        <p className="text-sm">Could not connect to remote instance</p>
+        <button
+          onClick={onRetryRemoteJobs}
+          className="mt-3 px-3 py-1.5 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm transition-colors"
+        >
+          Retry
+        </button>
+      </div>
     );
   }
 
   if (!activeJob) {
     return (
-      <EmptyState icon={<span className="text-2xl">&#x1f4ad;</span>} message="No training jobs running on this pod" />
+      <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-gray-400">
+        <span className="text-2xl mb-3">&#x1f4ad;</span>
+        <p className="text-sm">No training jobs running on this pod</p>
+      </div>
     );
   }
 

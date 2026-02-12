@@ -247,6 +247,8 @@ export default function RunPodPodDetailPage() {
         {activeTab === 'overview' && <PodOverviewTab pod={pod} liveData={liveData} />}
         {activeTab === 'logs' && (
           <PodLogsTab
+            pod={pod}
+            liveData={liveData}
             hostId={hostId}
             activeJob={activeJob}
             remoteJobsStatus={remoteJobsStatus}
