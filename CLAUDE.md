@@ -56,8 +56,14 @@ docker compose up                              # Start UI with NVIDIA GPU passth
 ```
 Mounts HuggingFace cache, SQLite DB, datasets, output, and config directories. Set `AI_TOOLKIT_AUTH` in environment for web UI password. See `docker-compose.yml` and `docker/Dockerfile` (CUDA 12.8.1 base).
 
-### No test suite
-There are no automated tests. Validation is done by running training jobs with example configs from `config/examples/`.
+### Testing and type checking
+```bash
+cd ui && npm run typecheck                     # TypeScript type check (tsc --noEmit)
+cd ui && npm test                              # Run Vitest tests
+cd ui && npm run test:watch                    # Vitest in watch mode
+cd ui && npm run test:coverage                 # Vitest with coverage
+```
+For the Python training code, there are no automated tests. Validation is done by running training jobs with example configs from `config/examples/`.
 
 ## Architecture
 
@@ -178,6 +184,8 @@ Six models in `ui/prisma/schema.prisma`:
 Job flow: UI creates Job with status "queued" → cron worker polls for queued jobs → finds free Queue (matching `gpu_ids`, `is_running=false`) → spawns `python run.py <config>` → sets `is_running=true` → monitors process → on exit sets status and `is_running=false`. The `stop` flag signals graceful stop; `return_to_queue` re-queues instead of stopping.
 
 ### Web UI technology stack
+- **Prettier** — Single quotes, 120 char width, trailing commas, 2-space indent. Config in `.prettierrc.json`.
+- **TypeScript path alias** — `@/*` maps to `./src/*` (e.g., `import { foo } from '@/server/bar'`).
 - **Tailwind CSS 4.1** — CSS-first config via `@import "tailwindcss"` in `globals.css`. No `tailwind.config.ts` (deleted during v3→v4 migration). Theme defined in `@theme` block in `globals.css`. PostCSS uses `@tailwindcss/postcss` plugin.
 - **Responsive sidebar** — 3 modes: mobile drawer (<768px, HeadlessUI `Dialog`), tablet icon rail (768–1024px, expands on hover), desktop full-width (>1024px). State managed by `SidebarContext.tsx` / `SidebarProvider`.
 - **Dynamic viewport height** — `h-dvh` (not `h-screen`) in root layout for correct mobile browser behavior.
@@ -335,22 +343,13 @@ The orchestrator (`datasetAnalysis.ts`) checks `fileModifiedAt` against stored `
 - **Datasets list page** (`ui/src/app/datasets/page.tsx`): `UniversalTable` with columns for name, image count, caption count (with color-coded completion percentage), size, last modified. Per-row action buttons: export (ZIP download), rename, delete
 
 ### Claude integration
-- `analyze_dataset_quality` server tool runs the full analysis pipeline
-- `get_dataset_issues` server tool returns stored results filtered by issue type
-- `view_dataset_image` server tool makes a vision API call to describe a specific image
-- `crop_faces` server tool crops detected faces into a new dataset
-- `delete_dataset_images` server tool deletes images directly (validates paths under writable roots)
-- Dataset page sets chat context (`datasetName`, `imageList`) via `useClaudeChat`
-- System prompt (`systemPrompt.ts`) includes analysis tool descriptions and context about available results
-- Tool progress events show spinner indicators in ChatPanel during server-side tool execution
+Dataset quality analysis is fully accessible through the Claude chat tools described in the "Claude AI Integration" section above. The dataset page sets chat context (`datasetName`, `imageList`) via `useClaudeChat`.
 
-### Hooks
-- **`useDatasetAnalysis`** — returns `{ status, result, progress, error, startAnalysis, getStoredResults, dismissGroup, dismissAllGroups, deleteImages, cropFaces, exportDataset }`
-- **`useDatasetList`** — returns `{ datasets: DatasetInfo[], setDatasets, status, refreshDatasets }`. Exports `DatasetInfo` interface with `{ name, imageCount, captionCount, totalSizeBytes, lastModified }`
-- **`useHostList`** — polls `/api/hosts` every 10s. Returns `{ hosts: HostInfo[], status, refreshHosts }`. Exports `HostInfo` interface with `{ id, name, address, port, instanceId, source, isOnline, deviceType, gpuSummary, lastSeen }`
-- **`useRemoteGPUInfo`** — polls remote GPU data via proxy (3s interval). Returns `{ gpuList, status, deviceType, refreshGpuInfo }`
-- **`useRemoteJobs`** — polls remote jobs via proxy (5s interval). Returns `{ jobs, status, refreshJobs }`
-- **`useRemoteQueue`** — fetches remote queue status via proxy. Returns `{ queue, status, refreshQueue }`
+### Key hooks (`ui/src/hooks/`)
+- **`useDatasetAnalysis`** — analysis state/streaming, dismiss groups, delete images, crop faces, export
+- **`useDatasetList`** — dataset metadata list with refresh. Exports `DatasetInfo` interface
+- **`useHostList`** — polls `/api/hosts` every 10s. Exports `HostInfo` interface
+- **`useRemoteGPUInfo`** / **`useRemoteJobs`** / **`useRemoteQueue`** — poll remote host data via proxy
 
 ## Multi-Host Management
 
