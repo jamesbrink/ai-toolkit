@@ -3,11 +3,19 @@ import fs from 'fs';
 import path from 'path';
 import { getDatasetsRoot, getTrainingFolder, getDataRoot } from '@/server/settings';
 
-export async function GET(request: NextRequest, { params }: { params: { imagePath: string } }) {
+export async function GET(request: NextRequest, { params }: { params: { imagePath: string[] } }) {
   const { imagePath } = await params;
   try {
-    // Decode the path
-    const filepath = decodeURIComponent(imagePath);
+    // Reconstruct the absolute file path from catch-all segments.
+    // Local direct access: single segment with URL-encoded slashes (e.g. ["%2Fhome%2F..."])
+    // Proxy relay: multiple segments where %2F was decoded by the HTTP layer (e.g. ["home","user","..."])
+    const segments = Array.isArray(imagePath) ? imagePath : [String(imagePath)];
+    let filepath: string;
+    if (segments.length === 1) {
+      filepath = decodeURIComponent(segments[0]);
+    } else {
+      filepath = '/' + segments.map(s => decodeURIComponent(s)).join('/');
+    }
 
     // Get allowed directories
     const datasetRoot = await getDatasetsRoot();

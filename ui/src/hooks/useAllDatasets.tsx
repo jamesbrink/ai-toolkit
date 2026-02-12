@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { SourcedDatasetInfo, DataSource } from '@/types';
 import { HostInfo } from '@/hooks/useHostList';
 import { apiClient } from '@/utils/api';
@@ -14,6 +14,17 @@ export default function useAllDatasets(hosts: HostInfo[]) {
   const isFetchingRef = useRef(false);
   const hostsRef = useRef(hosts);
   hostsRef.current = hosts;
+
+  // Stable key that changes only when the set of online hosts changes
+  const onlineHostsKey = useMemo(
+    () =>
+      hosts
+        .filter(h => h.isOnline)
+        .map(h => h.id)
+        .sort()
+        .join(','),
+    [hosts],
+  );
 
   const fetchAll = useCallback(async () => {
     if (isFetchingRef.current) return;
@@ -68,9 +79,10 @@ export default function useAllDatasets(hosts: HostInfo[]) {
     fetchAll();
   }, [fetchAll]);
 
+  // Re-fetch when the set of online hosts changes (covers initial load + host status changes)
   useEffect(() => {
     fetchAll();
-  }, [fetchAll]);
+  }, [fetchAll, onlineHostsKey]);
 
   return { allDatasets, isLoading, refreshAllDatasets };
 }
