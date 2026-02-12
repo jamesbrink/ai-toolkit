@@ -5,6 +5,11 @@ on:
     branches: [refactor]
     tags: ['v*']
 
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -34,10 +39,15 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Free disk space
-        run: |
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache
-          sudo docker image prune --all --force
-          df -h /
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: true
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: false
 
       - uses: DeterminateSystems/nix-installer-action@main
         with:
