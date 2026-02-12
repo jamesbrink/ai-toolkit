@@ -32,40 +32,48 @@ pkgs.dockerTools.buildImage {
   name = "ai-toolkit";
   tag = "latest";
 
-  contents = with pkgs; [
-    ai-toolkit
-    ai-toolkit-ui
-    bashInteractive
-    coreutils
-    ffmpeg-full
-    git
-    nodejs_22
-    cacert
-    openssh
-    gnugrep
-    gawk
-  ];
+  copyToRoot = pkgs.buildEnv {
+    name = "ai-toolkit-env";
+    paths = with pkgs; [
+      ai-toolkit
+      ai-toolkit-ui
+      bashInteractive
+      coreutils
+      ffmpeg-full
+      git
+      nodejs_22
+      cacert
+      openssh
+      gnugrep
+      gawk
+    ];
+    pathsToLink = [
+      "/bin"
+      "/lib"
+      "/share"
+      "/etc"
+    ];
+  };
 
-  runAsRoot = ''
-    #!${pkgs.runtimeShell}
+  extraCommands = ''
     # sshd requires these directories and files
-    mkdir -p /run/sshd
-    mkdir -p /etc/ssh
-    mkdir -p /root/.ssh
-    chmod 700 /root/.ssh
-    mkdir -p /tmp
-    chmod 1777 /tmp
+    mkdir -p run/sshd
+    mkdir -p etc/ssh
+    mkdir -p root/.ssh
+    chmod 700 root/.ssh
+    mkdir -p tmp
+    chmod 1777 tmp
 
     # Minimal passwd/group/shadow for sshd
-    echo 'root:x:0:0:root:/root:/bin/bash' > /etc/passwd
-    echo 'root:x:0:' > /etc/group
-    echo 'root:!:1::::::' > /etc/shadow
-    chmod 640 /etc/shadow
-    echo 'sshd:x:74:74:sshd:/var/empty/sshd:/bin/false' >> /etc/passwd
-    echo 'sshd:x:74:' >> /etc/group
+    echo 'root:x:0:0:root:/root:/bin/bash' > etc/passwd
+    echo 'root:x:0:' > etc/group
+    echo 'root:!:1::::::' > etc/shadow
+    chmod 640 etc/shadow
+    echo 'sshd:x:74:74:sshd:/var/empty/sshd:/bin/false' >> etc/passwd
+    echo 'sshd:x:74:' >> etc/group
 
     # Minimal sshd_config
-    cat > /etc/ssh/sshd_config << 'SSHD_EOF'
+    cat > etc/ssh/sshd_config << 'SSHD_EOF'
     Port 22
     PermitRootLogin yes
     PubkeyAuthentication yes
