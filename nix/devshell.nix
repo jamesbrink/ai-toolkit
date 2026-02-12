@@ -152,14 +152,15 @@
             ])}"''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
           ''}
 
-          # Mirror env vars from nix/ai-toolkit-ui-wrapper.sh for local dev
+          # Use the same data directory as nix run / Docker for parity
+          _DATA_DIR="''${AI_TOOLKIT_UI_DATA:-''${XDG_DATA_HOME:-$HOME/.local/share}/ai-toolkit}"
           export TOOLKIT_ROOT="$(pwd)"
-          export DATABASE_URL="file:$(pwd)/aitk_db.db"
-          export DATASETS_FOLDER="''${DATASETS_FOLDER:-$(pwd)/datasets}"
-          export TRAINING_FOLDER="''${TRAINING_FOLDER:-$(pwd)/output}"
-          export DATA_ROOT="''${DATA_ROOT:-$(pwd)/data}"
+          export DATABASE_URL="file:''${_DATA_DIR}/aitk_db.db"
+          export DATASETS_FOLDER="''${DATASETS_FOLDER:-''${_DATA_DIR}/datasets}"
+          export TRAINING_FOLDER="''${TRAINING_FOLDER:-''${_DATA_DIR}/output}"
+          export DATA_ROOT="''${DATA_ROOT:-''${_DATA_DIR}/data}"
           export PORT="''${PORT:-8675}"
-          mkdir -p "$DATASETS_FOLDER" "$TRAINING_FOLDER" "$DATA_ROOT"
+          mkdir -p "''${DATASETS_FOLDER}" "''${TRAINING_FOLDER}" "''${DATA_ROOT}"
 
           if [ ! -d "venv" ]; then
             echo "Creating Python virtual environment..."
