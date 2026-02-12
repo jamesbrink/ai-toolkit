@@ -37,7 +37,7 @@ export default function RunPodPodDetailPage() {
   const fetchPod = useCallback(async () => {
     try {
       const res = await apiClient.get(`/api/runpod/pods/${params.podId}`);
-      setPod(res.data);
+      setPod(res.data.pod);
     } catch (err) {
       console.error('Failed to fetch pod:', err);
     } finally {

@@ -32,11 +32,16 @@ async function runpodFetch<T>(query: string, variables?: Record<string, unknown>
   }
 
   const json = (await response.json()) as GraphQLResponse<T>;
-  // GraphQL APIs may return partial data alongside errors (e.g. nullable subfields failing).
-  // Only throw if there's no usable data at all.
   if (!json.data) {
     const msg = json.errors?.length ? json.errors.map(e => e.message).join(', ') : 'RunPod API returned no data';
     throw new Error(`RunPod GraphQL error: ${msg}`);
+  }
+  // Surface errors when data exists but contains null mutation results (e.g. no available GPUs)
+  if (json.errors?.length) {
+    const allNull = Object.values(json.data as Record<string, unknown>).every(v => v === null);
+    if (allNull) {
+      throw new Error(`RunPod error: ${json.errors.map(e => e.message).join(', ')}`);
+    }
   }
   return json.data;
 }
@@ -139,6 +144,9 @@ export async function deployPod(input: DeployPodInput): Promise<DeployedPod> {
     },
   );
 
+  if (!data.podFindAndDeployOnDemand) {
+    throw new Error('No GPU available for the selected type and cloud. Try a different GPU or cloud type.');
+  }
   return data.podFindAndDeployOnDemand;
 }
 
