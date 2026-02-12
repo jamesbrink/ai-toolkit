@@ -67,7 +67,8 @@ function NavContent({ collapsed, onNavClick }: { collapsed: boolean; onNavClick?
             width={28}
             height={28}
             unoptimized
-            className="w-auto h-7"
+            className="h-7"
+            style={{ width: 'auto' }}
           />
         ) : (
           <h1 className="text-l">
@@ -77,7 +78,8 @@ function NavContent({ collapsed, onNavClick }: { collapsed: boolean; onNavClick?
               width={28}
               height={28}
               unoptimized
-              className="w-auto h-7 mr-3 inline"
+              className="h-7 mr-3 inline"
+              style={{ width: 'auto' }}
             />
             <span className="font-bold uppercase">Ostris</span>
             <span className="ml-2 uppercase text-gray-300">AI-Toolkit</span>
