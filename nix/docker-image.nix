@@ -1,6 +1,6 @@
 # OCI/Docker image for ai-toolkit
 # Build with: nix build .#docker
-# Load with: docker load < result
+# Load with: ./result | docker load
 # Run UI:    docker run -p 8675:8675 -p 22:22 -v ./datasets:/workspace/datasets -v ./output:/workspace/output ai-toolkit
 # Run train: docker run ai-toolkit ai-toolkit-train config/your_config.yaml
 #
@@ -28,11 +28,11 @@ let
   '';
 in
 
-pkgs.dockerTools.buildImage {
+pkgs.dockerTools.streamLayeredImage {
   name = "ai-toolkit";
   tag = "latest";
 
-  copyToRoot = pkgs.buildEnv {
+  contents = pkgs.buildEnv {
     name = "ai-toolkit-env";
     paths = with pkgs; [
       ai-toolkit

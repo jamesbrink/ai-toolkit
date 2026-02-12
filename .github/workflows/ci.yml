@@ -61,7 +61,7 @@ jobs:
         run: nix build .#docker --print-build-logs --max-jobs auto
 
       - name: Load Docker image
-        run: docker load < result
+        run: ./result | docker load
 
       - uses: docker/login-action@v3
         with:
