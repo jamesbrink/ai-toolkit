@@ -14,18 +14,25 @@ apiClient.interceptors.request.use(config => {
   return config;
 });
 
-// Add a response interceptor to handle 401 errors
+// Add a response interceptor to handle errors
 apiClient.interceptors.response.use(
   response => response, // Return successful responses as-is
   error => {
-    // Check if the error is a 401 Unauthorized
-    if (error.response && error.response.status === 401) {
-      // Clear the auth token from localStorage
-      localStorage.removeItem('AI_TOOLKIT_AUTH');
-      isAuthorizedState.set(false);
+    if (error.response) {
+      // Check if the error is a 401 Unauthorized
+      if (error.response.status === 401) {
+        localStorage.removeItem('AI_TOOLKIT_AUTH');
+        isAuthorizedState.set(false);
+      }
+
+      // Surface the server's error message so callers get a useful message
+      // from err.message instead of the generic "Request failed with status code 500"
+      const serverMsg = error.response.data?.error || error.response.data?.message;
+      if (serverMsg) {
+        error.message = serverMsg;
+      }
     }
 
-    // Reject the promise with the error so calling code can still catch it
     return Promise.reject(error);
   },
 );
