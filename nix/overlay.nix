@@ -1,0 +1,26 @@
+# Package overlay for ai-toolkit
+#
+# Usage in a NixOS or nix-darwin configuration:
+#   nixpkgs.overlays = [ ai-toolkit.overlays.default ];
+#
+# This adds pkgs.ai-toolkit and pkgs.ai-toolkit-ui to nixpkgs.
+#
+# NOTE: On Linux, CUDA support requires allowUnfree in the consumer's nixpkgs config:
+#   nixpkgs.config.allowUnfree = true;
+final: prev:
+let
+  pythonOverlay = import ./python-packages.nix {
+    pkgs = final;
+    lib = final.lib;
+  };
+
+  python3 = final.python312.override {
+    packageOverrides = pythonOverlay;
+  };
+in
+{
+  ai-toolkit = final.callPackage ./ai-toolkit.nix { inherit python3; };
+  ai-toolkit-ui = final.callPackage ./ai-toolkit-ui.nix {
+    ai-toolkit = final.ai-toolkit;
+  };
+}
