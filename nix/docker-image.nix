@@ -17,12 +17,15 @@
 }:
 
 let
-  entrypoint = pkgs.substituteAll {
-    src = ./docker-entrypoint.sh;
-    isExecutable = true;
-    inherit (pkgs) openssh;
-    uiWrapper = ai-toolkit-ui;
-  };
+  entrypoint = pkgs.runCommand "docker-entrypoint" { } ''
+    cp ${
+      pkgs.replaceVars ./docker-entrypoint.sh {
+        openssh = pkgs.openssh;
+        uiWrapper = ai-toolkit-ui;
+      }
+    } $out
+    chmod +x $out
+  '';
 in
 
 pkgs.dockerTools.buildLayeredImage {
