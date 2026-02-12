@@ -37,6 +37,7 @@ export async function POST(request: Request) {
       MDNS_ENABLED,
       RUNPOD_API_KEY,
       RUNPOD_SSH_PUBLIC_KEY,
+      RUNPOD_DEFAULT_PASSWORD,
     } = body;
 
     // Upsert all settings
@@ -57,6 +58,7 @@ export async function POST(request: Request) {
       upsert('MDNS_ENABLED', MDNS_ENABLED),
       upsert('RUNPOD_API_KEY', RUNPOD_API_KEY),
       upsert('RUNPOD_SSH_PUBLIC_KEY', RUNPOD_SSH_PUBLIC_KEY),
+      upsert('RUNPOD_DEFAULT_PASSWORD', RUNPOD_DEFAULT_PASSWORD),
     ]);
 
     flushCache();

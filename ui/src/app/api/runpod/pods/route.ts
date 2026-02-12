@@ -39,8 +39,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'name and gpuTypeId are required' }, { status: 400 });
     }
 
-    // Generate a secure auth password for the remote instance
-    const authPassword = crypto.randomBytes(18).toString('base64url');
+    // Use static default password if configured, otherwise generate a random one
+    const defaultPw = await prisma.settings.findFirst({ where: { key: 'RUNPOD_DEFAULT_PASSWORD' } });
+    const authPassword = defaultPw?.value || crypto.randomBytes(18).toString('base64url');
 
     const baseInput = {
       name,

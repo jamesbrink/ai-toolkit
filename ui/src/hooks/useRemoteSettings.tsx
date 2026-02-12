@@ -14,6 +14,7 @@ const defaultSettings: Settings = {
   MDNS_ENABLED: 'true',
   RUNPOD_API_KEY: '',
   RUNPOD_SSH_PUBLIC_KEY: '',
+  RUNPOD_DEFAULT_PASSWORD: '',
 };
 
 export default function useRemoteSettings(hostId: string | null) {
@@ -42,6 +43,7 @@ export default function useRemoteSettings(hostId: string | null) {
           MDNS_ENABLED: data.MDNS_ENABLED ?? 'true',
           RUNPOD_API_KEY: data.RUNPOD_API_KEY || '',
           RUNPOD_SSH_PUBLIC_KEY: data.RUNPOD_SSH_PUBLIC_KEY || '',
+          RUNPOD_DEFAULT_PASSWORD: data.RUNPOD_DEFAULT_PASSWORD || '',
         });
         setIsLoaded(true);
       })

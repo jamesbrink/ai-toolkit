@@ -3,11 +3,16 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { TopBar, MainContent } from '@/components/layout';
-import { ArrowLeft, Square, Play, Trash2, Download, Cpu } from 'lucide-react';
+import { ArrowLeft, Square, Play, Trash2, Download } from 'lucide-react';
+import { Button } from '@headlessui/react';
 import classNames from 'classnames';
 import { RunPodPodInfo } from '@/hooks/useRunPodPods';
+import useRemoteJobs from '@/hooks/useRemoteJobs';
 import { openConfirm } from '@/components/ConfirmModal';
 import { apiClient } from '@/utils/api';
+import PodOverviewTab from '@/components/runpod/PodOverviewTab';
+import PodLogsTab from '@/components/runpod/PodLogsTab';
+import PodTrainingTab from '@/components/runpod/PodTrainingTab';
 
 const statusConfig: Record<string, { color: string; label: string }> = {
   deploying: { color: 'bg-yellow-900 text-yellow-300', label: 'Deploying' },
@@ -17,16 +22,14 @@ const statusConfig: Record<string, { color: string; label: string }> = {
   terminated: { color: 'bg-gray-700 text-gray-400', label: 'Terminated' },
 };
 
-interface LiveGpu {
-  id: string;
-  gpuUtilPerc: number;
-  memoryUtilPerc: number;
-}
-
-interface LivePodData {
+export interface LivePodData {
   runtime: {
     uptimeInSeconds: number;
-    gpus: LiveGpu[] | null;
+    gpus: Array<{
+      id: string;
+      gpuUtilPerc: number;
+      memoryUtilPerc: number;
+    }> | null;
     ports: Array<{
       ip: string;
       isIpPublic: boolean;
@@ -38,16 +41,13 @@ interface LivePodData {
   machine: { dataCenterId: string } | null;
 }
 
-function formatUptime(seconds: number): string {
-  if (seconds < 60) return `${seconds}s`;
-  const min = Math.floor(seconds / 60);
-  if (min < 60) return `${min}m`;
-  const hr = Math.floor(min / 60);
-  const remainMin = min % 60;
-  if (hr < 24) return `${hr}h ${remainMin}m`;
-  const days = Math.floor(hr / 24);
-  return `${days}d ${hr % 24}h`;
-}
+type TabKey = 'overview' | 'logs' | 'training';
+
+const tabs: { key: TabKey; label: string }[] = [
+  { key: 'overview', label: 'Overview' },
+  { key: 'logs', label: 'Logs' },
+  { key: 'training', label: 'Training' },
+];
 
 export default function RunPodPodDetailPage() {
   const params = useParams<{ podId: string }>();
@@ -55,7 +55,12 @@ export default function RunPodPodDetailPage() {
   const [pod, setPod] = useState<RunPodPodInfo | null>(null);
   const [liveData, setLiveData] = useState<LivePodData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<TabKey>('overview');
   const currentStatus = pod?.currentStatus;
+
+  // Remote jobs hook — only active when pod has a linked host
+  const hostId = pod?.hostId ?? null;
+  const { activeJob, status: remoteJobsStatus, refreshJobs } = useRemoteJobs(hostId);
 
   const fetchPod = useCallback(async () => {
     try {
@@ -179,7 +184,6 @@ export default function RunPodPodDetailPage() {
   const isActive = pod.currentStatus === 'running' || pod.currentStatus === 'deploying';
   const isStopped = pod.currentStatus === 'stopped';
   const isTerminated = pod.currentStatus === 'terminated';
-  const gpus = liveData?.runtime?.gpus;
 
   return (
     <>
@@ -238,113 +242,39 @@ export default function RunPodPodDetailPage() {
           )}
         </div>
       </TopBar>
-      <MainContent>
-        <div className="max-w-2xl space-y-6">
-          {/* GPU Utilization */}
-          {gpus && gpus.length > 0 && (
-            <div className="bg-gray-900 rounded-xl border border-gray-800 p-4">
-              <div className="flex items-center space-x-2 mb-3">
-                <Cpu className="w-4 h-4 text-gray-400" />
-                <h3 className="text-sm font-medium text-gray-300">GPU Utilization</h3>
-              </div>
-              <div className="space-y-3">
-                {gpus.map((gpu, i) => (
-                  <div key={gpu.id} className="space-y-1">
-                    <div className="flex items-center justify-between text-xs text-gray-400">
-                      <span>GPU {i}{gpus.length > 1 ? ` (${gpu.id})` : ''}</span>
-                      <span>{gpu.gpuUtilPerc}% compute &middot; {gpu.memoryUtilPerc}% memory</span>
-                    </div>
-                    <div className="flex space-x-2">
-                      <div className="flex-1">
-                        <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-blue-500 rounded-full transition-all duration-500"
-                            style={{ width: `${gpu.gpuUtilPerc}%` }}
-                          />
-                        </div>
-                      </div>
-                      <div className="flex-1">
-                        <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-purple-500 rounded-full transition-all duration-500"
-                            style={{ width: `${gpu.memoryUtilPerc}%` }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
 
-          {/* Metadata Table */}
-          <div className="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden">
-            <table className="w-full">
-              <tbody className="divide-y divide-gray-800">
-                <MetaRow label="RunPod ID" value={pod.runpodId} />
-                <MetaRow label="GPU" value={`${pod.gpuTypeDisplay}${pod.gpuCount > 1 ? ` x${pod.gpuCount}` : ''}`} />
-                <MetaRow label="Cloud Type" value={pod.cloudType === 'SECURE' ? 'Secure Cloud' : 'Community Cloud'} />
-                <MetaRow
-                  label="Instance Type"
-                  value={
-                    pod.instanceType === 'SPOT'
-                      ? `Spot (bid: $${pod.bidPerGpu.toFixed(2)}/hr per GPU)`
-                      : 'On-Demand'
-                  }
-                />
-                <MetaRow label="Cost" value={`$${pod.costPerHr.toFixed(2)}/hr`} />
-                <MetaRow label="Uptime" value={formatUptime(pod.totalUptimeSeconds)} />
-                <MetaRow label="Total Spend" value={`$${pod.estimatedSpend.toFixed(2)}`} />
-                <MetaRow label="Volume" value={`${pod.volumeInGb} GB`} />
-                <MetaRow label="Container Disk" value={`${pod.containerDiskInGb} GB`} />
-                {pod.dataCenterName && (
-                  <MetaRow
-                    label="Datacenter"
-                    value={`${pod.dataCenterName}${pod.dataCenterRegion ? ` — ${pod.dataCenterRegion}` : ''}`}
-                  />
-                )}
-                {liveData?.machine?.dataCenterId && !pod.dataCenterName && (
-                  <MetaRow label="Datacenter ID" value={liveData.machine.dataCenterId} />
-                )}
-                {pod.publicIp && <MetaRow label="Endpoint" value={`${pod.publicIp}:${pod.publicPort}`} />}
-                <MetaRow label="Created" value={new Date(pod.createdAt).toLocaleString()} />
-                {pod.terminatedAt && <MetaRow label="Terminated" value={new Date(pod.terminatedAt).toLocaleString()} />}
-              </tbody>
-            </table>
-          </div>
+      {/* Tab bar */}
+      <div className="bg-gray-800 absolute top-12 left-0 w-full h-10 flex items-center px-2 text-sm overflow-x-auto">
+        {tabs.map(tab => (
+          <Button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className={classNames('px-4 py-2 h-10 whitespace-nowrap shrink-0', activeTab === tab.key && 'bg-gray-700')}
+          >
+            {tab.label}
+          </Button>
+        ))}
+      </div>
 
-          {/* Host Link */}
-          {pod.hostId && (
-            <div className="bg-gray-900 rounded-xl border border-gray-800 p-4">
-              <h3 className="text-sm font-medium text-gray-300 mb-2">Linked Host</h3>
-              <button
-                onClick={() => router.push(`/hosts/${pod.hostId}`)}
-                className="text-blue-400 hover:text-blue-300 text-sm transition-colors"
-              >
-                View host details
-              </button>
-            </div>
-          )}
-
-          {/* Error */}
-          {pod.errorMessage && (
-            <div className="bg-red-900/30 border border-red-800 rounded-xl p-4">
-              <h3 className="text-sm font-medium text-red-400 mb-1">Error</h3>
-              <p className="text-sm text-red-300">{pod.errorMessage}</p>
-            </div>
-          )}
-        </div>
+      <MainContent className="pt-24">
+        {activeTab === 'overview' && <PodOverviewTab pod={pod} liveData={liveData} />}
+        {activeTab === 'logs' && (
+          <PodLogsTab
+            hostId={hostId}
+            activeJob={activeJob}
+            remoteJobsStatus={remoteJobsStatus}
+            onRetryRemoteJobs={refreshJobs}
+          />
+        )}
+        {activeTab === 'training' && (
+          <PodTrainingTab
+            hostId={hostId}
+            activeJob={activeJob}
+            remoteJobsStatus={remoteJobsStatus}
+            onRetryRemoteJobs={refreshJobs}
+          />
+        )}
       </MainContent>
     </>
-  );
-}
-
-function MetaRow({ label, value }: { label: string; value: string }) {
-  return (
-    <tr>
-      <td className="px-4 py-3 text-sm text-gray-400 whitespace-nowrap">{label}</td>
-      <td className="px-4 py-3 text-sm text-gray-100">{value}</td>
-    </tr>
   );
 }

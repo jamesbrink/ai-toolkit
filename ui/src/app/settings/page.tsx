@@ -220,6 +220,25 @@ export default function Settings() {
                   </div>
 
                   <div>
+                    <label htmlFor="RUNPOD_DEFAULT_PASSWORD" className="block text-sm font-medium mb-2">
+                      Default RunPod Password
+                      <div className="text-gray-400 text-sm ml-1">
+                        Set a static password for new RunPod pods. If empty, a random password is generated for each
+                        pod.
+                      </div>
+                    </label>
+                    <input
+                      type="password"
+                      id="RUNPOD_DEFAULT_PASSWORD"
+                      name="RUNPOD_DEFAULT_PASSWORD"
+                      value={settings.RUNPOD_DEFAULT_PASSWORD}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent"
+                      placeholder="Leave empty for random passwords"
+                    />
+                  </div>
+
+                  <div>
                     <label htmlFor="RUNPOD_API_KEY" className="block text-sm font-medium mb-2">
                       RunPod API Key
                       <div className="text-gray-400 text-sm ml-1">

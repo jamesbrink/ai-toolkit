@@ -13,6 +13,7 @@ export interface Settings {
   MDNS_ENABLED: string;
   RUNPOD_API_KEY: string;
   RUNPOD_SSH_PUBLIC_KEY: string;
+  RUNPOD_DEFAULT_PASSWORD: string;
 }
 
 export default function useSettings() {
@@ -26,6 +27,7 @@ export default function useSettings() {
     MDNS_ENABLED: 'true',
     RUNPOD_API_KEY: '',
     RUNPOD_SSH_PUBLIC_KEY: '',
+    RUNPOD_DEFAULT_PASSWORD: '',
   });
   const [isSettingsLoaded, setIsLoaded] = useState(false);
   useEffect(() => {
@@ -43,6 +45,7 @@ export default function useSettings() {
           MDNS_ENABLED: data.MDNS_ENABLED ?? 'true',
           RUNPOD_API_KEY: data.RUNPOD_API_KEY || '',
           RUNPOD_SSH_PUBLIC_KEY: data.RUNPOD_SSH_PUBLIC_KEY || '',
+          RUNPOD_DEFAULT_PASSWORD: data.RUNPOD_DEFAULT_PASSWORD || '',
         });
         setIsLoaded(true);
       })
