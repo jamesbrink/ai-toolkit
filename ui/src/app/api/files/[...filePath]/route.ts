@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
+import { Readable } from 'stream';
 import { getDatasetsRoot, getTrainingFolder } from '@/server/settings';
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ filePath: string }> }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ filePath: string[] }> }) {
   const { filePath } = await params;
   try {
-    // Decode the path
-    const decodedFilePath = decodeURIComponent(filePath);
+    // Decode the path (filePath is a string[] from catch-all route segment)
+    const decodedFilePath = decodeURIComponent(filePath.join('/'));
 
     // Get allowed directories
     const datasetRoot = await getDatasetsRoot();
@@ -90,7 +91,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         highWaterMark: 64 * 1024, // 64KB buffer
       });
 
-      return new NextResponse(fileStream as any, {
+      return new NextResponse(Readable.toWeb(fileStream) as ReadableStream, {
         status: 206,
         headers: {
           ...commonHeaders,
@@ -104,7 +105,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         highWaterMark: 64 * 1024, // 64KB buffer
       });
 
-      return new NextResponse(fileStream as any, {
+      return new NextResponse(Readable.toWeb(fileStream) as ReadableStream, {
         headers: {
           ...commonHeaders,
           'Content-Length': String(stat.size),

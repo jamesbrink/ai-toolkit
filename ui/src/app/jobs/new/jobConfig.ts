@@ -1,4 +1,4 @@
-import { JobConfig, DatasetConfig, SliderConfig } from '@/types';
+import { JobConfig, DatasetConfig, ProcessConfig, SliderConfig } from '@/types';
 
 export const defaultDatasetConfig: DatasetConfig = {
   folder_path: '/path/to/images/folder',
@@ -193,8 +193,7 @@ export const migrateJobConfig = (jobConfig: JobConfig): JobConfig => {
   }
 
   if (!('logging' in jobConfig.config.process[0])) {
-    //@ts-ignore
-    jobConfig.config.process[0].logging = {
+    (jobConfig.config.process[0] as ProcessConfig & Record<string, unknown>).logging = {
       log_every: 1,
       use_ui_logger: true,
     };

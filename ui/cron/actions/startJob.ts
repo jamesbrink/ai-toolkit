@@ -90,7 +90,7 @@ const startAndWatchJob = (job: Job) => {
 
     const isMpsJob = job.gpu_ids === 'mps';
 
-    const additionalEnv: any = {
+    const additionalEnv: Record<string, string> = {
       AITK_JOB_ID: jobID,
       IS_AI_TOOLKIT_UI: '1',
     };
@@ -154,7 +154,7 @@ const startAndWatchJob = (job: Job) => {
 
       // (No stdout/stderr listeners — logging should go to --log handled by your Python)
       // (No monitoring loop — the whole point is to let it live past this worker)
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Handle any exceptions during process launch
       console.error('Error launching process:', error);
 
@@ -162,7 +162,7 @@ const startAndWatchJob = (job: Job) => {
         where: { id: jobID },
         data: {
           status: 'error',
-          info: `Error launching job: ${error?.message || 'Unknown error'}`,
+          info: `Error launching job: ${error instanceof Error ? error.message : 'Unknown error'}`,
         },
       });
       return;

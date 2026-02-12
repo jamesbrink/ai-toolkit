@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 
-export function useFromNull(effect: () => void | (() => void), deps: Array<any | null | undefined>) {
-  const prevDepsRef = useRef<(any | null | undefined)[]>([]);
+export function useFromNull(effect: () => void | (() => void), deps: Array<unknown>) {
+  const prevDepsRef = useRef<unknown[]>([]);
 
   useEffect(() => {
     const shouldRun = deps.some((dep, i) => prevDepsRef.current[i] == null && dep != null);

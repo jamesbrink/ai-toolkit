@@ -1,16 +1,20 @@
 import { NextRequest } from 'next/server';
+import Anthropic from '@anthropic-ai/sdk';
+import { ChatContext } from '@/types/claude';
 import { getAnthropicAuth } from '@/server/settings';
 import { createAnthropicClient, getClaudeChatModel } from '@/server/claude/client';
 import { buildSystemPrompt } from '@/server/claude/systemPrompt';
 import { serverToolDefinitions, SERVER_TOOL_NAMES, executeViewImageRemote } from '@/server/claude/serverTools';
 import { executeToolMaybeRemote, fetchRemoteImageBytes } from '@/server/claude/remoteToolExecution';
 
+type MessageParam = Anthropic.MessageParam;
+
 const MAX_TOOL_LOOPS = 10;
 // Reserve tokens for system prompt (~3K) + response (4K) + tools (~2K)
 const MAX_MESSAGE_TOKENS = 180_000;
 
 // Rough token estimate: ~4 characters per token
-function estimateTokens(messages: { role: string; content: unknown }[]): number {
+function estimateTokens(messages: MessageParam[]): number {
   let chars = 0;
   for (const msg of messages) {
     if (typeof msg.content === 'string') {
@@ -25,10 +29,7 @@ function estimateTokens(messages: { role: string; content: unknown }[]): number 
 // Trim older messages to stay within the token budget.
 // Always keeps the most recent messages; drops from the front.
 // Preserves at least the last user message + any trailing assistant/tool messages.
-function trimMessages(
-  messages: { role: string; content: unknown }[],
-  maxTokens: number,
-): { role: string; content: unknown }[] {
+function trimMessages(messages: MessageParam[], maxTokens: number): MessageParam[] {
   if (estimateTokens(messages) <= maxTokens) return messages;
 
   // Drop messages from the front, two at a time (user+assistant pairs),
@@ -52,7 +53,10 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  const { messages, context, tools: clientTools } = await req.json();
+  const body = await req.json();
+  const messages: MessageParam[] = body.messages;
+  const context: (ChatContext & { hostId?: string }) | undefined = body.context;
+  const clientTools: Anthropic.Tool[] | undefined = body.tools;
   const hostId: string | undefined = context?.hostId;
 
   const client = createAnthropicClient(auth);
@@ -66,7 +70,7 @@ export async function POST(req: NextRequest) {
   const readable = new ReadableStream({
     async start(controller) {
       try {
-        let loopMessages = trimMessages(messages, MAX_MESSAGE_TOKENS);
+        let loopMessages: MessageParam[] = trimMessages(messages, MAX_MESSAGE_TOKENS);
         let iterations = 0;
 
         while (iterations < MAX_TOOL_LOOPS) {
@@ -135,14 +139,17 @@ export async function POST(req: NextRequest) {
             }
 
             // Append assistant response + tool results to messages for next iteration
+            const filteredResults = toolResults.filter(
+              (r): r is { type: 'tool_result'; tool_use_id: string; content: string } => r !== null,
+            );
             loopMessages = [
               ...loopMessages,
               { role: 'assistant' as const, content: response.content },
               {
                 role: 'user' as const,
-                content: toolResults.filter(Boolean),
+                content: filteredResults,
               },
-            ];
+            ] as MessageParam[];
             continue;
           }
 

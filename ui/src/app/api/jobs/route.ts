@@ -59,8 +59,8 @@ export async function POST(request: Request) {
       });
       return NextResponse.json(training);
     }
-  } catch (error: any) {
-    if (error.code === 'P2002') {
+  } catch (error: unknown) {
+    if (error instanceof Error && 'code' in error && (error as { code: string }).code === 'P2002') {
       // Handle unique constraint violation, 409=Conflict
       return NextResponse.json({ error: 'Job name already exists' }, { status: 409 });
     }

@@ -6,6 +6,7 @@ import dynamic from 'next/dynamic';
 import { CircleHelp } from 'lucide-react';
 import { getDoc } from '@/docs';
 import { openDoc } from '@/components/DocModal';
+import type { CSSObjectWithLabel, GroupBase, StylesConfig } from 'react-select';
 import { ConfigDoc, GroupedSelectOption, SelectOption } from '@/types';
 
 const Select = dynamic(() => import('react-select'), { ssr: false });
@@ -14,9 +15,10 @@ const labelClasses = 'block text-xs mb-1.5 mt-3 text-gray-300';
 const inputClasses =
   'w-full text-sm px-3 py-2.5 bg-gray-800 border border-gray-700 rounded-sm focus:ring-2 focus:ring-gray-600 focus:border-transparent text-gray-100 placeholder-gray-400';
 
-// Dark theme styles for react-select (overrides default inline styles)
-const reactSelectDarkStyles = {
-  control: (base: any, state: any) => ({
+// Dark theme styles for react-select (overrides default inline styles).
+// Typed permissively because the dynamic import loses generic type info.
+const reactSelectDarkStyles: StylesConfig = {
+  control: (base: CSSObjectWithLabel, state) => ({
     ...base,
     backgroundColor: '#262626',
     borderColor: state.isFocused ? 'transparent' : '#404040',
@@ -24,17 +26,17 @@ const reactSelectDarkStyles = {
     boxShadow: state.isFocused ? '0 0 0 2px #525252' : 'none',
     '&:hover': { borderColor: state.isFocused ? 'transparent' : '#525252' },
   }),
-  menu: (base: any) => ({
+  menu: (base: CSSObjectWithLabel) => ({
     ...base,
     backgroundColor: '#262626',
     border: '1px solid #404040',
     zIndex: 50,
   }),
-  menuList: (base: any) => ({
+  menuList: (base: CSSObjectWithLabel) => ({
     ...base,
     padding: 0,
   }),
-  option: (base: any, state: any) => ({
+  option: (base: CSSObjectWithLabel, state) => ({
     ...base,
     backgroundColor: state.isSelected ? '#404040' : state.isFocused ? '#404040' : '#262626',
     color: state.isSelected ? '#ffffff' : '#e5e5e5',
@@ -42,42 +44,42 @@ const reactSelectDarkStyles = {
     '&:hover': { backgroundColor: '#404040' },
     '&:active': { backgroundColor: '#404040' },
   }),
-  singleValue: (base: any) => ({
+  singleValue: (base: CSSObjectWithLabel) => ({
     ...base,
     color: '#e5e5e5',
     fontSize: '0.875rem',
   }),
-  input: (base: any) => ({
+  input: (base: CSSObjectWithLabel) => ({
     ...base,
     color: '#e5e5e5',
   }),
-  placeholder: (base: any) => ({
+  placeholder: (base: CSSObjectWithLabel) => ({
     ...base,
     color: '#a3a3a3',
     fontSize: '0.875rem',
   }),
-  groupHeading: (base: any) => ({
+  groupHeading: (base: CSSObjectWithLabel) => ({
     ...base,
     color: '#a3a3a3',
     textTransform: 'uppercase' as const,
     fontSize: '0.75rem',
   }),
-  indicatorSeparator: (base: any) => ({
+  indicatorSeparator: (base: CSSObjectWithLabel) => ({
     ...base,
     backgroundColor: '#525252',
   }),
-  dropdownIndicator: (base: any) => ({
+  dropdownIndicator: (base: CSSObjectWithLabel) => ({
     ...base,
     color: '#a3a3a3',
     padding: '0 8px',
     '&:hover': { color: '#d4d4d4' },
   }),
-  clearIndicator: (base: any) => ({
+  clearIndicator: (base: CSSObjectWithLabel) => ({
     ...base,
     color: '#a3a3a3',
     '&:hover': { color: '#d4d4d4' },
   }),
-  noOptionsMessage: (base: any) => ({
+  noOptionsMessage: (base: CSSObjectWithLabel) => ({
     ...base,
     color: '#a3a3a3',
   }),
@@ -217,7 +219,7 @@ export interface SelectInputProps extends InputProps {
   value: string;
   disabled?: boolean;
   onChange: (value: string) => void;
-  options: GroupedSelectOption[] | SelectOption[];
+  options: (GroupedSelectOption | SelectOption)[];
 }
 
 export const SelectInput = (props: SelectInputProps) => {
@@ -228,14 +230,9 @@ export const SelectInput = (props: SelectInputProps) => {
   }
   let selectedOption: SelectOption | undefined;
   if (options && options.length > 0) {
-    // see if grouped options
-    if ('options' in options[0]) {
-      selectedOption = (options as GroupedSelectOption[])
-        .flatMap(group => group.options)
-        .find(opt => opt.value === value);
-    } else {
-      selectedOption = (options as SelectOption[]).find(opt => opt.value === value);
-    }
+    selectedOption = options
+      .flatMap(opt => ('options' in opt ? (opt as GroupedSelectOption).options : [opt as SelectOption]))
+      .find(opt => opt.value === value);
   }
   return (
     <div

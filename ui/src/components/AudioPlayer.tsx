@@ -468,7 +468,8 @@ export default function AudioPlayer({
     const el = audioRef.current;
     if (!el) return;
 
-    const Ctx = (window.AudioContext || (window as any).webkitAudioContext) as typeof AudioContext | undefined;
+    const Ctx = (window.AudioContext ||
+      (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext) as typeof AudioContext | undefined;
     if (!Ctx) return;
 
     const ctx = new Ctx();
@@ -504,7 +505,7 @@ export default function AudioPlayer({
 
       let targetEnergy = 0;
       if (analyser && time) {
-        analyser.getByteTimeDomainData(time as Uint8Array<any>);
+        analyser.getByteTimeDomainData(time as Uint8Array<ArrayBuffer>);
         let sum = 0;
         for (let i = 0; i < time.length; i++) sum += Math.abs(time[i] - 128);
         targetEnergy = sum / time.length / 128; // 0..1
@@ -554,7 +555,7 @@ export default function AudioPlayer({
 
     if (!analyser || !time) return;
 
-    analyser.getByteTimeDomainData(time as Uint8Array<any>);
+    analyser.getByteTimeDomainData(time as Uint8Array<ArrayBuffer>);
 
     // progress background (behind waveform), semi-transparent
     const playedX = Math.floor(w * prog);

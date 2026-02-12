@@ -2,15 +2,15 @@ import { GroupedSelectOption, JobConfig, SelectOption } from '@/types';
 import { modelArchs, ModelArch } from './options';
 import { objectCopy } from '@/utils/basic';
 
-const expandDatasetDefaults = (defaults: { [key: string]: any }, numDatasets: number): { [key: string]: any } => {
+const expandDatasetDefaults = (defaults: Record<string, [unknown, unknown]>, numDatasets: number): Record<string, [unknown, unknown]> => {
   // expands the defaults for datasets[x] to datasets[0], datasets[1], etc.
-  const expandedDefaults: { [key: string]: any } = { ...defaults };
+  const expandedDefaults: Record<string, [unknown, unknown]> = { ...defaults };
   for (const key in defaults) {
     if (key.includes('datasets[x].')) {
       for (let i = 0; i < numDatasets; i++) {
         const datasetKey = key.replace('datasets[x].', `datasets[${i}].`);
         const v = defaults[key];
-        expandedDefaults[datasetKey] = Array.isArray(v) ? [...v] : objectCopy(v);
+        expandedDefaults[datasetKey] = [...v] as [unknown, unknown];
       }
       delete expandedDefaults[key];
     }
@@ -22,7 +22,7 @@ export const handleModelArchChange = (
   currentArchName: string,
   newArchName: string,
   jobConfig: JobConfig,
-  setJobConfig: (value: any, key: string) => void,
+  setJobConfig: (value: unknown, key: string) => void,
 ) => {
   const currentArch = modelArchs.find(a => a.name === currentArchName);
   if (!currentArch || currentArch.name === newArchName) {

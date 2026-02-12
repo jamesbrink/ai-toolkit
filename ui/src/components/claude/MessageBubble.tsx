@@ -3,7 +3,7 @@
 import React from 'react';
 import ReactMarkdown, { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { ChatMessage, ContentBlock } from '@/types/claude';
+import { ChatMessage, ConfigChange, ContentBlock } from '@/types/claude';
 import ConfigProposal from './ConfigProposal';
 import DeleteProposal from './DeleteProposal';
 
@@ -66,7 +66,7 @@ function renderContentBlocks(blocks: ContentBlock[]): React.ReactNode {
       return <div key={i}>{renderText(block.text)}</div>;
     }
     if (block.type === 'tool_use' && block.name === 'update_job_config') {
-      return <ConfigProposal key={i} toolUseId={block.id!} changes={block.input?.changes as any[]} />;
+      return <ConfigProposal key={i} toolUseId={block.id!} changes={block.input?.changes as ConfigChange[]} />;
     }
     if (block.type === 'tool_use' && block.name === 'delete_dataset_images') {
       return (

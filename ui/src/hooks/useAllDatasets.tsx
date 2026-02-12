@@ -43,12 +43,12 @@ export default function useAllDatasets(hosts: HostInfo[]) {
       const promises = [
         apiClient.get('/api/datasets/list').then(res => ({
           source: LOCAL_SOURCE,
-          datasets: (res.data || []) as any[],
+          datasets: (res.data || []) as Record<string, unknown>[],
         })),
         ...onlineHosts.map(host =>
           remoteApi.get(host.id, 'datasets/list').then(res => ({
             source: { type: 'remote' as const, hostId: host.id, hostName: host.name, isOnline: true },
-            datasets: (res.data || []) as any[],
+            datasets: (res.data || []) as Record<string, unknown>[],
           })),
         ),
       ];
@@ -61,11 +61,11 @@ export default function useAllDatasets(hosts: HostInfo[]) {
           const { source, datasets } = result.value;
           for (const ds of datasets) {
             merged.push({
-              name: ds.name,
-              imageCount: ds.imageCount ?? 0,
-              captionCount: ds.captionCount ?? 0,
-              totalSizeBytes: ds.totalSizeBytes ?? 0,
-              lastModified: ds.lastModified ?? null,
+              name: ds.name as string,
+              imageCount: (ds.imageCount as number) ?? 0,
+              captionCount: (ds.captionCount as number) ?? 0,
+              totalSizeBytes: (ds.totalSizeBytes as number) ?? 0,
+              lastModified: (ds.lastModified as number | null) ?? null,
               source,
             });
           }

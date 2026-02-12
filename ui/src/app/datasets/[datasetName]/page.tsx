@@ -84,9 +84,9 @@ export default function DatasetPage({ params }: { params: Promise<{ datasetName:
     setStatus('loading');
     apiClient
       .post(proxyApiPath('/api/datasets/listImages', hostId), { datasetName: dbName })
-      .then((res: any) => {
+      .then((res: { data: { images: { img_path: string }[] } }) => {
         const data = res.data;
-        data.images.sort((a: { img_path: string }, b: { img_path: string }) => a.img_path.localeCompare(b.img_path));
+        data.images.sort((a, b) => a.img_path.localeCompare(b.img_path));
         setImgList(data.images);
         setStatus('success');
       })
@@ -134,8 +134,8 @@ export default function DatasetPage({ params }: { params: Promise<{ datasetName:
     if (datasetName) {
       apiClient
         .get(proxyApiPath('/api/datasets/list', hostId))
-        .then((res: any) => {
-          const ds = res.data.find((d: any) => d.name === datasetName);
+        .then((res: { data: { name: string; totalSizeBytes: number }[] }) => {
+          const ds = res.data.find(d => d.name === datasetName);
           if (ds) setDatasetSize(ds.totalSizeBytes);
         })
         .catch(() => {});
@@ -158,8 +158,8 @@ export default function DatasetPage({ params }: { params: Promise<{ datasetName:
             newName: newName.trim(),
           });
           router.push(`/datasets/${res.data.name}`);
-        } catch (error: any) {
-          const msg = error?.response?.data?.error || 'Copy failed';
+        } catch (error: unknown) {
+          const msg = (error as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Copy failed';
           alert(msg);
         }
       },
@@ -181,8 +181,8 @@ export default function DatasetPage({ params }: { params: Promise<{ datasetName:
             newName: newName.trim(),
           });
           router.replace(`/datasets/${res.data.name}`);
-        } catch (error: any) {
-          const msg = error?.response?.data?.error || 'Rename failed';
+        } catch (error: unknown) {
+          const msg = (error as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Rename failed';
           alert(msg);
         }
       },

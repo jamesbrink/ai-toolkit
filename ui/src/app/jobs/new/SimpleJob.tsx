@@ -9,7 +9,7 @@ import {
   jobTypeOptions,
 } from './options';
 import { defaultDatasetConfig } from './jobConfig';
-import { DeviceType, GroupedSelectOption, JobConfig, SelectOption } from '@/types';
+import { DeviceType, GpuInfo, GroupedSelectOption, JobConfig, SelectOption } from '@/types';
 import { objectCopy } from '@/utils/basic';
 import { TextInput, SelectInput, Checkbox, FormGroup, NumberInput, SliderInput } from '@/components/formInputs';
 import Card from '@/components/Card';
@@ -22,14 +22,14 @@ import { IoFlaskSharp } from 'react-icons/io5';
 
 type Props = {
   jobConfig: JobConfig;
-  setJobConfig: (value: any, key: string) => void;
+  setJobConfig: (value: unknown, key: string) => void;
   status: 'idle' | 'saving' | 'success' | 'error';
   handleSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
   runId: string | null;
   gpuIDs: string | null;
   setGpuIDs: (value: string | null) => void;
-  gpuList: any;
-  datasetOptions: any;
+  gpuList: GpuInfo[];
+  datasetOptions: (GroupedSelectOption | SelectOption)[];
   deviceType: DeviceType;
 };
 
@@ -168,7 +168,7 @@ export default function SimpleJob({
               options={
                 deviceType === 'mps'
                   ? [{ value: 'mps', label: 'Apple Silicon (MPS)' }]
-                  : gpuList.map((gpu: any) => ({ value: `${gpu.index}`, label: `GPU #${gpu.index}` }))
+                  : gpuList.map((gpu: GpuInfo) => ({ value: `${gpu.index}`, label: `GPU #${gpu.index}` }))
               }
             />
             {disableSections.includes('trigger_word') ? null : (
@@ -238,7 +238,7 @@ export default function SimpleJob({
               <Checkbox
                 label="Match Target Res"
                 docKey="model.qie.match_target_res"
-                checked={jobConfig.config.process[0].model.model_kwargs.match_target_res}
+                checked={!!jobConfig.config.process[0].model.model_kwargs.match_target_res}
                 onChange={value => setJobConfig(value, 'config.process[0].model.model_kwargs.match_target_res')}
               />
             )}
@@ -328,12 +328,12 @@ export default function SimpleJob({
               <FormGroup label="Stages to Train" docKey={'model.multistage'}>
                 <Checkbox
                   label="High Noise"
-                  checked={jobConfig.config.process[0].model.model_kwargs?.train_high_noise || false}
+                  checked={!!jobConfig.config.process[0].model.model_kwargs?.train_high_noise}
                   onChange={value => setJobConfig(value, 'config.process[0].model.model_kwargs.train_high_noise')}
                 />
                 <Checkbox
                   label="Low Noise"
-                  checked={jobConfig.config.process[0].model.model_kwargs?.train_low_noise || false}
+                  checked={!!jobConfig.config.process[0].model.model_kwargs?.train_low_noise}
                   onChange={value => setJobConfig(value, 'config.process[0].model.model_kwargs.train_low_noise')}
                 />
               </FormGroup>
@@ -777,7 +777,7 @@ export default function SimpleJob({
                           onChange={value =>
                             setJobConfig(value == '' ? null : value, `config.process[0].datasets[${i}].control_path`)
                           }
-                          options={[{ value: '', label: <>&nbsp;</> }, ...datasetOptions]}
+                          options={[{ value: '', label: '\u00A0' }, ...datasetOptions]}
                         />
                       )}
                       {modelArch?.additionalSections?.includes('datasets.multi_control_paths') && (
@@ -793,7 +793,7 @@ export default function SimpleJob({
                                 `config.process[0].datasets[${i}].control_path_1`,
                               )
                             }
-                            options={[{ value: '', label: <>&nbsp;</> }, ...datasetOptions]}
+                            options={[{ value: '', label: '\u00A0' }, ...datasetOptions]}
                           />
                           <SelectInput
                             label="Control Dataset 2"
@@ -806,7 +806,7 @@ export default function SimpleJob({
                                 `config.process[0].datasets[${i}].control_path_2`,
                               )
                             }
-                            options={[{ value: '', label: <>&nbsp;</> }, ...datasetOptions]}
+                            options={[{ value: '', label: '\u00A0' }, ...datasetOptions]}
                           />
                           <SelectInput
                             label="Control Dataset 3"
@@ -819,7 +819,7 @@ export default function SimpleJob({
                                 `config.process[0].datasets[${i}].control_path_3`,
                               )
                             }
-                            options={[{ value: '', label: <>&nbsp;</> }, ...datasetOptions]}
+                            options={[{ value: '', label: '\u00A0' }, ...datasetOptions]}
                           />
                         </>
                       )}

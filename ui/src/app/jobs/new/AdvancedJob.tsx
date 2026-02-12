@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState, useRef } from 'react';
-import { DeviceType, JobConfig } from '@/types';
+import { DeviceType, GpuInfo, GroupedSelectOption, JobConfig, SelectOption } from '@/types';
 import YAML from 'yaml';
 import Editor, { OnMount } from '@monaco-editor/react';
 import type { editor } from 'monaco-editor';
@@ -9,14 +9,14 @@ import { migrateJobConfig } from './jobConfig';
 
 type Props = {
   jobConfig: JobConfig;
-  setJobConfig: (value: any, key?: string) => void;
+  setJobConfig: (value: unknown, key?: string) => void;
   status: 'idle' | 'saving' | 'success' | 'error';
   handleSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
   runId: string | null;
   gpuIDs: string | null;
   setGpuIDs: (value: string | null) => void;
-  gpuList: any;
-  datasetOptions: any;
+  gpuList: GpuInfo[];
+  datasetOptions: (GroupedSelectOption | SelectOption)[];
   settings: Settings;
   deviceType: DeviceType;
 };

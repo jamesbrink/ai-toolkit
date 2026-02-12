@@ -2,21 +2,17 @@ import { useState, useMemo } from 'react';
 import { TableSkeleton } from '@/components/Skeleton';
 import classNames from 'classnames';
 
-export interface TableColumn {
+export interface TableColumn<T = Record<string, unknown>> {
   title: string;
   key: string;
   sortable?: boolean;
-  render?: (row: any) => React.ReactNode;
+  render?: (row: T) => React.ReactNode;
   className?: string;
 }
 
-interface TableRow {
-  [key: string]: any;
-}
-
-interface TableProps {
-  columns: TableColumn[];
-  rows: TableRow[];
+interface TableProps<T = Record<string, unknown>> {
+  columns: TableColumn<T>[];
+  rows: T[];
   isLoading: boolean;
   theadClassName?: string;
   defaultSortKey?: string;
@@ -24,7 +20,7 @@ interface TableProps {
   onRefresh: () => void;
 }
 
-export default function UniversalTable({
+export default function UniversalTable<T>({
   columns,
   rows,
   isLoading,
@@ -32,7 +28,7 @@ export default function UniversalTable({
   defaultSortKey,
   defaultSortDir = 'asc',
   onRefresh = () => {},
-}: TableProps) {
+}: TableProps<T>) {
   const [sortKey, setSortKey] = useState<string | null>(defaultSortKey ?? null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>(defaultSortDir);
 
@@ -48,8 +44,8 @@ export default function UniversalTable({
   const sortedRows = useMemo(() => {
     if (!sortKey) return rows;
     return [...rows].sort((a, b) => {
-      const aVal = a[sortKey];
-      const bVal = b[sortKey];
+      const aVal = (a as Record<string, unknown>)[sortKey];
+      const bVal = (b as Record<string, unknown>)[sortKey];
       if (aVal == null && bVal == null) return 0;
       if (aVal == null) return 1;
       if (bVal == null) return -1;
@@ -66,6 +62,14 @@ export default function UniversalTable({
   const SortIndicator = ({ columnKey }: { columnKey: string }) => {
     if (sortKey !== columnKey) return <span className="ml-1 text-gray-600">↕</span>;
     return <span className="ml-1">{sortDir === 'asc' ? '↑' : '↓'}</span>;
+  };
+
+  /** Get a cell value for default (non-render) display */
+  const getCellValue = (row: T, key: string): React.ReactNode => {
+    const val = (row as Record<string, unknown>)[key];
+    if (val == null) return '';
+    if (typeof val === 'string' || typeof val === 'number' || typeof val === 'boolean') return String(val);
+    return '';
   };
 
   return (
@@ -92,7 +96,7 @@ export default function UniversalTable({
                   <div key={column.key} className="flex justify-between items-start gap-2">
                     <span className="text-xs text-gray-400 uppercase shrink-0">{column.title}</span>
                     <span className={classNames('text-sm text-right', column.className)}>
-                      {column.render ? column.render(row) : row[column.key]}
+                      {column.render ? column.render(row) : getCellValue(row, column.key)}
                     </span>
                   </div>
                 ))}
@@ -131,7 +135,7 @@ export default function UniversalTable({
                     <tr key={index} className={`${rowClass} border-b border-gray-700 hover:bg-gray-700`}>
                       {columns.map(column => (
                         <td key={column.key} className={classNames('px-3 py-2', column.className)}>
-                          {column.render ? column.render(row) : row[column.key]}
+                          {column.render ? column.render(row) : getCellValue(row, column.key)}
                         </td>
                       ))}
                     </tr>

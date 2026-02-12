@@ -47,12 +47,12 @@ export async function executeToolMaybeRemote(
 
     const data = await response.json();
     return data.result ?? 'No result returned from remote host';
-  } catch (error: any) {
+  } catch (error: unknown) {
     clearTimeout(timeout);
-    if (error.name === 'AbortError') {
+    if (error instanceof Error && error.name === 'AbortError') {
       return 'Error: remote tool execution timed out (120s)';
     }
-    return `Error: remote host unreachable — ${error.message}`;
+    return `Error: remote host unreachable — ${error instanceof Error ? error.message : String(error)}`;
   }
 }
 

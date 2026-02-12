@@ -54,6 +54,8 @@
           {
             name = "check";
             command = ''
+              echo "==> Type checking..."
+              cd ui && npm run typecheck
               echo "==> Checking formatting..."
               nix fmt -- --fail-on-change
               echo "==> Running ESLint..."
@@ -62,7 +64,7 @@
               cd ui && npm test
               echo "All checks passed."
             '';
-            help = "Run all checks (format, lint, test)";
+            help = "Run all checks (typecheck, format, lint, test)";
             category = "development";
           }
 

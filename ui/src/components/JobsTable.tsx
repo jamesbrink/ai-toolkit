@@ -41,7 +41,7 @@ function MultiHostJobsTable({ onlyActive, hosts }: { onlyActive: boolean; hosts:
     refreshAllQueues();
   };
 
-  const columns: TableColumn[] = [
+  const columns: TableColumn<UnifiedJob>[] = [
     {
       title: 'Name',
       key: 'name',
@@ -293,7 +293,7 @@ function LocalJobsTable({ onlyActive }: { onlyActive: boolean }) {
     refreshQueues();
   };
 
-  const columns: TableColumn[] = [
+  const columns: TableColumn<Job>[] = [
     {
       title: 'Name',
       key: 'name',

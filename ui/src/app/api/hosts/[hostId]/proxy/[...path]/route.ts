@@ -92,9 +92,9 @@ async function proxyRequest(request: NextRequest, context: RouteContext): Promis
       status: response.status,
       headers: { 'Content-Type': contentType },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     clearTimeout(timeout);
-    if (error.name === 'AbortError') {
+    if (error instanceof Error && error.name === 'AbortError') {
       return NextResponse.json({ error: 'Remote host request timed out' }, { status: 504 });
     }
     return NextResponse.json({ error: 'Remote host unreachable' }, { status: 502 });

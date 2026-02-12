@@ -67,9 +67,7 @@ export default tseslint.config(
   {
     files: ["**/*.ts", "**/*.tsx"],
     rules: {
-      // Allow `any` — this codebase uses it extensively and migrating is a
-      // separate effort.
-      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-explicit-any": "error",
 
       // Unused vars: warn instead of error, allow underscore-prefixed vars
       // and rest siblings.
@@ -88,8 +86,11 @@ export default tseslint.config(
       // Allow empty interfaces/object types (common in Next.js page props)
       "@typescript-eslint/no-empty-object-type": "off",
 
-      // Allow @ts-ignore — migrating to @ts-expect-error is a separate task
-      "@typescript-eslint/ban-ts-comment": "off",
+      "@typescript-eslint/ban-ts-comment": ["error", {
+        "ts-expect-error": "allow-with-description",
+        "ts-ignore": true,
+        "ts-nocheck": true,
+      }],
 
       // Downgrade — one expression statement exists that is not easily refactored
       "@typescript-eslint/no-unused-expressions": "warn",

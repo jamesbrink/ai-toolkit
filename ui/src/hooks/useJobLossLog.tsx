@@ -18,7 +18,7 @@ function isLossKey(key: string) {
   return /loss/i.test(key);
 }
 
-function buildQueryString(params: Record<string, any>): string {
+function buildQueryString(params: Record<string, string | number | null>): string {
   const parts: string[] = [];
   for (const [k, v] of Object.entries(params)) {
     if (v != null) parts.push(`${encodeURIComponent(k)}=${encodeURIComponent(v)}`);
@@ -45,7 +45,7 @@ export default function useJobLossLog(jobID: string, reloadInterval: null | numb
   }, [keys]);
 
   const fetchLoss = useCallback(
-    (path: string, params?: Record<string, any>) => {
+    (path: string, params?: Record<string, string | number | null>) => {
       if (hostId) {
         const qs = params ? buildQueryString(params) : '';
         return remoteApi.get(hostId, `${path}${qs}`).then(res => res.data);
@@ -76,7 +76,7 @@ export default function useJobLossLog(jobID: string, reloadInterval: null | numb
 
       // Step 2: fetch each loss key incrementally (since_step per key if polling)
       const requests = wantedLossKeys.map(k => {
-        const params: Record<string, any> = { key: k };
+        const params: Record<string, string | number | null> = { key: k };
 
         if (reloadInterval && lastStepByKeyRef.current[k] != null) {
           params.since_step = lastStepByKeyRef.current[k];

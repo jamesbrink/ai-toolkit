@@ -38,8 +38,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     });
 
     return NextResponse.json(host);
-  } catch (error: any) {
-    if (error.code === 'P2025') {
+  } catch (error: unknown) {
+    if (error instanceof Error && 'code' in error && (error as { code: string }).code === 'P2025') {
       return NextResponse.json({ error: 'Host not found' }, { status: 404 });
     }
     console.error('Error updating host:', error);
@@ -54,8 +54,8 @@ export async function DELETE(_request: NextRequest, { params }: { params: Promis
     await prisma.host.delete({ where: { id: hostId } });
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
-    if (error.code === 'P2025') {
+  } catch (error: unknown) {
+    if (error instanceof Error && 'code' in error && (error as { code: string }).code === 'P2025') {
       return NextResponse.json({ error: 'Host not found' }, { status: 404 });
     }
     console.error('Error deleting host:', error);

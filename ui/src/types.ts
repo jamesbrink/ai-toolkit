@@ -165,7 +165,7 @@ export interface ModelConfig {
   quantize_kwargs?: QuantizeKwargsConfig;
   arch: string;
   low_vram: boolean;
-  model_kwargs: { [key: string]: any };
+  model_kwargs: Record<string, unknown>;
   layer_offloading?: boolean;
   layer_offloading_transformer_percent?: number;
   layer_offloading_text_encoder_percent?: number;

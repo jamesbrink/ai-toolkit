@@ -27,7 +27,8 @@ export function setNestedValue<T, V>(obj: T, value: V, path?: string): T {
   }
 
   // Navigate to the target location
-  let current: any = result;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- recursive object traversal requires dynamic property access
+  let current: { [key: string]: any } = result as { [key: string]: any };
   for (let i = 0; i < pathArray.length - 1; i++) {
     const key = pathArray[i];
 
@@ -60,8 +61,8 @@ export function setNestedValue<T, V>(obj: T, value: V, path?: string): T {
       }
     }
 
-    // Move to the next level
-    current = current[key];
+    // Move to the next level — re-widen because TS narrows based on branch assignments
+    current = (current as { [key: string]: typeof current })[key as string];
   }
 
   // Set the value at the final path segment
@@ -80,12 +81,12 @@ export function setNestedValue<T, V>(obj: T, value: V, path?: string): T {
  * @param initialState The initial state object
  * @returns [state, setValue] tuple
  */
-export function useNestedState<T>(initialState: T): [T, (value: any, path?: string) => void] {
+export function useNestedState<T>(initialState: T): [T, (value: unknown, path?: string) => void] {
   const [state, setState] = React.useState<T>(initialState);
 
-  const setValue = React.useCallback((value: any, path?: string) => {
+  const setValue = React.useCallback((value: unknown, path?: string) => {
     if (path === undefined) {
-      setState(value);
+      setState(value as T);
       return;
     }
     setState(prevState => setNestedValue(prevState, value, path));

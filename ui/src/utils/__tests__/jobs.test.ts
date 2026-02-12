@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { getJobConfig, getAvaliableJobActions, getTotalSteps } from '../jobs';
 
 // Minimal mock job factory
-function makeJob(overrides: Record<string, any> = {}) {
+function makeJob(overrides: Record<string, unknown> = {}) {
   const defaults = {
     id: 'test-id',
     name: 'test-job',

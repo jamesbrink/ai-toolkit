@@ -260,8 +260,9 @@ export default function TrainingForm() {
         setStatus('success');
         router.push(`/jobs/${jobId}`);
       }
-    } catch (error: any) {
-      if (error.response?.status === 409) {
+    } catch (error: unknown) {
+      const axiosError = error as { response?: { status?: number } };
+      if (axiosError.response?.status === 409) {
         alert('Training name already exists. Please choose a different name.');
       } else {
         alert('Failed to save job. Please try again.');
@@ -331,7 +332,7 @@ export default function TrainingForm() {
                 options={
                   activeDeviceType === 'mps'
                     ? [{ value: 'mps', label: 'Apple Silicon (MPS)' }]
-                    : activeGpuList.map((gpu: any) => ({ value: `${gpu.index}`, label: `GPU #${gpu.index}` }))
+                    : activeGpuList.map((gpu) => ({ value: `${gpu.index}`, label: `GPU #${gpu.index}` }))
                 }
               />
             </div>

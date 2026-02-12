@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
 
     // Process files sequentially to avoid overwhelming the system
     for (let i = 0; i < files.length; i++) {
-      const file = files[i] as any;
+      const file = files[i] as File;
       const bytes = await file.arrayBuffer();
       const buffer = Buffer.from(bytes);
 

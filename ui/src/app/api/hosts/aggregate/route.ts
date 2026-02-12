@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/server/prisma';
+import { GpuInfo } from '@/types';
 
 interface AggregatedHost {
   id: string;
   name: string;
   isOnline: boolean;
   deviceType: string;
-  gpus: any[];
+  gpus: GpuInfo[];
   activeJobCount: number;
 }
 
@@ -39,7 +40,7 @@ export async function GET() {
 
           clearTimeout(timeout);
 
-          let gpus: any[] = [];
+          let gpus: GpuInfo[] = [];
           let activeJobCount = 0;
 
           if (gpuRes.status === 'fulfilled' && gpuRes.value.ok) {
@@ -50,7 +51,7 @@ export async function GET() {
           if (jobsRes.status === 'fulfilled' && jobsRes.value.ok) {
             const jobsData = await jobsRes.value.json();
             const jobs = jobsData.jobs || [];
-            activeJobCount = jobs.filter((j: any) => j.status === 'running' || j.status === 'queued').length;
+            activeJobCount = jobs.filter((j: Record<string, unknown>) => j.status === 'running' || j.status === 'queued').length;
           }
 
           return {

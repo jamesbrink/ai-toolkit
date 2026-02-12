@@ -36,7 +36,7 @@ export interface ModelArch {
   group: ModelGroup;
   controls?: Control[];
   isVideoModel?: boolean;
-  defaults?: { [key: string]: any };
+  defaults?: Record<string, [unknown, unknown]>;
   disableSections?: DisableableSections[];
   additionalSections?: AdditionalSections[];
   accuracyRecoveryAdapters?: { [key: string]: string };
@@ -44,7 +44,7 @@ export interface ModelArch {
 
 const defaultNameOrPath = '';
 
-export const modelArchs: ModelArch[] = [
+export const modelArchs: ModelArch[] = ([
   {
     name: 'flux',
     label: 'FLUX.1',
@@ -721,10 +721,10 @@ export const modelArchs: ModelArch[] = [
       'model.qie.match_target_res',
     ],
   },
-].sort((a, b) => {
+] as ModelArch[]).sort((a, b) => {
   // Sort by label, case-insensitive
   return a.label.localeCompare(b.label, undefined, { sensitivity: 'base' });
-}) as any;
+});
 
 export const groupedModelOptions: GroupedSelectOption[] = modelArchs.reduce((acc, arch) => {
   const group = acc.find(g => g.label === arch.group);

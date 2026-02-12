@@ -23,7 +23,8 @@ export async function POST(request: NextRequest) {
     // make it recursive if it doesn't exist
     await mkdir(imgRoot, { recursive: true });
     const savedFiles = await Promise.all(
-      files.map(async (file: any) => {
+      files.map(async (entry: FormDataEntryValue) => {
+        const file = entry as File;
         const bytes = await file.arrayBuffer();
         const buffer = Buffer.from(bytes);
 

@@ -61,7 +61,7 @@ export default function Datasets() {
   const [exportingDataset, setExportingDataset] = useState<string | null>(null);
   const [pushDataset, setPushDataset] = useState<string | null>(null);
 
-  const columns: TableColumn[] = [
+  const columns: TableColumn<SourcedDatasetInfo>[] = [
     {
       title: 'Dataset Name',
       key: 'name',
@@ -91,7 +91,7 @@ export default function Datasets() {
                 {row.source.type === 'local' ? 'Local' : row.source.hostName}
               </span>
             ),
-          } as TableColumn,
+          } as TableColumn<SourcedDatasetInfo>,
         ]
       : []),
     {
@@ -258,8 +258,8 @@ export default function Datasets() {
         try {
           const res = await apiClient.post('/api/datasets/copy', { sourceName: datasetName, newName: newName.trim() });
           router.push(`/datasets/${res.data.name}`);
-        } catch (error: any) {
-          const msg = error?.response?.data?.error || 'Copy failed';
+        } catch (error: unknown) {
+          const msg = (error as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Copy failed';
           alert(msg);
         }
       },
@@ -278,8 +278,8 @@ export default function Datasets() {
         try {
           await apiClient.post('/api/datasets/rename', { oldName: datasetName, newName: newName.trim() });
           refreshDatasets();
-        } catch (error: any) {
-          const msg = error?.response?.data?.error || 'Rename failed';
+        } catch (error: unknown) {
+          const msg = (error as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Rename failed';
           alert(msg);
         }
       },

@@ -8,20 +8,20 @@ import { remoteApi } from '@/utils/remoteApi';
 
 const LOCAL_SOURCE: DataSource = { type: 'local' };
 
-function normalizeJob(raw: any, source: DataSource): UnifiedJob {
+function normalizeJob(raw: Record<string, unknown>, source: DataSource): UnifiedJob {
   return {
-    id: raw.id,
-    name: raw.name,
-    status: raw.status,
-    step: raw.step ?? 0,
-    speed_string: raw.speed_string ?? '',
-    gpu_ids: raw.gpu_ids ?? '',
-    job_config: raw.job_config ?? '{}',
-    queue_position: raw.queue_position ?? null,
-    created_at: typeof raw.created_at === 'string' ? raw.created_at : new Date(raw.created_at).toISOString(),
-    info: raw.info ?? '',
-    stop: raw.stop ?? false,
-    return_to_queue: raw.return_to_queue ?? false,
+    id: raw.id as string,
+    name: raw.name as string,
+    status: raw.status as string,
+    step: (raw.step as number) ?? 0,
+    speed_string: (raw.speed_string as string) ?? '',
+    gpu_ids: (raw.gpu_ids as string) ?? '',
+    job_config: (raw.job_config as string) ?? '{}',
+    queue_position: (raw.queue_position as number | null) ?? null,
+    created_at: typeof raw.created_at === 'string' ? raw.created_at : new Date(raw.created_at as number).toISOString(),
+    info: (raw.info as string) ?? '',
+    stop: (raw.stop as boolean) ?? false,
+    return_to_queue: (raw.return_to_queue as boolean) ?? false,
     source,
   };
 }
@@ -43,12 +43,12 @@ export default function useAllJobs(hosts: HostInfo[], onlyActive = false, reload
       const promises = [
         apiClient.get('/api/jobs').then(res => ({
           source: LOCAL_SOURCE,
-          jobs: (res.data.jobs || []) as any[],
+          jobs: (res.data.jobs || []) as Record<string, unknown>[],
         })),
         ...onlineHosts.map(host =>
           remoteApi.get(host.id, 'jobs').then(res => ({
             source: { type: 'remote' as const, hostId: host.id, hostName: host.name, isOnline: true },
-            jobs: (res.data.jobs || []) as any[],
+            jobs: (res.data.jobs || []) as Record<string, unknown>[],
           })),
         ),
       ];

@@ -8,11 +8,11 @@ import { remoteApi } from '@/utils/remoteApi';
 
 const LOCAL_SOURCE: DataSource = { type: 'local' };
 
-function normalizeQueue(raw: any, source: DataSource): UnifiedQueue {
+function normalizeQueue(raw: Record<string, unknown>, source: DataSource): UnifiedQueue {
   return {
-    id: raw.id,
-    gpu_ids: raw.gpu_ids ?? '',
-    is_running: raw.is_running ?? false,
+    id: raw.id as number,
+    gpu_ids: (raw.gpu_ids as string) ?? '',
+    is_running: (raw.is_running as boolean) ?? false,
     source,
   };
 }
@@ -34,12 +34,12 @@ export default function useAllQueues(hosts: HostInfo[], reloadInterval = 5000) {
       const promises = [
         apiClient.get('/api/queue').then(res => ({
           source: LOCAL_SOURCE,
-          queues: (res.data.queues || []) as any[],
+          queues: (res.data.queues || []) as Record<string, unknown>[],
         })),
         ...onlineHosts.map(host =>
           remoteApi.get(host.id, 'queue').then(res => ({
             source: { type: 'remote' as const, hostId: host.id, hostName: host.name, isOnline: true },
-            queues: (res.data.queues || []) as any[],
+            queues: (res.data.queues || []) as Record<string, unknown>[],
           })),
         ),
       ];

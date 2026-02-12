@@ -6,7 +6,7 @@ import { flushCache } from '@/server/settings';
 export async function GET() {
   try {
     const settings = await prisma.settings.findMany();
-    const settingsObject = settings.reduce((acc: any, setting) => {
+    const settingsObject = settings.reduce((acc: Record<string, string>, setting) => {
       acc[setting.key] = setting.value;
       return acc;
     }, {});

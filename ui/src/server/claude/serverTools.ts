@@ -570,8 +570,8 @@ export async function executeServerTool(name: string, input: Record<string, unkn
         },
       });
       return JSON.stringify({ id: job.id, name: job.name, status: job.status, queue_position: job.queue_position });
-    } catch (err: any) {
-      if (err.code === 'P2002') {
+    } catch (err: unknown) {
+      if (err instanceof Error && 'code' in err && (err as { code: string }).code === 'P2002') {
         return `Error: a job named "${jobName}" already exists`;
       }
       return `Error creating job: ${err instanceof Error ? err.message : String(err)}`;

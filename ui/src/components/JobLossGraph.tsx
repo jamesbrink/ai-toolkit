@@ -142,7 +142,7 @@ export default function JobLossGraph({ job, hostId }: Props) {
   const chartData = useMemo(() => {
     // Merge series into one array of objects keyed by step.
     // Fields: `${key}__raw` and `${key}__smooth`
-    const map = new Map<number, any>();
+    const map = new Map<number, { step: number; [key: string]: number | null }>();
 
     for (const key of activeKeys) {
       const s = perSeries[key];
@@ -270,8 +270,8 @@ export default function JobLossGraph({ job, hostId }: Props) {
                     fontSize: 12,
                   }}
                   labelStyle={{ color: 'rgba(255,255,255,0.75)' }}
-                  labelFormatter={(label: any) => `step ${label}`}
-                  formatter={(value: any, name: any) => [formatNum(Number(value)), name]}
+                  labelFormatter={(label) => `step ${label}`}
+                  formatter={(value, name) => [formatNum(Number(value)), name]}
                 />
 
                 <Legend
