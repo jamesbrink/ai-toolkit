@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { getAnthropicAuth } from '@/server/settings';
 import { createAnthropicClient, getClaudeCaptionModel } from '@/server/claude/client';
 import { captionPrompts, captionSystemPrompt, fallbackCaptionPrompt, isRefusal } from '@/server/claude/captionPrompts';
+import { fetchRemoteImageBytes } from '@/server/claude/remoteToolExecution';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -28,7 +29,7 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  const { imagePaths, style, triggerWord } = await req.json();
+  const { imagePaths, style, triggerWord, hostId } = await req.json();
   if (!imagePaths || !Array.isArray(imagePaths) || imagePaths.length === 0) {
     return new Response(JSON.stringify({ error: 'imagePaths array required' }), {
       status: 400,
@@ -67,7 +68,21 @@ export async function POST(req: NextRequest) {
         }
 
         try {
-          const imageData = await fs.readFile(imagePath);
+          let imageData: Buffer;
+          if (hostId) {
+            const remote = await fetchRemoteImageBytes(imagePath, hostId);
+            if (!remote) {
+              controller.enqueue(
+                encoder.encode(
+                  JSON.stringify({ imagePath, caption: '', error: 'Could not fetch from remote host', index: i, total }) + '\n',
+                ),
+              );
+              continue;
+            }
+            imageData = remote.buffer;
+          } else {
+            imageData = await fs.readFile(imagePath);
+          }
           const imageSource = {
             type: 'base64' as const,
             media_type: mediaType,

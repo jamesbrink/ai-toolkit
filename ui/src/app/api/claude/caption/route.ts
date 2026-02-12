@@ -3,6 +3,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { getAnthropicAuth } from '@/server/settings';
 import { createAnthropicClient, getClaudeCaptionModel } from '@/server/claude/client';
 import { captionPrompts, captionSystemPrompt, fallbackCaptionPrompt, isRefusal } from '@/server/claude/captionPrompts';
+import { fetchRemoteImageBytes } from '@/server/claude/remoteToolExecution';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -26,7 +27,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Anthropic API key not configured' }, { status: 400 });
   }
 
-  const { imagePath, style, triggerWord } = await req.json();
+  const { imagePath, style, triggerWord, hostId } = await req.json();
   if (!imagePath) {
     return NextResponse.json({ error: 'imagePath required' }, { status: 400 });
   }
@@ -37,10 +38,19 @@ export async function POST(req: NextRequest) {
   }
 
   let imageData: Buffer;
-  try {
-    imageData = await fs.readFile(imagePath);
-  } catch {
-    return NextResponse.json({ error: 'Image file not found' }, { status: 404 });
+  if (hostId) {
+    // Fetch image bytes from remote host
+    const remote = await fetchRemoteImageBytes(imagePath, hostId);
+    if (!remote) {
+      return NextResponse.json({ error: 'Could not fetch image from remote host' }, { status: 502 });
+    }
+    imageData = remote.buffer;
+  } else {
+    try {
+      imageData = await fs.readFile(imagePath);
+    } catch {
+      return NextResponse.json({ error: 'Image file not found' }, { status: 404 });
+    }
   }
 
   const client = createAnthropicClient(auth);

@@ -11,6 +11,7 @@ interface DatasetAnalysisPanelProps {
   onClose: () => void;
   datasetName: string;
   onImagesDeleted?: () => void;
+  hostId?: string | null;
 }
 
 export default function DatasetAnalysisPanel({
@@ -18,6 +19,8 @@ export default function DatasetAnalysisPanel({
   onClose,
   datasetName,
   onImagesDeleted,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  hostId,
 }: DatasetAnalysisPanelProps) {
   const {
     status,

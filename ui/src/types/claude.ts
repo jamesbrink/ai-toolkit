@@ -32,6 +32,8 @@ export interface AnalysisSummary {
   darkCount: number;
   brightCount: number;
   tooSmallCount: number;
+  lowContrastCount?: number;
+  facesCount?: number;
 }
 
 export interface ChatContext {
@@ -45,6 +47,8 @@ export interface ChatContext {
   imageList?: string[];
   analysisAvailable?: boolean;
   analysisSummary?: AnalysisSummary;
+  hostId?: string;
+  hostName?: string;
 }
 
 export interface ChatSession {

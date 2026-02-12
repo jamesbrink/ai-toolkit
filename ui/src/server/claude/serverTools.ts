@@ -1,10 +1,14 @@
 import fs from 'fs/promises';
+import fsSync from 'fs';
 import path from 'path';
+import { PrismaClient } from '@prisma/client';
 import { TOOLKIT_ROOT } from '@/paths';
 import { getDatasetsRoot, getTrainingFolder, getAnthropicAuth } from '@/server/settings';
 import { createAnthropicClient, getClaudeCaptionModel } from '@/server/claude/client';
 import { analyzeDataset, getStoredAnalysis, deleteAnalyzedImages } from '@/server/datasetAnalysis';
 import { runPythonAnalysis } from '@/server/pythonAnalysis';
+
+const prisma = new PrismaClient();
 
 // Tool definitions sent to the Claude API
 export const serverToolDefinitions = [
@@ -143,6 +147,57 @@ export const serverToolDefinitions = [
         },
       },
       required: ['image_paths', 'reason'],
+    },
+  },
+  {
+    name: 'list_jobs',
+    description:
+      'List all training jobs with their status, step count, speed, and GPU assignment. Returns a JSON array of job summaries.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        status_filter: {
+          type: 'string',
+          description: 'Optional filter by status: stopped, queued, running, completed, error (default: all)',
+        },
+      },
+      required: [] as string[],
+    },
+  },
+  {
+    name: 'create_job',
+    description:
+      'Create a new training job with a name, config (YAML string), and GPU assignment. The job is created in "stopped" status — use start_job to queue it for execution.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        name: { type: 'string', description: 'Unique name for the job' },
+        job_config: { type: 'string', description: 'Training config as a YAML or JSON string' },
+        gpu_ids: { type: 'string', description: 'GPU IDs to assign (e.g. "0", "0,1", "mps")' },
+      },
+      required: ['name', 'job_config', 'gpu_ids'],
+    },
+  },
+  {
+    name: 'start_job',
+    description:
+      'Queue a job for execution by setting its status to "queued" and ensuring its GPU queue exists. The cron worker will pick it up and start training.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        job_id: { type: 'string', description: 'ID of the job to start' },
+      },
+      required: ['job_id'],
+    },
+  },
+  {
+    name: 'list_datasets',
+    description:
+      'List all available datasets with image and caption file counts. Scans the datasets directory for folders containing images.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {},
+      required: [] as string[],
     },
   },
 ];
@@ -405,17 +460,16 @@ export async function executeServerTool(name: string, input: Record<string, unkn
       const outputDir = path.join(datasetsRoot, outputDatasetName);
 
       // Find all images in the dataset
-      const fsModule = await import('fs');
-      const IMAGE_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif']);
+      const CROP_IMAGE_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif']);
       function findImages(dir: string): string[] {
         const results: string[] = [];
-        if (!fsModule.default.existsSync(dir)) return results;
-        for (const item of fsModule.default.readdirSync(dir)) {
+        if (!fsSync.existsSync(dir)) return results;
+        for (const item of fsSync.readdirSync(dir)) {
           const p = path.join(dir, item);
-          const s = fsModule.default.statSync(p);
+          const s = fsSync.statSync(p);
           if (s.isDirectory() && item !== '_controls' && !item.startsWith('.')) {
             results.push(...findImages(p));
-          } else if (IMAGE_EXTENSIONS.has(path.extname(p).toLowerCase())) {
+          } else if (CROP_IMAGE_EXTENSIONS.has(path.extname(p).toLowerCase())) {
             results.push(p);
           }
         }
@@ -467,5 +521,190 @@ export async function executeServerTool(name: string, input: Record<string, unkn
     }
   }
 
+  if (name === 'list_jobs') {
+    const statusFilter = input.status_filter as string | undefined;
+
+    try {
+      const where = statusFilter ? { status: statusFilter } : {};
+      const jobs = await prisma.job.findMany({
+        where,
+        orderBy: [{ status: 'asc' }, { updated_at: 'desc' }],
+        select: {
+          id: true,
+          name: true,
+          status: true,
+          step: true,
+          speed_string: true,
+          gpu_ids: true,
+          queue_position: true,
+          created_at: true,
+          updated_at: true,
+          info: true,
+        },
+      });
+      return JSON.stringify(jobs, null, 2);
+    } catch (err) {
+      return `Error listing jobs: ${err instanceof Error ? err.message : String(err)}`;
+    }
+  }
+
+  if (name === 'create_job') {
+    const jobName = input.name as string;
+    const jobConfig = input.job_config as string;
+    const gpuIds = input.gpu_ids as string;
+
+    if (!jobName) return 'Error: name is required';
+    if (!jobConfig) return 'Error: job_config is required';
+    if (!gpuIds) return 'Error: gpu_ids is required';
+
+    try {
+      // Get max queue_position for ordering
+      const maxPos = await prisma.job.aggregate({ _max: { queue_position: true } });
+      const nextPosition = (maxPos._max.queue_position ?? 0) + 1;
+
+      const job = await prisma.job.create({
+        data: {
+          name: jobName,
+          job_config: jobConfig,
+          gpu_ids: gpuIds,
+          status: 'stopped',
+          queue_position: nextPosition,
+        },
+      });
+      return JSON.stringify({ id: job.id, name: job.name, status: job.status, queue_position: job.queue_position });
+    } catch (err: any) {
+      if (err.code === 'P2002') {
+        return `Error: a job named "${jobName}" already exists`;
+      }
+      return `Error creating job: ${err instanceof Error ? err.message : String(err)}`;
+    }
+  }
+
+  if (name === 'start_job') {
+    const jobId = input.job_id as string;
+    if (!jobId) return 'Error: job_id is required';
+
+    try {
+      const job = await prisma.job.findUnique({ where: { id: jobId } });
+      if (!job) return `Error: job "${jobId}" not found`;
+
+      if (job.status === 'running') return `Job "${job.name}" is already running`;
+      if (job.status === 'queued') return `Job "${job.name}" is already queued`;
+
+      // Set job to queued
+      await prisma.job.update({
+        where: { id: jobId },
+        data: { status: 'queued', stop: false },
+      });
+
+      // Ensure a queue row exists for this GPU set
+      await prisma.queue.upsert({
+        where: { gpu_ids: job.gpu_ids },
+        create: { gpu_ids: job.gpu_ids, is_running: false },
+        update: {},
+      });
+
+      return `Job "${job.name}" queued for execution on GPU ${job.gpu_ids}`;
+    } catch (err) {
+      return `Error starting job: ${err instanceof Error ? err.message : String(err)}`;
+    }
+  }
+
+  if (name === 'list_datasets') {
+    try {
+      const datasetsRoot = await getDatasetsRoot();
+      const IMAGE_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp', '.tiff']);
+      const CAPTION_EXTENSIONS = new Set(['.txt']);
+
+      if (!fsSync.existsSync(datasetsRoot)) {
+        return JSON.stringify([]);
+      }
+
+      const entries = await fs.readdir(datasetsRoot, { withFileTypes: true });
+      const datasets: { name: string; imageCount: number; captionCount: number }[] = [];
+
+      for (const entry of entries) {
+        if (!entry.isDirectory() || entry.name.startsWith('.')) continue;
+
+        const datasetDir = path.join(datasetsRoot, entry.name);
+        let imageCount = 0;
+        let captionCount = 0;
+
+        try {
+          const files = await fs.readdir(datasetDir);
+          for (const file of files) {
+            const ext = path.extname(file).toLowerCase();
+            if (IMAGE_EXTENSIONS.has(ext)) imageCount++;
+            if (CAPTION_EXTENSIONS.has(ext)) captionCount++;
+          }
+        } catch {
+          // Skip unreadable directories
+        }
+
+        datasets.push({ name: entry.name, imageCount, captionCount });
+      }
+
+      return JSON.stringify(datasets, null, 2);
+    } catch (err) {
+      return `Error listing datasets: ${err instanceof Error ? err.message : String(err)}`;
+    }
+  }
+
   return `Error: unknown server tool "${name}"`;
+}
+
+/**
+ * Execute view_dataset_image with pre-fetched remote image bytes.
+ * The vision API call runs locally (hub has the API key), but the image
+ * comes from a remote host rather than the local filesystem.
+ */
+export async function executeViewImageRemote(
+  input: Record<string, unknown>,
+  imageBuffer: Buffer,
+  mediaType: string,
+): Promise<string> {
+  const question = (input.question as string) || 'Describe this image in detail.';
+
+  type VisionMediaType = 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif';
+  const allowedTypes = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
+  if (!allowedTypes.has(mediaType)) {
+    return `Error: unsupported image type "${mediaType}"`;
+  }
+
+  try {
+    const auth = await getAnthropicAuth();
+    if (!auth.apiKey && !auth.oauthToken) {
+      return 'Error: Anthropic API key not configured';
+    }
+    const client = createAnthropicClient(auth);
+    const model = await getClaudeCaptionModel();
+
+    const response = await client.messages.create({
+      model,
+      max_tokens: 1024,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'image',
+              source: {
+                type: 'base64',
+                media_type: mediaType as VisionMediaType,
+                data: imageBuffer.toString('base64'),
+              },
+            },
+            { type: 'text', text: question },
+          ],
+        },
+      ],
+    });
+
+    return response.content
+      .filter(b => b.type === 'text')
+      .map(b => (b as { type: 'text'; text: string }).text)
+      .join('');
+  } catch (err) {
+    return `Error viewing remote image: ${err instanceof Error ? err.message : String(err)}`;
+  }
 }

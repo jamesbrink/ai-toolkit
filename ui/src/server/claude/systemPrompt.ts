@@ -1,5 +1,6 @@
 import { ChatContext } from '@/types/claude';
 import { getResolvedPaths } from '@/server/claude/serverTools';
+import { fetchRemoteSettings } from '@/server/claude/remoteToolExecution';
 
 const BASE_KNOWLEDGE = `You are an AI training assistant integrated into the AI Toolkit web UI. You help users configure and troubleshoot diffusion model training jobs.
 
@@ -47,7 +48,15 @@ Captioning best practices:
 - Shorter captions (20-40 words) train better than long, exhaustive ones. Filler phrases dilute the signal.
 - For LoRA training: use a trigger word (e.g. "ohwx") and describe only what varies between images, not the trigger concept itself.
 - Keyword/tag style (booru, descriptive) works well for SDXL and SD 1.5. Natural language captions work better for FLUX.
-- When writing captions via write_file, output plain text only — no markdown, no bullet points, no labels.`;
+- When writing captions via write_file, output plain text only — no markdown, no bullet points, no labels.
+
+Job management tools:
+- list_jobs: List all training jobs with status, step count, speed, and GPU assignment. Optionally filter by status.
+- create_job: Create a new training job with name, config (YAML/JSON string), and GPU assignment. Job starts in "stopped" status.
+- start_job: Queue a job for execution and ensure its GPU queue exists. The cron worker picks it up automatically.
+- list_datasets: List available datasets with image and caption counts. Useful for confirming dataset names before creating jobs.
+
+When asked to set up training, use list_datasets to find the dataset, create_job with appropriate config, then start_job to queue it.`;
 
 const MPS_NOTES = `
 Apple Silicon (MPS) constraints:
@@ -135,15 +144,34 @@ export async function buildSystemPrompt(context?: ChatContext, modelId?: string)
     prompt += MPS_NOTES;
   }
 
-  // Inject resolved file system paths so the agent knows where things live
-  const paths = await getResolvedPaths();
-  prompt += `
+  // Inject resolved file system paths — from remote host when operating remotely
+  if (context?.hostId) {
+    const remotePaths = await fetchRemoteSettings(context.hostId);
+    if (remotePaths && (remotePaths.toolkitRoot || remotePaths.datasetsRoot || remotePaths.trainingFolder)) {
+      prompt += `
+
+REMOTE HOST CONTEXT: You are operating on a remote AI Toolkit instance "${context.hostName || 'remote host'}". All file tools will execute on the remote host.
+
+File system paths on the remote host (use these with your file tools):
+- Toolkit source (read-only): ${remotePaths.toolkitRoot}
+- Datasets (read/write): ${remotePaths.datasetsRoot}
+- Training output (read/write): ${remotePaths.trainingFolder}
+- Example configs: ${remotePaths.toolkitRoot}/config/examples/`;
+    } else {
+      prompt += `
+
+REMOTE HOST CONTEXT: You are operating on a remote AI Toolkit instance "${context.hostName || 'remote host'}". All file tools will execute on the remote host. Remote path settings could not be fetched — use relative dataset names with the job/dataset tools instead.`;
+    }
+  } else {
+    const paths = await getResolvedPaths();
+    prompt += `
 
 File system paths (use these with your file tools):
 - Toolkit source (read-only): ${paths.toolkitRoot}
 - Datasets (read/write): ${paths.datasetsRoot}
 - Training output (read/write): ${paths.trainingFolder}
 - Example configs: ${paths.toolkitRoot}/config/examples/`;
+  }
 
   if (context) {
     prompt += buildPageContext(context);

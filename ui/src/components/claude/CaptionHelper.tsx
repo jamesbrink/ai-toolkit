@@ -4,6 +4,8 @@ import { useState, useCallback } from 'react';
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react';
 import { X, Check, RotateCcw, Loader2 } from 'lucide-react';
 import { apiClient } from '@/utils/api';
+import { getImageUrlPrefix } from '@/utils/remoteApi';
+import { proxyApiPath } from '@/utils/proxyPath';
 
 interface CaptionResult {
   imagePath: string;
@@ -19,6 +21,7 @@ interface CaptionHelperProps {
   imagePaths: string[];
   datasetName: string;
   onCaptionsApplied?: () => void;
+  hostId?: string | null;
 }
 
 export default function CaptionHelper({
@@ -27,6 +30,7 @@ export default function CaptionHelper({
   imagePaths,
   datasetName,
   onCaptionsApplied,
+  hostId,
 }: CaptionHelperProps) {
   const [style, setStyle] = useState<'descriptive' | 'booru' | 'natural' | 'trigger'>('descriptive');
   const [triggerWord, setTriggerWord] = useState('');
@@ -43,7 +47,7 @@ export default function CaptionHelper({
     const existingCaptions: Record<string, string> = {};
     for (const imgPath of imagePaths) {
       try {
-        const res = await apiClient.post('/api/caption/get', { imgPath });
+        const res = await apiClient.post(proxyApiPath('/api/caption/get', hostId), { imgPath });
         if (res.data) {
           existingCaptions[imgPath] = `${res.data}`;
         }
@@ -59,7 +63,12 @@ export default function CaptionHelper({
     const res = await fetch('/api/claude/caption/batch', {
       method: 'POST',
       headers,
-      body: JSON.stringify({ imagePaths, style, ...(style === 'trigger' && triggerWord ? { triggerWord } : {}) }),
+      body: JSON.stringify({
+        imagePaths,
+        style,
+        ...(style === 'trigger' && triggerWord ? { triggerWord } : {}),
+        ...(hostId ? { hostId } : {}),
+      }),
     });
 
     if (!res.ok) {
@@ -106,7 +115,7 @@ export default function CaptionHelper({
     }
 
     setIsProcessing(false);
-  }, [imagePaths, style, triggerWord]);
+  }, [imagePaths, style, triggerWord, hostId]);
 
   const toggleAccept = (index: number) => {
     setResults(prev => prev.map((r, i) => (i === index ? { ...r, accepted: !r.accepted } : r)));
@@ -122,7 +131,7 @@ export default function CaptionHelper({
     setIsSaving(true);
     for (const result of items) {
       try {
-        await apiClient.post('/api/img/caption', {
+        await apiClient.post(proxyApiPath('/api/img/caption', hostId), {
           imgPath: result.imagePath,
           caption: result.caption.trim(),
         });
@@ -235,7 +244,7 @@ export default function CaptionHelper({
                   >
                     <div className="flex items-start gap-3">
                       <img
-                        src={`/api/img/${encodeURIComponent(result.imagePath)}`}
+                        src={`${getImageUrlPrefix(hostId)}${encodeURIComponent(result.imagePath)}`}
                         alt=""
                         className="w-16 h-16 object-cover rounded shrink-0"
                       />

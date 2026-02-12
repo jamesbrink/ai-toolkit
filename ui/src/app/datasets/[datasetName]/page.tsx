@@ -57,20 +57,20 @@ export default function DatasetPage({ params }: { params: { datasetName: string 
     }
   }, [hostId]);
 
-  // Set chat context so Claude knows which dataset the user is viewing (local only)
+  // Set chat context so Claude knows which dataset the user is viewing
   useEffect(() => {
-    if (datasetName && !isRemote) {
+    if (datasetName) {
       setContext({
         page: 'dataset',
         datasetName,
         imageList: imgList.map(img => img.img_path),
+        ...(hostId ? { hostId, hostName } : {}),
       });
     }
-  }, [datasetName, imgList, setContext, isRemote]);
+  }, [datasetName, imgList, setContext, hostId, hostName]);
 
-  // Refresh when Claude agent modifies the dataset (local only)
+  // Refresh when Claude agent modifies the dataset
   useEffect(() => {
-    if (isRemote) return;
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail;
       if (detail?.toolName === 'delete_dataset_images' || detail?.toolName === 'write_file') {
@@ -79,7 +79,7 @@ export default function DatasetPage({ params }: { params: { datasetName: string 
     };
     window.addEventListener('claude-tool-completed', handler);
     return () => window.removeEventListener('claude-tool-completed', handler);
-  }, [datasetName, isRemote]);
+  }, [datasetName]);
 
   const refreshImageList = (dbName: string) => {
     setStatus('loading');
@@ -275,7 +275,7 @@ export default function DatasetPage({ params }: { params: { datasetName: string 
           )}
         </div>
         <div className="flex-1"></div>
-        {!isRemote && imgList.length > 0 && (
+        {imgList.length > 0 && (
           <div className="mr-2">
             <Button
               className="text-gray-200 bg-teal-700 hover:bg-teal-600 px-3 py-1 rounded-md flex items-center gap-1.5 text-sm"
@@ -320,7 +320,7 @@ export default function DatasetPage({ params }: { params: { datasetName: string 
             </Button>
           </div>
         )}
-        {!isRemote && isConfigured && imgList.length > 0 && (
+        {isConfigured && imgList.length > 0 && (
           <div className="mr-2">
             <Button
               className="text-gray-200 bg-purple-700 hover:bg-purple-600 px-3 py-1 rounded-md flex items-center gap-1.5 text-sm"
@@ -345,7 +345,7 @@ export default function DatasetPage({ params }: { params: { datasetName: string 
       <MainContent>
         {isRemote && (
           <div className="mb-4 px-4 py-2 bg-blue-900/30 border border-blue-800 rounded-lg text-sm text-blue-200">
-            Viewing remote dataset on <strong>{hostName || 'remote host'}</strong> (read-only)
+            Viewing remote dataset on <strong>{hostName || 'remote host'}</strong>
           </div>
         )}
         {PageInfoContent}
@@ -370,23 +370,23 @@ export default function DatasetPage({ params }: { params: { datasetName: string 
       {!isRemote && (
         <FullscreenDropOverlay datasetName={datasetName} onComplete={() => refreshImageList(datasetName)} />
       )}
-      {!isRemote && isConfigured && (
+      {isConfigured && (
         <CaptionHelper
           isOpen={captionModalOpen}
           onClose={() => setCaptionModalOpen(false)}
           imagePaths={imgList.map(img => img.img_path)}
           datasetName={datasetName}
           onCaptionsApplied={() => refreshImageList(datasetName)}
+          hostId={hostId}
         />
       )}
-      {!isRemote && (
-        <DatasetAnalysisPanel
-          isOpen={analysisModalOpen}
-          onClose={() => setAnalysisModalOpen(false)}
-          datasetName={datasetName}
-          onImagesDeleted={() => refreshImageList(datasetName)}
-        />
-      )}
+      <DatasetAnalysisPanel
+        isOpen={analysisModalOpen}
+        onClose={() => setAnalysisModalOpen(false)}
+        datasetName={datasetName}
+        onImagesDeleted={() => refreshImageList(datasetName)}
+        hostId={hostId}
+      />
       {!isRemote && (
         <DatasetPushModal
           isOpen={pushModalOpen}

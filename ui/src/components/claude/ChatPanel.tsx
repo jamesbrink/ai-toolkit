@@ -16,6 +16,10 @@ const TOOL_LABELS: Record<string, string> = {
   view_dataset_image: 'Viewing image...',
   delete_dataset_images: 'Deleting images...',
   crop_faces: 'Cropping faces...',
+  list_jobs: 'Listing jobs...',
+  create_job: 'Creating job...',
+  start_job: 'Starting job...',
+  list_datasets: 'Listing datasets...',
 };
 
 const MIN_WIDTH = 320;

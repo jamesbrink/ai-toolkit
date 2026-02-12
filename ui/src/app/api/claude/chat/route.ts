@@ -2,7 +2,8 @@ import { NextRequest } from 'next/server';
 import { getAnthropicAuth } from '@/server/settings';
 import { createAnthropicClient, getClaudeChatModel } from '@/server/claude/client';
 import { buildSystemPrompt } from '@/server/claude/systemPrompt';
-import { serverToolDefinitions, SERVER_TOOL_NAMES, executeServerTool } from '@/server/claude/serverTools';
+import { serverToolDefinitions, SERVER_TOOL_NAMES, executeViewImageRemote } from '@/server/claude/serverTools';
+import { executeToolMaybeRemote, fetchRemoteImageBytes } from '@/server/claude/remoteToolExecution';
 
 const MAX_TOOL_LOOPS = 10;
 // Reserve tokens for system prompt (~3K) + response (4K) + tools (~2K)
@@ -52,6 +53,7 @@ export async function POST(req: NextRequest) {
   }
 
   const { messages, context, tools: clientTools } = await req.json();
+  const hostId: string | undefined = context?.hostId;
 
   const client = createAnthropicClient(auth);
   const chatModel = await getClaudeChatModel();
@@ -96,11 +98,23 @@ export async function POST(req: NextRequest) {
               }
             }
 
-            // Execute server tools and continue the loop
+            // Execute server tools — route to remote host when hostId is set
             const toolResults = await Promise.all(
               serverToolUses.map(async block => {
                 if (block.type !== 'tool_use') return null;
-                const result = await executeServerTool(block.name, block.input as Record<string, unknown>);
+                const input = block.input as Record<string, unknown>;
+                let result: string;
+
+                if (block.name === 'view_dataset_image' && hostId) {
+                  // Vision API runs locally (hub has API key), but fetch image from remote
+                  const imageData = await fetchRemoteImageBytes(input.image_path as string, hostId);
+                  result = imageData
+                    ? await executeViewImageRemote(input, imageData.buffer, imageData.mediaType)
+                    : 'Error: Could not fetch image from remote host';
+                } else {
+                  result = await executeToolMaybeRemote(block.name, input, hostId);
+                }
+
                 return { type: 'tool_result' as const, tool_use_id: block.id, content: result };
               }),
             );

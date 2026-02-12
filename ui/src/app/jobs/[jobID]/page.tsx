@@ -68,9 +68,10 @@ export default function JobPage({ params }: { params: { jobID: string } }) {
       setContext({
         page: `/jobs/${jobID}`,
         jobData: { name: job.name, status: job.status, step: job.step, gpu_ids: job.gpu_ids },
+        ...(hostId ? { hostId } : {}),
       });
     }
-  }, [isConfigured, job, jobID, setContext]);
+  }, [isConfigured, job, jobID, setContext, hostId]);
 
   const page = pages.find(p => p.value === pageKey);
 
