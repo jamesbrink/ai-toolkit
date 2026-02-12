@@ -24,7 +24,7 @@ jobs:
           nix develop --command bash -c "cd ui && npm ci && DATABASE_URL=file:./ci.db npx prisma generate && npm run typecheck && npm run lint"
 
       - name: Check Nix formatting
-        run: nix fmt -- --check
+        run: nix fmt -- --fail-on-change
 
   build-docker:
     runs-on: ubuntu-latest
