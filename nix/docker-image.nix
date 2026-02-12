@@ -1,6 +1,6 @@
 # OCI/Docker image for ai-toolkit
 # Build with: nix build .#docker
-# Load with: ./result | docker load
+# Load with: ./result | docker load  (or: ./result | podman load)
 # Run UI:    docker run -p 8675:8675 -p 22:22 -v ./datasets:/workspace/datasets -v ./output:/workspace/output ai-toolkit
 # Run train: docker run ai-toolkit ai-toolkit-train config/your_config.yaml
 #

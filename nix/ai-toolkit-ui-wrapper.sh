@@ -40,7 +40,12 @@ export PRISMA_ENGINES_CHECKSUM_IGNORE_MISSING=1
 
 # --- Ensure DB schema is up to date ---
 echo "Running prisma db push to ensure schema is up to date..."
-if ! node "$UI_DIR/node_modules/prisma/build/index.js" db push --schema "$UI_DIR/prisma/schema.prisma" --skip-generate; then
+# Prisma 7 reads the datasource URL from prisma.config.ts (no longer from schema.prisma).
+# Use --config to locate the config and --url to pass DATABASE_URL directly (avoids
+# needing tsx to load the TS config file at runtime).
+if ! node "$UI_DIR/node_modules/prisma/build/index.js" db push \
+    --schema "$UI_DIR/prisma/schema.prisma" \
+    --url "$DATABASE_URL"; then
   echo "Warning: prisma db push failed, DB may need manual setup"
 fi
 
@@ -53,7 +58,10 @@ echo "  UI dir:       $UI_DIR"
 echo ""
 
 # --- Start worker and server ---
-node --import tsx/esm "$UI_DIR/cron/worker.ts" &
+# Use the tsx CLI directly (absolute path) to avoid ESM bare-specifier resolution
+# issues — Node's --import flag resolves packages from cwd, which may not contain
+# node_modules (e.g. /workspace in Docker).
+"$UI_DIR/node_modules/.bin/tsx" "$UI_DIR/cron/worker.ts" &
 WORKER_PID=$!
 
 node "$UI_DIR/server.js" &
