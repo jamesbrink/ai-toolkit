@@ -10,7 +10,8 @@ import { apiClient } from '@/utils/api';
 import classNames from 'classnames';
 import { FaCaretDown, FaCaretUp } from 'react-icons/fa';
 import SampleImageViewer from './SampleImageViewer';
-import { getImageUrlPrefix } from '@/utils/remoteApi';
+import { getImageUrlPrefix, getFileUrlPrefix } from '@/utils/remoteApi';
+import { proxyApiPath } from '@/utils/proxyPath';
 
 interface SampleImagesMenuProps {
   job?: Job | UnifiedJob | null;
@@ -20,26 +21,22 @@ interface SampleImagesMenuProps {
 export const SampleImagesMenu = ({ job, hostId }: SampleImagesMenuProps) => {
   const [isZipping, setIsZipping] = useState(false);
 
-  // ZIP download not supported for remote jobs
-  if (hostId) return null;
-
   const downloadZip = async () => {
     if (isZipping) return;
     setIsZipping(true);
 
     try {
-      const res = await apiClient.post('/api/zip', {
+      const res = await apiClient.post(proxyApiPath('/api/zip', hostId), {
         zipTarget: 'samples',
         jobName: job?.name,
       });
 
-      const zipPath = res.data.zipPath; // e.g. /mnt/Train2/out/ui/.../samples.zip
+      const zipPath = res.data.zipPath;
       if (!zipPath) throw new Error('No zipPath in response');
 
-      const downloadPath = `/api/files/${encodeURIComponent(zipPath)}`;
+      const downloadPath = `${getFileUrlPrefix(hostId)}${encodeURIComponent(zipPath)}`;
       const a = document.createElement('a');
       a.href = downloadPath;
-      // optional: suggest filename (browser may ignore if server sets Content-Disposition)
       a.download = 'samples.zip';
       document.body.appendChild(a);
       a.click();

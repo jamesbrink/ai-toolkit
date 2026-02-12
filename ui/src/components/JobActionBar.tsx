@@ -192,7 +192,7 @@ export default function JobActionBar({
         >
           <MenuItem>
             <Link
-              href={`/jobs/new?cloneId=${job.id}${isRemote ? '&remoteClone=true' : ''}`}
+              href={`/jobs/new?cloneId=${job.id}${isRemote && source?.hostId ? `&sourceHostId=${source.hostId}` : ''}`}
               className="cursor-pointer px-4 py-1 hover:bg-gray-800 rounded block text-gray-200"
             >
               Clone Job

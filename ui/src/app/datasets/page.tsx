@@ -10,7 +10,8 @@ import useAllDatasets from '@/hooks/useAllDatasets';
 import { SourcedDatasetInfo } from '@/types';
 import { Button } from '@headlessui/react';
 import { FaRegTrashAlt, FaPen, FaCopy } from 'react-icons/fa';
-import { Download } from 'lucide-react';
+import { Download, Upload } from 'lucide-react';
+import DatasetPushModal from '@/components/DatasetPushModal';
 import { openConfirm } from '@/components/ConfirmModal';
 import { TopBar, MainContent } from '@/components/layout';
 import UniversalTable, { TableColumn } from '@/components/UniversalTable';
@@ -62,6 +63,7 @@ export default function Datasets() {
   const [newDatasetName, setNewDatasetName] = useState('');
   const [isNewDatasetModalOpen, setIsNewDatasetModalOpen] = useState(false);
   const [exportingDataset, setExportingDataset] = useState<string | null>(null);
+  const [pushDataset, setPushDataset] = useState<string | null>(null);
 
   const columns: TableColumn[] = [
     {
@@ -164,6 +166,15 @@ export default function Datasets() {
             >
               <Download className="w-4 h-4" />
             </button>
+            {onlineHosts.length > 0 && row.imageCount > 0 && (
+              <button
+                className="text-gray-400 hover:text-blue-400 p-2 rounded-full transition-colors"
+                onClick={() => setPushDataset(row.name)}
+                title="Push to Host"
+              >
+                <Upload className="w-4 h-4" />
+              </button>
+            )}
             <button
               className="text-gray-400 hover:text-gray-200 p-2 rounded-full transition-colors"
               onClick={() => handleCopyDataset(row.name)}
@@ -353,6 +364,13 @@ export default function Datasets() {
           onRefresh={refreshDatasets}
         />
       </MainContent>
+
+      <DatasetPushModal
+        isOpen={!!pushDataset}
+        onClose={() => setPushDataset(null)}
+        datasetName={pushDataset || ''}
+        hosts={onlineHosts}
+      />
 
       <Modal
         isOpen={isNewDatasetModalOpen}

@@ -3,7 +3,7 @@
 import { useEffect, useState, use, useMemo } from 'react';
 import { LuImageOff, LuLoader, LuBan } from 'react-icons/lu';
 import { FaChevronLeft, FaPen, FaCopy } from 'react-icons/fa';
-import { Sparkles, Search, Download } from 'lucide-react';
+import { Sparkles, Search, Download, Upload } from 'lucide-react';
 import DatasetImageCard from '@/components/DatasetImageCard';
 import { Button } from '@headlessui/react';
 import AddImagesModal, { openImagesModal } from '@/components/AddImagesModal';
@@ -16,6 +16,8 @@ import DatasetAnalysisPanel from '@/components/DatasetAnalysisPanel';
 import { useClaudeChat } from '@/components/claude/ClaudeChatContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { proxyApiPath } from '@/utils/proxyPath';
+import useHostList from '@/hooks/useHostList';
+import DatasetPushModal from '@/components/DatasetPushModal';
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 B';
@@ -40,6 +42,9 @@ export default function DatasetPage({ params }: { params: { datasetName: string 
   const [exporting, setExporting] = useState(false);
   const [datasetSize, setDatasetSize] = useState<number | null>(null);
   const [hostName, setHostName] = useState<string>('');
+  const [pushModalOpen, setPushModalOpen] = useState(false);
+  const { hosts } = useHostList();
+  const onlineHosts = hosts.filter(h => h.isOnline);
   const { isConfigured, setContext } = useClaudeChat();
 
   // Fetch host name for remote banner
@@ -293,6 +298,17 @@ export default function DatasetPage({ params }: { params: { datasetName: string 
             </Button>
           </div>
         )}
+        {!isRemote && onlineHosts.length > 0 && imgList.length > 0 && (
+          <div className="mr-2">
+            <Button
+              className="text-gray-200 bg-blue-700 hover:bg-blue-600 px-3 py-1 rounded-md flex items-center gap-1.5 text-sm"
+              onClick={() => setPushModalOpen(true)}
+            >
+              <Upload className="w-4 h-4" />
+              Push to Host
+            </Button>
+          </div>
+        )}
         {!isRemote && (
           <div className="mr-2">
             <Button
@@ -369,6 +385,14 @@ export default function DatasetPage({ params }: { params: { datasetName: string 
           onClose={() => setAnalysisModalOpen(false)}
           datasetName={datasetName}
           onImagesDeleted={() => refreshImageList(datasetName)}
+        />
+      )}
+      {!isRemote && (
+        <DatasetPushModal
+          isOpen={pushModalOpen}
+          onClose={() => setPushModalOpen(false)}
+          datasetName={datasetName}
+          hosts={onlineHosts}
         />
       )}
     </>
