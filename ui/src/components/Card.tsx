@@ -23,7 +23,7 @@ const Card: React.FC<CardProps> = ({ title, children, collapsible, defaultOpen }
               <div className="flex-1">
                 {title && (
                   <h2
-                    className={clsx('text-lg mb-2 font-semibold uppercase text-zinc-500 dark:text-zinc-400', {
+                    className={clsx('text-lg mb-2 font-semibold uppercase text-zinc-600 dark:text-zinc-400', {
                       'mb-0': !open,
                     })}
                   >
@@ -42,7 +42,7 @@ const Card: React.FC<CardProps> = ({ title, children, collapsible, defaultOpen }
   }
   return (
     <section className="space-y-2 px-4 pb-4 pt-2 bg-white dark:bg-zinc-900 rounded-lg">
-      {title && <h2 className="text-lg mb-2 font-semibold uppercase text-zinc-500 dark:text-zinc-400">{title}</h2>}
+      {title && <h2 className="text-lg mb-2 font-semibold uppercase text-zinc-600 dark:text-zinc-400">{title}</h2>}
       {children ?? null}
     </section>
   );

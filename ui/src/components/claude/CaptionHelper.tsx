@@ -197,7 +197,7 @@ export default function CaptionHelper({
                 </div>
                 {style === 'trigger' && (
                   <div className="space-y-1">
-                    <label className="block text-xs text-zinc-500 dark:text-zinc-400">Trigger word</label>
+                    <label className="block text-xs text-zinc-600 dark:text-zinc-400">Trigger word</label>
                     <input
                       type="text"
                       value={triggerWord}
@@ -207,7 +207,7 @@ export default function CaptionHelper({
                     />
                   </div>
                 )}
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                <p className="text-xs text-zinc-600 dark:text-zinc-400">
                   {imagePaths.length} image{imagePaths.length !== 1 ? 's' : ''} selected
                 </p>
                 <Button color="blue" onClick={startBatchCaption} disabled={style === 'trigger' && !triggerWord.trim()}>
@@ -235,7 +235,7 @@ export default function CaptionHelper({
                     >
                       Accept all
                     </button>
-                    <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                    <span className="text-xs text-zinc-600 dark:text-zinc-400">
                       {acceptedCount} of {results.length} accepted
                     </span>
                   </div>

@@ -98,9 +98,9 @@ function buildDeployEvents(pod: RunPodPodInfo, liveData: LivePodData | null, hos
 }
 
 const eventTypeColors: Record<string, string> = {
-  info: 'text-gray-400',
-  success: 'text-green-400',
-  waiting: 'text-yellow-400',
+  info: 'text-zinc-600 dark:text-zinc-400',
+  success: 'text-green-600 dark:text-green-400',
+  waiting: 'text-yellow-600 dark:text-yellow-400',
 };
 
 function DeploymentLog({
@@ -128,24 +128,26 @@ function DeploymentLog({
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-gray-200">Deployment Log</span>
-          <span className="px-2 py-0.5 rounded-full text-xs bg-yellow-900 text-yellow-300">Deploying</span>
+          <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200">Deployment Log</span>
+          <span className="px-2 py-0.5 rounded-full text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">
+            Deploying
+          </span>
         </div>
       </div>
       <div
         ref={logRef}
-        className="bg-gray-950 rounded-lg font-mono text-xs overflow-y-auto max-h-[calc(100vh-14rem)] flex-1 p-4"
+        className="bg-zinc-100 dark:bg-zinc-950 rounded-lg font-mono text-xs overflow-y-auto max-h-[calc(100vh-14rem)] flex-1 p-4"
       >
         {events.map((event, i) => (
           <div key={i} className={clsx('py-0.5', eventTypeColors[event.type])}>
-            {event.time && <span className="text-gray-600 mr-2">[{event.time}]</span>}
+            {event.time && <span className="text-zinc-400 dark:text-zinc-600 mr-2">[{event.time}]</span>}
             {event.type === 'success' && <span className="mr-1">✓</span>}
             {event.type === 'waiting' && i === events.length - 1 && <span className="mr-1">⏳</span>}
             {event.message}
           </div>
         ))}
         {isWaiting && (
-          <div className="flex items-center gap-2 text-gray-500 mt-2">
+          <div className="flex items-center gap-2 text-zinc-500 mt-2">
             <Loader2 className="w-3 h-3 animate-spin" />
             <span>Polling for updates every 5s...</span>
           </div>
@@ -203,12 +205,12 @@ export default function PodLogsTab({
 
   if (remoteJobsStatus === 'error') {
     return (
-      <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-gray-400">
-        <RefreshCw className="w-6 h-6 text-gray-500 mb-3" />
+      <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-zinc-600 dark:text-zinc-400">
+        <RefreshCw className="w-6 h-6 text-zinc-500 mb-3" />
         <p className="text-sm">Could not connect to remote instance</p>
         <button
           onClick={onRetryRemoteJobs}
-          className="mt-3 px-3 py-1.5 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm transition-colors"
+          className="mt-3 px-3 py-1.5 bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 rounded-lg text-sm transition-colors"
         >
           Retry
         </button>
@@ -218,7 +220,7 @@ export default function PodLogsTab({
 
   if (!activeJob) {
     return (
-      <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-gray-400">
+      <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-zinc-600 dark:text-zinc-400">
         <span className="text-2xl mb-3">&#x1f4ad;</span>
         <p className="text-sm">No training jobs running on this pod</p>
       </div>
@@ -227,11 +229,11 @@ export default function PodLogsTab({
 
   // Active job — show log viewer
   const statusColors: Record<string, string> = {
-    running: 'bg-green-900 text-green-300',
-    queued: 'bg-yellow-900 text-yellow-300',
-    completed: 'bg-blue-900 text-blue-300',
-    error: 'bg-red-900 text-red-300',
-    stopped: 'bg-gray-700 text-gray-300',
+    running: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
+    queued: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
+    completed: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+    error: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
+    stopped: 'bg-zinc-200 text-zinc-700 dark:bg-zinc-700 dark:text-zinc-300',
   };
 
   return (
@@ -239,11 +241,11 @@ export default function PodLogsTab({
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-gray-200">{activeJob.name}</span>
+          <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200">{activeJob.name}</span>
           <span
             className={clsx(
               'px-2 py-0.5 rounded-full text-xs',
-              statusColors[activeJob.status] || 'bg-gray-700 text-gray-300',
+              statusColors[activeJob.status] || 'bg-zinc-200 text-zinc-700 dark:bg-zinc-700 dark:text-zinc-300',
             )}
           >
             {activeJob.status}
@@ -254,8 +256,8 @@ export default function PodLogsTab({
           className={clsx(
             'px-2.5 py-1 text-xs rounded-md transition-colors border',
             isFollowing
-              ? 'bg-blue-600/20 text-blue-400 border-blue-500/30'
-              : 'bg-gray-800 text-gray-400 border-gray-700 hover:text-white',
+              ? 'bg-blue-600/20 text-blue-600 dark:text-blue-400 border-blue-500/30'
+              : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-300 dark:border-zinc-700 hover:text-zinc-900 dark:hover:text-white',
           )}
         >
           {isFollowing ? 'Following' : 'Follow'}
@@ -265,18 +267,18 @@ export default function PodLogsTab({
       {/* Log viewer */}
       <div
         ref={logRef}
-        className="bg-gray-950 rounded-lg font-mono text-xs text-gray-300 overflow-y-auto max-h-[calc(100vh-14rem)] flex-1 p-4"
+        className="bg-zinc-100 dark:bg-zinc-950 rounded-lg font-mono text-xs text-zinc-700 dark:text-zinc-300 overflow-y-auto max-h-[calc(100vh-14rem)] flex-1 p-4"
         onScroll={handleScroll}
       >
         {logStatus === 'loading' && (
-          <div className="flex items-center gap-2 text-gray-500">
+          <div className="flex items-center gap-2 text-zinc-500">
             <Loader2 className="w-4 h-4 animate-spin" />
             Loading logs...
           </div>
         )}
         {logStatus === 'error' && <span className="text-red-400">Error loading logs</span>}
         {['success', 'refreshing'].includes(logStatus) && logLines.length === 0 && (
-          <span className="text-gray-500">Waiting for log output...</span>
+          <span className="text-zinc-500">Waiting for log output...</span>
         )}
         {['success', 'refreshing'].includes(logStatus) && logLines.map((line, i) => <pre key={i}>{line}</pre>)}
       </div>

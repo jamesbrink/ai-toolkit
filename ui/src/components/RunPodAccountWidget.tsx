@@ -37,29 +37,29 @@ export default function RunPodAccountWidget({ account }: RunPodAccountWidgetProp
         <div className="flex items-center space-x-2">
           <DollarSign className="w-4 h-4 text-green-600 dark:text-green-400" />
           <div>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">Balance</p>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">Balance</p>
             <p className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
               {formatDollars(account.clientBalance)}
             </p>
           </div>
         </div>
         <div className="flex items-center space-x-2">
-          <TrendingDown className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
+          <TrendingDown className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
           <div>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">Burn Rate</p>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">Burn Rate</p>
             <p className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
               {formatDollars(account.currentSpendPerHr)}/hr
             </p>
           </div>
         </div>
         <div>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">Time Remaining</p>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">Time Remaining</p>
           <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
             {formatTimeRemaining(account.clientBalance, account.currentSpendPerHr)}
           </p>
         </div>
         <div>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">Lifetime Spend</p>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">Lifetime Spend</p>
           <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
             {formatDollars(account.clientLifetimeSpend)}
           </p>

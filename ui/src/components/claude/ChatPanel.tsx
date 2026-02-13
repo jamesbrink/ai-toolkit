@@ -149,7 +149,7 @@ export default function ChatPanel() {
       className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-3 chat-scrollbar"
     >
       {messages.length === 0 && (
-        <div className="text-center text-zinc-500 dark:text-zinc-400 text-sm mt-8">
+        <div className="text-center text-zinc-600 dark:text-zinc-400 text-sm mt-8">
           <p>Ask me about training config, troubleshooting, or anything about diffusion model training.</p>
         </div>
       )}
@@ -162,7 +162,7 @@ export default function ChatPanel() {
       ))}
       {isStreaming && activeToolName && (
         <div className="flex justify-start mb-3">
-          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs">
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-xs">
             <Loader2 className="w-3.5 h-3.5 animate-spin" />
             {TOOL_LABELS[activeToolName] || `Running ${activeToolName}...`}
           </div>

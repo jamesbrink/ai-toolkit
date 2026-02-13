@@ -47,16 +47,16 @@ export default function DatasetPushModal({ isOpen, onClose, datasetName, hosts }
     <Dialog open={isOpen} onClose={handleClose} className="relative z-50">
       <DialogBackdrop className="fixed inset-0 bg-black/50" />
       <div className="fixed inset-0 flex items-center justify-center p-4">
-        <DialogPanel className="w-full max-w-md rounded-xl bg-white dark:bg-gray-800 p-6 shadow-xl border border-zinc-200 dark:border-zinc-700">
-          <DialogTitle className="text-lg font-semibold text-zinc-900 dark:text-gray-100 flex items-center gap-2">
+        <DialogPanel className="w-full max-w-md rounded-xl bg-white dark:bg-zinc-800 p-6 shadow-xl border border-zinc-200 dark:border-zinc-700">
+          <DialogTitle className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
             <Upload className="w-5 h-5" />
             Push Dataset to Host
           </DialogTitle>
 
           <div className="mt-4 space-y-4">
             <div>
-              <label className="block text-sm text-zinc-500 dark:text-gray-400 mb-1">Dataset</label>
-              <div className="text-zinc-800 dark:text-gray-200 bg-zinc-100 dark:bg-gray-700 rounded px-3 py-2 text-sm">
+              <label className="block text-sm text-zinc-500 dark:text-zinc-400 mb-1">Dataset</label>
+              <div className="text-zinc-800 dark:text-zinc-200 bg-zinc-100 dark:bg-zinc-700 rounded px-3 py-2 text-sm">
                 {datasetName}
               </div>
             </div>
@@ -71,20 +71,20 @@ export default function DatasetPushModal({ isOpen, onClose, datasetName, hosts }
 
             {isPushing && (
               <div className="space-y-2">
-                <div className="flex justify-between text-sm text-zinc-500 dark:text-gray-400">
+                <div className="flex justify-between text-sm text-zinc-500 dark:text-zinc-400">
                   <span>Transferring files...</span>
                   <span>
                     {progress.transferred}/{progress.total} ({progressPercent}%)
                   </span>
                 </div>
-                <div className="w-full bg-zinc-200 dark:bg-gray-700 rounded-full h-2">
+                <div className="w-full bg-zinc-200 dark:bg-zinc-700 rounded-full h-2">
                   <div
                     className="bg-blue-500 h-2 rounded-full transition-all duration-300"
                     style={{ width: `${progressPercent}%` }}
                   />
                 </div>
                 {progress.currentFile && (
-                  <p className="text-xs text-zinc-500 dark:text-gray-500 truncate">{progress.currentFile}</p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">{progress.currentFile}</p>
                 )}
               </div>
             )}
@@ -104,7 +104,7 @@ export default function DatasetPushModal({ isOpen, onClose, datasetName, hosts }
 
           <div className="mt-6 flex justify-end gap-3">
             <Button
-              className="px-4 py-2 rounded-md bg-zinc-200 dark:bg-gray-700 text-zinc-700 dark:text-gray-200 hover:bg-zinc-300 dark:hover:bg-gray-600 disabled:opacity-50"
+              className="px-4 py-2 rounded-md bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-300 dark:hover:bg-zinc-600 disabled:opacity-50"
               onClick={handleClose}
               disabled={isPushing}
             >

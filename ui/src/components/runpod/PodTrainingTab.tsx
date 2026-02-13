@@ -17,7 +17,7 @@ interface PodTrainingTabProps {
 
 function EmptyState({ icon, message, action }: { icon: React.ReactNode; message: string; action?: React.ReactNode }) {
   return (
-    <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-gray-400">
+    <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-zinc-600 dark:text-zinc-400">
       <div className="mb-3">{icon}</div>
       <p className="text-sm">{message}</p>
       {action && <div className="mt-3">{action}</div>}
@@ -55,7 +55,7 @@ export default function PodTrainingTab({
   if (!hostId) {
     return (
       <EmptyState
-        icon={<Loader2 className="w-6 h-6 animate-spin text-gray-500" />}
+        icon={<Loader2 className="w-6 h-6 animate-spin text-zinc-500" />}
         message="Waiting for pod to come online..."
       />
     );
@@ -64,7 +64,7 @@ export default function PodTrainingTab({
   if (remoteJobsStatus === 'loading') {
     return (
       <EmptyState
-        icon={<Loader2 className="w-6 h-6 animate-spin text-gray-500" />}
+        icon={<Loader2 className="w-6 h-6 animate-spin text-zinc-500" />}
         message="Connecting to remote instance..."
       />
     );
@@ -73,12 +73,12 @@ export default function PodTrainingTab({
   if (remoteJobsStatus === 'error') {
     return (
       <EmptyState
-        icon={<RefreshCw className="w-6 h-6 text-gray-500" />}
+        icon={<RefreshCw className="w-6 h-6 text-zinc-500" />}
         message="Could not connect to remote instance"
         action={
           <button
             onClick={onRetryRemoteJobs}
-            className="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm transition-colors"
+            className="px-3 py-1.5 bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 rounded-lg text-sm transition-colors"
           >
             Retry
           </button>
@@ -94,30 +94,30 @@ export default function PodTrainingTab({
   }
 
   const statusColors: Record<string, string> = {
-    running: 'bg-green-900 text-green-300',
-    queued: 'bg-yellow-900 text-yellow-300',
-    completed: 'bg-blue-900 text-blue-300',
-    error: 'bg-red-900 text-red-300',
-    stopped: 'bg-gray-700 text-gray-300',
+    running: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
+    queued: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
+    completed: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+    error: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
+    stopped: 'bg-zinc-200 text-zinc-700 dark:bg-zinc-700 dark:text-zinc-300',
   };
 
   return (
     <div className="space-y-6">
       {/* Job Status Header */}
-      <div className="bg-gray-900 rounded-xl border border-gray-800 p-4">
+      <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-gray-200">{activeJob.name}</span>
+            <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200">{activeJob.name}</span>
             <span
               className={clsx(
                 'px-2 py-0.5 rounded-full text-xs',
-                statusColors[activeJob.status] || 'bg-gray-700 text-gray-300',
+                statusColors[activeJob.status] || 'bg-zinc-200 text-zinc-700 dark:bg-zinc-700 dark:text-zinc-300',
               )}
             >
               {activeJob.status}
             </span>
           </div>
-          <div className="flex items-center gap-4 text-sm text-gray-400">
+          <div className="flex items-center gap-4 text-sm text-zinc-600 dark:text-zinc-400">
             <span>Step {activeJob.step}</span>
             {activeJob.speed_string && <span>{activeJob.speed_string}</span>}
           </div>
@@ -125,8 +125,8 @@ export default function PodTrainingTab({
       </div>
 
       {/* Loss Chart */}
-      <div className="bg-gray-900 rounded-xl border border-gray-800 p-4">
-        <h3 className="text-sm font-medium text-gray-300 mb-3">Loss Graph</h3>
+      <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4">
+        <h3 className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-3">Loss Graph</h3>
         <JobLossGraph job={adaptedJob} hostId={hostId} />
       </div>
 

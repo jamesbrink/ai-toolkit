@@ -601,7 +601,7 @@ function SummaryCard({
 
   return (
     <div className={`rounded-lg border p-3 ${colorMap[color]}`}>
-      <div className="flex items-center gap-1.5 mb-1 text-xs opacity-70">
+      <div className="flex items-center gap-1.5 mb-1 text-xs">
         {icon}
         {label}
       </div>

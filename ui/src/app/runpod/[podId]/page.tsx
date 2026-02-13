@@ -15,11 +15,14 @@ import PodLogsTab from '@/components/runpod/PodLogsTab';
 import PodTrainingTab from '@/components/runpod/PodTrainingTab';
 
 const statusConfig: Record<string, { color: string; label: string }> = {
-  deploying: { color: 'bg-yellow-900 text-yellow-300', label: 'Deploying' },
-  running: { color: 'bg-green-900 text-green-300', label: 'Running' },
-  stopped: { color: 'bg-gray-700 text-gray-300', label: 'Stopped' },
-  error: { color: 'bg-red-900 text-red-300', label: 'Error' },
-  terminated: { color: 'bg-gray-700 text-gray-400', label: 'Terminated' },
+  deploying: {
+    color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
+    label: 'Deploying',
+  },
+  running: { color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300', label: 'Running' },
+  stopped: { color: 'bg-zinc-200 text-zinc-700 dark:bg-zinc-700 dark:text-zinc-300', label: 'Stopped' },
+  error: { color: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300', label: 'Error' },
+  terminated: { color: 'bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-400', label: 'Terminated' },
 };
 
 export interface LivePodData {
@@ -158,9 +161,9 @@ export default function RunPodPodDetailPage() {
         </TopBar>
         <MainContent>
           <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-gray-800 rounded w-1/3"></div>
-            <div className="h-4 bg-gray-800 rounded w-1/2"></div>
-            <div className="h-4 bg-gray-800 rounded w-2/3"></div>
+            <div className="h-8 bg-zinc-200 dark:bg-zinc-800 rounded w-1/3"></div>
+            <div className="h-4 bg-zinc-200 dark:bg-zinc-800 rounded w-1/2"></div>
+            <div className="h-4 bg-zinc-200 dark:bg-zinc-800 rounded w-2/3"></div>
           </div>
         </MainContent>
       </>
@@ -174,7 +177,7 @@ export default function RunPodPodDetailPage() {
           <h1 className="text-lg">Pod Not Found</h1>
         </TopBar>
         <MainContent>
-          <p className="text-gray-400">The requested pod was not found.</p>
+          <p className="text-zinc-600 dark:text-zinc-400">The requested pod was not found.</p>
         </MainContent>
       </>
     );
@@ -190,7 +193,7 @@ export default function RunPodPodDetailPage() {
       <TopBar>
         <button
           onClick={() => router.push('/hosts')}
-          className="flex items-center space-x-1 text-gray-400 hover:text-white transition-colors mr-3"
+          className="flex items-center space-x-1 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors mr-3"
         >
           <ArrowLeft className="w-4 h-4" />
           <span className="text-sm">Back</span>
@@ -199,7 +202,9 @@ export default function RunPodPodDetailPage() {
           <h1 className="text-lg">{pod.name}</h1>
           <span className={clsx('px-2 py-0.5 rounded-full text-xs', status.color)}>{status.label}</span>
           {pod.instanceType === 'SPOT' && (
-            <span className="px-2 py-0.5 rounded-full text-xs bg-green-900 text-green-300">Spot</span>
+            <span className="px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+              Spot
+            </span>
           )}
         </div>
         <div className="flex-1"></div>
@@ -225,7 +230,7 @@ export default function RunPodPodDetailPage() {
           {pod.hostId && !isTerminated && (
             <button
               onClick={handleDownload}
-              className="flex items-center space-x-1 px-3 py-1.5 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors text-sm"
+              className="flex items-center space-x-1 px-3 py-1.5 bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 rounded-lg transition-colors text-sm"
             >
               <Download className="w-4 h-4" />
               <span>Download</span>
@@ -266,12 +271,15 @@ export default function RunPodPodDetailPage() {
       </MainContent>
 
       {/* Tab bar — must be after MainContent in DOM so it stacks on top */}
-      <div className="bg-gray-800 absolute top-12 left-0 w-full h-10 flex items-center px-2 text-sm overflow-x-auto">
+      <div className="bg-zinc-100 dark:bg-zinc-800 absolute top-12 left-0 w-full h-10 flex items-center px-2 text-sm overflow-x-auto">
         {tabs.map(tab => (
           <Button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={clsx('px-4 py-2 h-10 whitespace-nowrap shrink-0', activeTab === tab.key && 'bg-gray-700')}
+            className={clsx(
+              'px-4 py-2 h-10 whitespace-nowrap shrink-0',
+              activeTab === tab.key && 'bg-zinc-200 dark:bg-zinc-700',
+            )}
           >
             {tab.label}
           </Button>

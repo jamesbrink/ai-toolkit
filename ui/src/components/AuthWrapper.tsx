@@ -86,9 +86,9 @@ export default function AuthWrapper({ authRequired, children }: AuthWrapperProps
   }
 
   return (
-    <div className="flex min-h-dvh bg-gray-900 text-gray-100 absolute top-0 left-0 right-0 bottom-0 scroll-auto">
+    <div className="flex min-h-dvh bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 absolute top-0 left-0 right-0 bottom-0 scroll-auto">
       {/* Left side - decorative or brand area */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gray-800 flex-col justify-center items-center p-12">
+      <div className="hidden lg:flex lg:w-1/2 bg-zinc-100 dark:bg-zinc-800 flex-col justify-center items-center p-12">
         <div className="mb-4">
           {/* Replace with your own logo */}
           <div className="flex items-center justify-center">
@@ -126,7 +126,7 @@ export default function AuthWrapper({ authRequired, children }: AuthWrapperProps
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="token" className="block text-sm font-medium text-gray-400 mb-2">
+              <label htmlFor="token" className="block text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-2">
                 Password
               </label>
               <input
@@ -138,10 +138,10 @@ export default function AuthWrapper({ authRequired, children }: AuthWrapperProps
                 value={token}
                 ref={inputRef}
                 onChange={e => setToken(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 text-gray-100 transition duration-200"
+                className="w-full px-4 py-3 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 text-zinc-900 dark:text-zinc-100 transition duration-200"
                 placeholder="Enter your password"
               />
-              <div className="text-gray-400 text-xs mt-2">
+              <div className="text-zinc-500 dark:text-zinc-400 text-xs mt-2">
                 The password is set with the environment variable AI_TOOLKIT_AUTH, the default is the super secure
                 secret word &quot;password&quot;
               </div>

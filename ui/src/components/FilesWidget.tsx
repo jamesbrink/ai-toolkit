@@ -65,11 +65,11 @@ export default function FilesWidget({ jobID, hostId }: { jobID: string; hostId?:
                           {nameWithoutExt}
                         </span>
                       </div>
-                      <span className="text-xs text-zinc-500 dark:text-gray-400">.safetensors</span>
+                      <span className="text-xs text-zinc-600 dark:text-gray-400">.safetensors</span>
                     </div>
                   </div>
                   <div className="flex items-center space-x-3 flex-shrink-0">
-                    <span className="text-xs text-zinc-500 dark:text-gray-400">{cleanSize(file.size)}</span>
+                    <span className="text-xs text-zinc-600 dark:text-gray-400">{cleanSize(file.size)}</span>
                     <div className="bg-purple-500 bg-opacity-0 group-hover:bg-opacity-10 rounded-full p-1 transition-all">
                       <Download className="w-3 h-3 text-purple-400" />
                     </div>
@@ -81,7 +81,7 @@ export default function FilesWidget({ jobID, hostId }: { jobID: string; hostId?:
         )}
 
         {['success', 'refreshing'].includes(status) && files.length === 0 && (
-          <div className="text-center py-4 text-zinc-500 dark:text-gray-400 text-sm">No checkpoints available</div>
+          <div className="text-center py-4 text-zinc-600 dark:text-gray-400 text-sm">No checkpoints available</div>
         )}
       </div>
     </div>

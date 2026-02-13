@@ -23,7 +23,7 @@ const markdownComponents: Components = {
   strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
   em: ({ children }) => <em>{children}</em>,
   a: ({ href, children }) => (
-    <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline hover:text-blue-300">
+    <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 underline hover:text-blue-500 dark:hover:text-blue-300">
       {children}
     </a>
   ),
@@ -31,25 +31,25 @@ const markdownComponents: Components = {
     const isBlock = className?.includes('language-') || String(children).includes('\n');
     if (isBlock) {
       return (
-        <pre className="bg-gray-950 rounded p-2 my-2 overflow-x-auto text-xs">
+        <pre className="bg-zinc-100 dark:bg-zinc-950 rounded p-2 my-2 overflow-x-auto text-xs">
           <code>{children}</code>
         </pre>
       );
     }
-    return <code className="bg-gray-950 px-1 rounded text-xs">{children}</code>;
+    return <code className="bg-zinc-100 dark:bg-zinc-950 px-1 rounded text-xs">{children}</code>;
   },
   pre: ({ children }) => <>{children}</>,
   blockquote: ({ children }) => (
-    <blockquote className="border-l-2 border-gray-600 pl-3 my-2 text-gray-300">{children}</blockquote>
+    <blockquote className="border-l-2 border-zinc-300 dark:border-zinc-600 pl-3 my-2 text-zinc-600 dark:text-zinc-300">{children}</blockquote>
   ),
-  hr: () => <hr className="border-gray-700 my-3" />,
+  hr: () => <hr className="border-zinc-200 dark:border-zinc-700 my-3" />,
   table: ({ children }) => (
     <div className="overflow-x-auto my-2 chat-scrollbar">
       <table className="text-xs border-collapse min-w-full">{children}</table>
     </div>
   ),
-  th: ({ children }) => <th className="border border-gray-700 px-2 py-1 text-left font-semibold">{children}</th>,
-  td: ({ children }) => <td className="border border-gray-700 px-2 py-1">{children}</td>,
+  th: ({ children }) => <th className="border border-zinc-200 dark:border-zinc-700 px-2 py-1 text-left font-semibold">{children}</th>,
+  td: ({ children }) => <td className="border border-zinc-200 dark:border-zinc-700 px-2 py-1">{children}</td>,
 };
 
 function renderText(text: string): React.ReactNode {
@@ -80,7 +80,7 @@ function renderContentBlocks(blocks: ContentBlock[]): React.ReactNode {
     }
     if (block.type === 'tool_use') {
       return (
-        <div key={i} className="bg-gray-950 rounded p-2 my-1 text-xs text-gray-400">
+        <div key={i} className="bg-zinc-100 dark:bg-zinc-950 rounded p-2 my-1 text-xs text-zinc-600 dark:text-zinc-400">
           Tool: {block.name}
         </div>
       );
@@ -108,11 +108,11 @@ export default function MessageBubble({ message, isStreaming }: MessageBubblePro
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-3`}>
       <div
         className={`max-w-[85%] min-w-0 px-3 py-2 rounded-lg text-sm overflow-x-auto overflow-y-hidden break-words chat-scrollbar ${
-          isUser ? 'bg-gray-700 text-gray-100' : 'bg-gray-800 text-gray-100'
+          isUser ? 'bg-zinc-200 dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100'
         }`}
       >
         {content}
-        {isStreaming && !isUser && <span className="inline-block w-2 h-4 bg-gray-400 animate-pulse ml-0.5" />}
+        {isStreaming && !isUser && <span className="inline-block w-2 h-4 bg-zinc-400 animate-pulse ml-0.5" />}
       </div>
     </div>
   );

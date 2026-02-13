@@ -28,7 +28,7 @@ export default function HostSummaryCard({ id, name, isOnline, deviceType, active
             <span className={clsx('w-2 h-2 rounded-full shrink-0', isOnline ? 'bg-green-500' : 'bg-red-500')} />
           </div>
           <div className="flex items-center space-x-2 mt-0.5">
-            <span className="text-xs text-zinc-500 dark:text-zinc-400">{deviceType.toUpperCase()}</span>
+            <span className="text-xs text-zinc-600 dark:text-zinc-400">{deviceType.toUpperCase()}</span>
             {activeJobs > 0 && (
               <span className="text-xs text-blue-600 dark:text-blue-400">
                 {activeJobs} active job{activeJobs !== 1 ? 's' : ''}

@@ -24,7 +24,7 @@ export default function UniversalTable<T>({
   columns,
   rows,
   isLoading,
-  theadClassName = 'text-zinc-500 dark:text-zinc-400',
+  theadClassName = 'text-zinc-600 dark:text-zinc-400',
   defaultSortKey,
   defaultSortDir = 'asc',
   onRefresh = () => {},
@@ -60,7 +60,7 @@ export default function UniversalTable<T>({
   }, [rows, sortKey, sortDir]);
 
   const SortIndicator = ({ columnKey }: { columnKey: string }) => {
-    if (sortKey !== columnKey) return <span className="ml-1 text-zinc-400 dark:text-zinc-600">&#x21D5;</span>;
+    if (sortKey !== columnKey) return <span className="ml-1 text-zinc-400 dark:text-zinc-500">&#x21D5;</span>;
     return <span className="ml-1">{sortDir === 'asc' ? '\u2191' : '\u2193'}</span>;
   };
 
@@ -76,7 +76,7 @@ export default function UniversalTable<T>({
       {isLoading ? (
         <TableSkeleton />
       ) : rows.length === 0 ? (
-        <div className="p-6 text-center text-zinc-500 dark:text-zinc-400">
+        <div className="p-6 text-center text-zinc-600 dark:text-zinc-400">
           <p className="text-sm">Empty</p>
           <button
             onClick={() => onRefresh()}
@@ -93,7 +93,7 @@ export default function UniversalTable<T>({
               <div key={index} className="p-3 space-y-2">
                 {columns.map(column => (
                   <div key={column.key} className="flex justify-between items-start gap-2">
-                    <span className="text-xs text-zinc-500 dark:text-zinc-400 uppercase shrink-0">{column.title}</span>
+                    <span className="text-xs text-zinc-600 dark:text-zinc-400 uppercase shrink-0">{column.title}</span>
                     <span className={clsx('text-sm text-right', column.className)}>
                       {column.render ? column.render(row) : getCellValue(row, column.key)}
                     </span>

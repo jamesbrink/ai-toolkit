@@ -112,7 +112,7 @@ function NavContent({ collapsed, onNavClick }: { collapsed: boolean; onNavClick?
               <span className="font-bold uppercase">Ostris</span>
               <span className="ml-2 uppercase text-zinc-500 dark:text-gray-300">AI-Toolkit</span>
             </h1>
-            <p className="text-xs text-zinc-400 dark:text-gray-500 uppercase tracking-widest mt-1 pl-10">Kiln Remix</p>
+            <p className="text-xs text-zinc-500 dark:text-gray-400 uppercase tracking-widest mt-1 pl-10">Kiln Remix</p>
           </div>
         )}
       </div>

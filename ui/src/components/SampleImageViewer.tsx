@@ -238,7 +238,7 @@ export default function SampleImageViewer({
         <div className="flex min-h-full items-center justify-center p-4 text-center">
           <DialogPanel
             transition
-            className="relative transform rounded-lg bg-gray-800 text-left shadow-xl transition-all data-closed:translate-y-4 data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in max-w-[95%] max-h-[95vh] data-closed:sm:translate-y-0 data-closed:sm:scale-95 flex flex-col overflow-hidden"
+            className="relative transform rounded-lg bg-white dark:bg-zinc-800 text-left shadow-xl transition-all data-closed:translate-y-4 data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in max-w-[95%] max-h-[95vh] data-closed:sm:translate-y-0 data-closed:sm:scale-95 flex flex-col overflow-hidden"
           >
             <div
               className="overflow-hidden flex items-center justify-center"
@@ -267,13 +267,13 @@ export default function SampleImageViewer({
                 ))}
             </div>
             {/* # make full width */}
-            <div className="bg-gray-900 text-sm flex justify-between items-center px-4 py-2">
+            <div className="bg-zinc-50 dark:bg-zinc-900 text-sm flex justify-between items-center px-4 py-2">
               <div className="flex-1 relative h-10 min-w-0">
                 {sampleItem?.prompt && (
                   <div className="absolute inset-0 grid place-items-center overflow-auto mr-4">
                     <div className="w-full">
-                      <span className="text-gray-300 mr-1 font-medium">Prompt:</span>
-                      <span className="text-gray-100 whitespace-pre-wrap break-words">{sampleItem.prompt}</span>
+                      <span className="text-zinc-600 dark:text-zinc-300 mr-1 font-medium">Prompt:</span>
+                      <span className="text-zinc-900 dark:text-zinc-100 whitespace-pre-wrap break-words">{sampleItem.prompt}</span>
                     </div>
                   </div>
                 )}
@@ -286,36 +286,36 @@ export default function SampleImageViewer({
                       key={idx}
                       src={`${imageBaseUrl}${encodeURIComponent(ci)}`}
                       alt={`Control ${idx + 1}`}
-                      className="max-h-12 max-w-12 object-contain bg-black border border-gray-700 rounded"
+                      className="max-h-12 max-w-12 object-contain bg-black border border-zinc-300 dark:border-zinc-700 rounded"
                     />
                   ))}
                 </div>
               )}
 
-              <div className="text-xs text-gray-100">
+              <div className="text-xs text-zinc-900 dark:text-zinc-100">
                 <div>
-                  <span className="text-gray-300 font-medium">Step:</span> {imgInfo.step.toLocaleString()}
+                  <span className="text-zinc-600 dark:text-zinc-300 font-medium">Step:</span> {imgInfo.step.toLocaleString()}
                 </div>
                 <div>
-                  <span className="text-gray-300 font-medium">Sample #:</span> {imgInfo.promptIdx + 1}
+                  <span className="text-zinc-600 dark:text-zinc-300 font-medium">Sample #:</span> {imgInfo.promptIdx + 1}
                 </div>
                 <div>
-                  <span className="text-gray-300 font-medium">Seed:</span> {seed}
+                  <span className="text-zinc-600 dark:text-zinc-300 font-medium">Seed:</span> {seed}
                 </div>
               </div>
             </div>
-            <div className="absolute top-2 right-2 bg-gray-900 rounded-full p-1 leading-[0px] opacity-50 hover:opacity-100">
+            <div className="absolute top-2 right-2 bg-zinc-100 dark:bg-zinc-900 rounded-full p-1 leading-[0px] opacity-50 hover:opacity-100">
               <Menu>
                 <MenuButton className="flex items-center justify-center">
                   <Cog />
                 </MenuButton>
                 <MenuItems
                   anchor="bottom end"
-                  className="bg-gray-900 border border-gray-700 rounded shadow-lg w-48 px-4 py-2 mt-1 z-50 text-gray-200"
+                  className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded shadow-lg w-48 px-4 py-2 mt-1 z-50 text-zinc-800 dark:text-zinc-200"
                 >
                   <MenuItem>
                     <div
-                      className="cursor-pointer text-gray-200 hover:bg-gray-800 rounded px-2 py-1"
+                      className="cursor-pointer text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded px-2 py-1"
                       onClick={() => {
                         const message = `Are you sure you want to delete this sample? This action cannot be undone.`;
                         openConfirm({

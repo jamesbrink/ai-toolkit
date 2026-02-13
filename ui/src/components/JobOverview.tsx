@@ -113,13 +113,13 @@ export default function JobOverview({ job, hostId }: JobOverviewProps) {
       case 'stopping':
         return 'bg-amber-500/10 text-amber-500';
       case 'stopped':
-        return 'bg-gray-500/10 text-gray-400';
+        return 'bg-gray-500/10 text-gray-500 dark:text-gray-400';
       case 'completed':
         return 'bg-blue-500/10 text-blue-500';
       case 'error':
         return 'bg-rose-500/10 text-rose-500';
       default:
-        return 'bg-gray-500/10 text-gray-400';
+        return 'bg-gray-500/10 text-gray-500 dark:text-gray-400';
     }
   };
 
@@ -140,12 +140,12 @@ export default function JobOverview({ job, hostId }: JobOverviewProps) {
           {/* Progress Bar */}
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-zinc-500 dark:text-gray-400">Progress</span>
+              <span className="text-zinc-600 dark:text-gray-400">Progress</span>
               <span className="text-zinc-700 dark:text-gray-200">
                 Step {job.step} of {totalSteps}
               </span>
             </div>
-            <div className="w-full bg-zinc-200 dark:bg-gray-800 rounded-full h-2">
+            <div className="w-full bg-zinc-200 dark:bg-gray-700 rounded-full h-2">
               <div className="h-2 rounded-full bg-blue-500 transition-all" style={{ width: `${progress}%` }} />
             </div>
           </div>
@@ -155,7 +155,7 @@ export default function JobOverview({ job, hostId }: JobOverviewProps) {
             <div className="flex items-center space-x-4">
               <HardDrive className="w-5 h-5 text-blue-400" />
               <div>
-                <p className="text-xs text-zinc-500 dark:text-gray-400">Job Name</p>
+                <p className="text-xs text-zinc-600 dark:text-gray-400">Job Name</p>
                 <p className="text-sm font-medium text-zinc-700 dark:text-gray-200">{job.name}</p>
               </div>
             </div>
@@ -163,7 +163,7 @@ export default function JobOverview({ job, hostId }: JobOverviewProps) {
             <div className="flex items-center space-x-4">
               <Cpu className="w-5 h-5 text-purple-400" />
               <div>
-                <p className="text-xs text-zinc-500 dark:text-gray-400">{isMpsJob ? 'Device' : 'Assigned GPUs'}</p>
+                <p className="text-xs text-zinc-600 dark:text-gray-400">{isMpsJob ? 'Device' : 'Assigned GPUs'}</p>
                 <p className="text-sm font-medium text-zinc-700 dark:text-gray-200">
                   {isMpsJob ? 'Apple Silicon (MPS)' : `GPUs: ${job.gpu_ids}`}
                 </p>
@@ -173,7 +173,7 @@ export default function JobOverview({ job, hostId }: JobOverviewProps) {
             <div className="flex items-center space-x-4">
               <Gauge className="w-5 h-5 text-green-400" />
               <div>
-                <p className="text-xs text-zinc-500 dark:text-gray-400">Speed</p>
+                <p className="text-xs text-zinc-600 dark:text-gray-400">Speed</p>
                 <p className="text-sm font-medium text-zinc-700 dark:text-gray-200">
                   {job.speed_string == '' ? '?' : job.speed_string}
                 </p>

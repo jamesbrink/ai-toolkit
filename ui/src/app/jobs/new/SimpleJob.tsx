@@ -319,7 +319,7 @@ export default function SimpleJob({
                 options={quantizationOptions}
               />
               {deviceType === 'mps' && jobConfig.config.process[0].model.quantize && (
-                <p className="text-xs text-yellow-400 mt-2">
+                <p className="text-xs text-yellow-700 dark:text-yellow-400 mt-2">
                   Transformer quantization may crash during backward pass on MPS. Only text encoder quantization is
                   safe.
                 </p>
@@ -1354,8 +1354,8 @@ export default function SimpleJob({
           </Card>
         </div>
 
-        {status === 'success' && <p className="text-green-500 text-center">Training saved successfully!</p>}
-        {status === 'error' && <p className="text-red-500 text-center">Error saving training. Please try again.</p>}
+        {status === 'success' && <p className="text-green-700 dark:text-green-400 text-center">Training saved successfully!</p>}
+        {status === 'error' && <p className="text-red-700 dark:text-red-400 text-center">Error saving training. Please try again.</p>}
       </form>
       <AddSingleImageModal />
     </>

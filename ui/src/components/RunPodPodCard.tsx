@@ -28,11 +28,14 @@ function formatCost(dollars: number): string {
 }
 
 const statusConfig: Record<string, { color: string; label: string }> = {
-  deploying: { color: 'bg-yellow-900 text-yellow-300', label: 'Deploying' },
-  running: { color: 'bg-green-900 text-green-300', label: 'Running' },
-  stopped: { color: 'bg-gray-700 text-gray-300', label: 'Stopped' },
-  error: { color: 'bg-red-900 text-red-300', label: 'Error' },
-  terminated: { color: 'bg-gray-700 text-gray-400', label: 'Terminated' },
+  deploying: {
+    color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
+    label: 'Deploying',
+  },
+  running: { color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300', label: 'Running' },
+  stopped: { color: 'bg-zinc-200 text-zinc-700 dark:bg-zinc-700 dark:text-zinc-300', label: 'Stopped' },
+  error: { color: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300', label: 'Error' },
+  terminated: { color: 'bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-400', label: 'Terminated' },
 };
 
 export default function RunPodPodCard({ pod, onRefresh }: RunPodPodCardProps) {
@@ -79,20 +82,20 @@ export default function RunPodPodCard({ pod, onRefresh }: RunPodPodCardProps) {
   return (
     <div
       onClick={() => router.push(`/runpod/${pod.id}`)}
-      className="bg-gray-900 rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 border border-gray-800 cursor-pointer"
+      className="bg-white dark:bg-zinc-900 rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 border border-zinc-200 dark:border-zinc-800 cursor-pointer"
     >
       {/* Header */}
-      <div className="bg-gray-800 px-4 py-3 flex items-center justify-between">
+      <div className="bg-zinc-100 dark:bg-zinc-800 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center space-x-2 min-w-0">
-          <Cloud className="w-4 h-4 text-gray-400 shrink-0" />
-          <h2 className="font-semibold text-gray-100 truncate">{pod.name}</h2>
+          <Cloud className="w-4 h-4 text-zinc-600 dark:text-zinc-400 shrink-0" />
+          <h2 className="font-semibold text-zinc-900 dark:text-zinc-100 truncate">{pod.name}</h2>
           <span className={clsx('px-2 py-0.5 rounded-full text-xs', status.color)}>{status.label}</span>
         </div>
         <div className="flex items-center space-x-1 shrink-0">
           {isActive && (
             <button
               onClick={handleStop}
-              className="p-1.5 text-gray-400 hover:text-yellow-400 rounded transition-colors"
+              className="p-1.5 text-zinc-600 dark:text-zinc-400 hover:text-yellow-600 dark:hover:text-yellow-400 rounded transition-colors"
               title="Stop"
             >
               <Square className="w-3.5 h-3.5" />
@@ -101,7 +104,7 @@ export default function RunPodPodCard({ pod, onRefresh }: RunPodPodCardProps) {
           {isStopped && (
             <button
               onClick={handleResume}
-              className="p-1.5 text-gray-400 hover:text-green-400 rounded transition-colors"
+              className="p-1.5 text-zinc-600 dark:text-zinc-400 hover:text-green-600 dark:hover:text-green-400 rounded transition-colors"
               title="Resume"
             >
               <Play className="w-3.5 h-3.5" />
@@ -110,7 +113,7 @@ export default function RunPodPodCard({ pod, onRefresh }: RunPodPodCardProps) {
           {pod.currentStatus !== 'terminated' && (
             <button
               onClick={handleTerminate}
-              className="p-1.5 text-gray-400 hover:text-red-400 rounded transition-colors"
+              className="p-1.5 text-zinc-600 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 rounded transition-colors"
               title="Terminate"
             >
               <Trash2 className="w-3.5 h-3.5" />
@@ -122,31 +125,35 @@ export default function RunPodPodCard({ pod, onRefresh }: RunPodPodCardProps) {
       {/* Body */}
       <div className="p-4 space-y-3">
         <div className="flex items-center space-x-2">
-          <span className="text-sm text-gray-300">{pod.gpuTypeDisplay}</span>
-          {pod.gpuCount > 1 && <span className="text-xs text-gray-400">x{pod.gpuCount}</span>}
+          <span className="text-sm text-zinc-700 dark:text-zinc-300">{pod.gpuTypeDisplay}</span>
+          {pod.gpuCount > 1 && <span className="text-xs text-zinc-600 dark:text-zinc-400">x{pod.gpuCount}</span>}
         </div>
 
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-1">
-            <DollarSign className="w-3.5 h-3.5 text-gray-400" />
-            <span className="text-sm text-gray-300">{formatCost(pod.costPerHr)}/hr</span>
+            <DollarSign className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-400" />
+            <span className="text-sm text-zinc-700 dark:text-zinc-300">{formatCost(pod.costPerHr)}/hr</span>
           </div>
           <div className="flex items-center space-x-1">
-            <Clock className="w-3.5 h-3.5 text-gray-400" />
-            <span className="text-sm text-gray-300">{formatUptime(pod.totalUptimeSeconds)}</span>
+            <Clock className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-400" />
+            <span className="text-sm text-zinc-700 dark:text-zinc-300">{formatUptime(pod.totalUptimeSeconds)}</span>
           </div>
         </div>
 
         <div className="flex items-center justify-between flex-wrap gap-1">
-          <span className="text-sm text-gray-400">Spend: {formatCost(pod.estimatedSpend)}</span>
+          <span className="text-sm text-zinc-600 dark:text-zinc-400">Spend: {formatCost(pod.estimatedSpend)}</span>
           <div className="flex items-center space-x-1">
             {pod.instanceType === 'SPOT' && (
-              <span className="px-2 py-0.5 rounded-full text-xs bg-green-900 text-green-300">Spot</span>
+              <span className="px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+                Spot
+              </span>
             )}
             <span
               className={clsx(
                 'px-2 py-0.5 rounded-full text-xs',
-                pod.cloudType === 'SECURE' ? 'bg-blue-900 text-blue-300' : 'bg-gray-700 text-gray-300',
+                pod.cloudType === 'SECURE'
+                  ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
+                  : 'bg-zinc-200 text-zinc-700 dark:bg-zinc-700 dark:text-zinc-300',
               )}
             >
               {pod.cloudType === 'SECURE' ? 'Secure' : 'Community'}
@@ -155,7 +162,7 @@ export default function RunPodPodCard({ pod, onRefresh }: RunPodPodCardProps) {
         </div>
 
         {pod.dataCenterName && (
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-zinc-600 dark:text-zinc-400">
             {pod.dataCenterName}
             {pod.dataCenterRegion ? ` — ${pod.dataCenterRegion}` : ''}
           </p>
@@ -166,10 +173,10 @@ export default function RunPodPodCard({ pod, onRefresh }: RunPodPodCardProps) {
             <span
               className={clsx(
                 'w-2 h-2 rounded-full shrink-0',
-                pod.currentStatus === 'running' ? 'bg-green-500' : 'bg-gray-500',
+                pod.currentStatus === 'running' ? 'bg-green-500' : 'bg-zinc-400 dark:bg-zinc-500',
               )}
             />
-            <span className="text-xs text-gray-400">
+            <span className="text-xs text-zinc-600 dark:text-zinc-400">
               {pod.currentStatus === 'running' ? 'Host connected' : 'Host linked (offline)'}
             </span>
           </div>

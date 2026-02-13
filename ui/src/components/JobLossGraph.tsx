@@ -5,6 +5,7 @@ import { UnifiedJob } from '@/types';
 import useJobLossLog, { LossPoint } from '@/hooks/useJobLossLog';
 import { useMemo, useState, useEffect } from 'react';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from 'recharts';
+import { useTheme } from '@/components/ThemeProvider';
 
 interface Props {
   job: Job | UnifiedJob;
@@ -68,6 +69,17 @@ function strokeForKey(key: string) {
 
 export default function JobLossGraph({ job, hostId }: Props) {
   const { series, lossKeys, status, refreshLoss } = useJobLossLog(job.id, 2000, hostId);
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === 'dark';
+
+  const tickFill = isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.55)';
+  const tickLineStroke = isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)';
+  const gridStroke = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+  const tooltipBg = isDark ? 'rgba(17,24,39,0.96)' : 'rgba(255,255,255,0.96)';
+  const tooltipBorder = isDark ? '1px solid rgba(31,41,55,1)' : '1px solid rgba(228,228,231,1)';
+  const tooltipColor = isDark ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.9)';
+  const tooltipLabelColor = isDark ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.75)';
+  const legendColor = isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.7)';
 
   // Controls
   const [useLogScale, setUseLogScale] = useState(false);
@@ -190,12 +202,12 @@ export default function JobLossGraph({ job, hostId }: Props) {
   }, [clipOutliers, chartData, activeKeys, showSmoothed]);
 
   return (
-    <div className="bg-gray-900 rounded-xl shadow-lg overflow-hidden border border-gray-800 flex flex-col">
-      <div className="bg-gray-800 px-4 py-3 flex items-center justify-between">
+    <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-lg overflow-hidden border border-zinc-200 dark:border-zinc-800 flex flex-col">
+      <div className="bg-zinc-50 dark:bg-zinc-800 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="h-2 w-2 rounded-full bg-blue-400" />
-          <h2 className="text-gray-100 text-sm font-medium">Loss graph</h2>
-          <span className="text-xs text-gray-400">
+          <h2 className="text-zinc-900 dark:text-zinc-100 text-sm font-medium">Loss graph</h2>
+          <span className="text-xs text-zinc-600 dark:text-zinc-400">
             {status === 'loading' && 'Loading...'}
             {status === 'refreshing' && 'Refreshing...'}
             {status === 'error' && 'Error'}
@@ -207,7 +219,7 @@ export default function JobLossGraph({ job, hostId }: Props) {
         <button
           type="button"
           onClick={refreshLoss}
-          className="px-3 py-1 rounded-md text-xs bg-gray-700/60 hover:bg-gray-700 text-gray-200 border border-gray-700"
+          className="px-3 py-1 rounded-md text-xs bg-zinc-200/60 hover:bg-zinc-200 dark:bg-zinc-700/60 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 border border-zinc-300 dark:border-zinc-700"
         >
           Refresh
         </button>
@@ -215,27 +227,27 @@ export default function JobLossGraph({ job, hostId }: Props) {
 
       {/* Chart */}
       <div className="px-4  pt-4 pb-4">
-        <div className="bg-gray-950 rounded-lg border border-gray-800 h-96 relative">
+        <div className="bg-zinc-50 dark:bg-zinc-950 rounded-lg border border-zinc-200 dark:border-zinc-800 h-96 relative">
           {!hasData ? (
-            <div className="h-full w-full flex items-center justify-center text-sm text-gray-400">
+            <div className="h-full w-full flex items-center justify-center text-sm text-zinc-600 dark:text-zinc-400">
               {status === 'error' ? 'Failed to load loss logs.' : 'Waiting for loss points...'}
             </div>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData} margin={{ top: 10, right: 16, bottom: 10, left: 8 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
                 <XAxis
                   dataKey="step"
-                  tick={{ fill: 'rgba(255,255,255,0.55)', fontSize: 12 }}
-                  tickLine={{ stroke: 'rgba(255,255,255,0.15)' }}
-                  axisLine={{ stroke: 'rgba(255,255,255,0.15)' }}
+                  tick={{ fill: tickFill, fontSize: 12 }}
+                  tickLine={{ stroke: tickLineStroke }}
+                  axisLine={{ stroke: tickLineStroke }}
                   minTickGap={40}
                 />
                 <YAxis
                   scale={useLogScale ? 'log' : 'linear'}
-                  tick={{ fill: 'rgba(255,255,255,0.55)', fontSize: 12 }}
-                  tickLine={{ stroke: 'rgba(255,255,255,0.15)' }}
-                  axisLine={{ stroke: 'rgba(255,255,255,0.15)' }}
+                  tick={{ fill: tickFill, fontSize: 12 }}
+                  tickLine={{ stroke: tickLineStroke }}
+                  axisLine={{ stroke: tickLineStroke }}
                   width={72}
                   tickFormatter={formatNum}
                   domain={yDomain}
@@ -244,13 +256,13 @@ export default function JobLossGraph({ job, hostId }: Props) {
                 <Tooltip
                   cursor={{ stroke: 'rgba(59,130,246,0.25)', strokeWidth: 1 }}
                   contentStyle={{
-                    background: 'rgba(17,24,39,0.96)',
-                    border: '1px solid rgba(31,41,55,1)',
+                    background: tooltipBg,
+                    border: tooltipBorder,
                     borderRadius: 10,
-                    color: 'rgba(255,255,255,0.9)',
+                    color: tooltipColor,
                     fontSize: 12,
                   }}
-                  labelStyle={{ color: 'rgba(255,255,255,0.75)' }}
+                  labelStyle={{ color: tooltipLabelColor }}
                   labelFormatter={label => `step ${label}`}
                   formatter={(value, name) => [formatNum(Number(value)), name]}
                 />
@@ -258,7 +270,7 @@ export default function JobLossGraph({ job, hostId }: Props) {
                 <Legend
                   wrapperStyle={{
                     paddingTop: 8,
-                    color: 'rgba(255,255,255,0.7)',
+                    color: legendColor,
                     fontSize: 12,
                   }}
                 />
@@ -302,8 +314,8 @@ export default function JobLossGraph({ job, hostId }: Props) {
       {/* Controls */}
       <div className="px-4 pb-2">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="bg-gray-950 border border-gray-800 rounded-lg p-3">
-            <label className="block text-xs text-gray-400 mb-2">Display</label>
+          <div className="bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-3">
+            <label className="block text-xs text-zinc-600 dark:text-zinc-400 mb-2">Display</label>
             <div className="flex flex-wrap gap-2">
               <ToggleButton checked={showSmoothed} onClick={() => setShowSmoothed(v => !v)} label="Smoothed" />
               <ToggleButton checked={showRaw} onClick={() => setShowRaw(v => !v)} label="Raw" />
@@ -312,10 +324,10 @@ export default function JobLossGraph({ job, hostId }: Props) {
             </div>
           </div>
 
-          <div className="bg-gray-950 border border-gray-800 rounded-lg p-3">
-            <label className="block text-xs text-gray-400 mb-2">Series</label>
+          <div className="bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-3">
+            <label className="block text-xs text-zinc-600 dark:text-zinc-400 mb-2">Series</label>
             {lossKeys.length === 0 ? (
-              <div className="text-sm text-gray-400">No loss keys found yet.</div>
+              <div className="text-sm text-zinc-600 dark:text-zinc-400">No loss keys found yet.</div>
             ) : (
               <div className="flex flex-wrap gap-2">
                 {lossKeys.map(k => (
@@ -326,8 +338,8 @@ export default function JobLossGraph({ job, hostId }: Props) {
                     className={[
                       'px-3 py-1 rounded-md text-xs border transition-colors',
                       enabled[k] === false
-                        ? 'bg-gray-900 text-gray-400 border-gray-800 hover:bg-gray-800/60'
-                        : 'bg-gray-900 text-gray-200 border-gray-800 hover:bg-gray-800/60',
+                        ? 'bg-zinc-100 dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-200/60 dark:hover:bg-zinc-800/60'
+                        : 'bg-zinc-100 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-200/60 dark:hover:bg-zinc-800/60',
                     ].join(' ')}
                     aria-pressed={enabled[k] !== false}
                     title={k}
@@ -340,10 +352,10 @@ export default function JobLossGraph({ job, hostId }: Props) {
             )}
           </div>
 
-          <div className="bg-gray-950 border border-gray-800 rounded-lg p-3">
+          <div className="bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-3">
             <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs text-gray-400">Smoothing</label>
-              <span className="text-xs text-gray-300">{smoothing}%</span>
+              <label className="block text-xs text-zinc-600 dark:text-zinc-400">Smoothing</label>
+              <span className="text-xs text-zinc-700 dark:text-zinc-300">{smoothing}%</span>
             </div>
             <input
               type="range"
@@ -356,10 +368,10 @@ export default function JobLossGraph({ job, hostId }: Props) {
             />
           </div>
 
-          <div className="bg-gray-950 border border-gray-800 rounded-lg p-3">
+          <div className="bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-3">
             <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs text-gray-400">Plot stride</label>
-              <span className="text-xs text-gray-300">every {plotStride} pt</span>
+              <label className="block text-xs text-zinc-600 dark:text-zinc-400">Plot stride</label>
+              <span className="text-xs text-zinc-700 dark:text-zinc-300">every {plotStride} pt</span>
             </div>
             <input
               type="range"
@@ -369,13 +381,13 @@ export default function JobLossGraph({ job, hostId }: Props) {
               onChange={e => setPlotStride(Number(e.target.value))}
               className="w-full accent-blue-500"
             />
-            <div className="mt-2 text-[11px] text-gray-400">UI downsample for huge runs.</div>
+            <div className="mt-2 text-[11px] text-zinc-600 dark:text-zinc-400">UI downsample for huge runs.</div>
           </div>
 
-          <div className="bg-gray-950 border border-gray-800 rounded-lg p-3 md:col-span-2">
+          <div className="bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-3 md:col-span-2">
             <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs text-gray-400">Window (last N points)</label>
-              <span className="text-xs text-gray-300">{windowSize === 0 ? 'all' : windowSize.toLocaleString()}</span>
+              <label className="block text-xs text-zinc-600 dark:text-zinc-400">Window (last N points)</label>
+              <span className="text-xs text-zinc-700 dark:text-zinc-300">{windowSize === 0 ? 'all' : windowSize.toLocaleString()}</span>
             </div>
             <input
               type="range"
@@ -386,7 +398,7 @@ export default function JobLossGraph({ job, hostId }: Props) {
               onChange={e => setWindowSize(Number(e.target.value))}
               className="w-full accent-blue-500"
             />
-            <div className="mt-2 text-[11px] text-gray-400">
+            <div className="mt-2 text-[11px] text-zinc-600 dark:text-zinc-400">
               Set to 0 to show all (not recommended for very long runs).
             </div>
           </div>
@@ -404,8 +416,8 @@ function ToggleButton({ checked, onClick, label }: { checked: boolean; onClick: 
       className={[
         'px-3 py-1 rounded-md text-xs border transition-colors',
         checked
-          ? 'bg-blue-500/10 text-blue-300 border-blue-500/30 hover:bg-blue-500/15'
-          : 'bg-gray-900 text-gray-300 border-gray-800 hover:bg-gray-800/60',
+          ? 'bg-blue-500/10 text-blue-600 dark:text-blue-300 border-blue-500/30 hover:bg-blue-500/15'
+          : 'bg-zinc-100 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-200/60 dark:hover:bg-zinc-800/60',
       ].join(' ')}
       aria-pressed={checked}
     >

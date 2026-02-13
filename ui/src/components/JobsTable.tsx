@@ -67,7 +67,7 @@ function MultiHostJobsTable({ onlyActive, hosts }: { onlyActive: boolean; hosts:
         const totalSteps = jobConfig.config.process[0].train.steps;
         return (
           <div>
-            <div className="text-xs text-zinc-500 dark:text-gray-400">
+            <div className="text-xs text-zinc-600 dark:text-gray-400">
               {row.step} / {totalSteps}
             </div>
             <div className="bg-zinc-200 dark:bg-gray-700 rounded-full h-1.5">
@@ -88,7 +88,7 @@ function MultiHostJobsTable({ onlyActive, hosts }: { onlyActive: boolean; hosts:
       title: 'Status',
       key: 'status',
       render: (row: UnifiedJob) => {
-        let statusClass = 'text-zinc-500 dark:text-gray-400';
+        let statusClass = 'text-zinc-600 dark:text-gray-400';
         if (row.status === 'completed') statusClass = 'text-green-600 dark:text-green-400';
         if (row.status === 'failed') statusClass = 'text-red-600 dark:text-red-400';
         if (row.status === 'running') statusClass = 'text-blue-600 dark:text-blue-400';
@@ -254,7 +254,7 @@ function MultiHostJobsTable({ onlyActive, hosts }: { onlyActive: boolean; hosts:
                 >
                   {queueRunning ? (
                     <>
-                      <span className="text-emerald-600 dark:text-green-400 mr-2">Queue Running</span>
+                      <span className="text-emerald-700 dark:text-green-400 mr-2">Queue Running</span>
                       <button
                         onClick={handleStopQueue}
                         className="ml-4 text-xs bg-red-600 hover:bg-red-700 dark:bg-red-900 dark:hover:bg-red-800 text-white px-2 py-1 rounded"
@@ -280,13 +280,13 @@ function MultiHostJobsTable({ onlyActive, hosts }: { onlyActive: boolean; hosts:
                 rows={group.jobs}
                 isLoading={isLoading}
                 onRefresh={refresh}
-                theadClassName={queueRunning ? 'bg-emerald-50 dark:bg-green-950' : 'bg-red-50 dark:bg-red-950'}
+                theadClassName={queueRunning ? 'text-zinc-600 dark:text-zinc-400 bg-emerald-50 dark:bg-green-950' : 'text-zinc-600 dark:text-zinc-400 bg-red-50 dark:bg-red-950'}
               />
             </div>
           );
         })}
       {!onlyActive && Object.keys(jobsDict).includes('Idle') && jobsDict['Idle'].jobs.length > 0 && (
-        <div className="mb-6 opacity-50">
+        <div className="mb-6 text-zinc-400 dark:text-zinc-500">
           <div className="text-md flex px-4 py-1 rounded-t-lg bg-zinc-200 dark:bg-slate-600">
             <div className="flex items-center space-x-2 flex-1 py-2">
               <h2 className="font-semibold text-zinc-700 dark:text-gray-100">Idle</h2>
@@ -333,7 +333,7 @@ function LocalJobsTable({ onlyActive }: { onlyActive: boolean }) {
 
         return (
           <div>
-            <div className="text-xs text-zinc-500 dark:text-gray-400">
+            <div className="text-xs text-zinc-600 dark:text-gray-400">
               {row.step} / {totalSteps}
             </div>
             <div className="bg-zinc-200 dark:bg-gray-700 rounded-full h-1.5">
@@ -354,7 +354,7 @@ function LocalJobsTable({ onlyActive }: { onlyActive: boolean }) {
       title: 'Status',
       key: 'status',
       render: row => {
-        let statusClass = 'text-zinc-500 dark:text-gray-400';
+        let statusClass = 'text-zinc-600 dark:text-gray-400';
         if (row.status === 'completed') statusClass = 'text-green-600 dark:text-green-400';
         if (row.status === 'failed') statusClass = 'text-red-600 dark:text-red-400';
         if (row.status === 'running') statusClass = 'text-blue-600 dark:text-blue-400';
@@ -460,7 +460,7 @@ function LocalJobsTable({ onlyActive }: { onlyActive: boolean }) {
                 >
                   {queue?.is_running ? (
                     <>
-                      <span className="text-emerald-600 dark:text-green-400 mr-2">Queue Running</span>
+                      <span className="text-emerald-700 dark:text-green-400 mr-2">Queue Running</span>
                       <button
                         onClick={async () => {
                           await stopQueue(queue.gpu_ids as string);
@@ -498,7 +498,7 @@ function LocalJobsTable({ onlyActive }: { onlyActive: boolean }) {
           );
         })}
       {!onlyActive && Object.keys(jobsDict).includes('Idle') && (
-        <div className="mb-6 opacity-50">
+        <div className="mb-6 text-zinc-400 dark:text-zinc-500">
           <div className="text-md flex px-4 py-1 rounded-t-lg bg-zinc-200 dark:bg-slate-600">
             <div className="flex items-center space-x-2 flex-1 py-2">
               <h2 className="font-semibold text-zinc-700 dark:text-gray-100">Idle</h2>

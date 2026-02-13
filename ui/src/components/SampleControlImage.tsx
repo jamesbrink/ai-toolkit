@@ -108,8 +108,8 @@ export default function SampleControlImage({
         'group relative flex items-center justify-center rounded-xl cursor-pointer ring-1 ring-inset',
         'transition-all duration-200 select-none overflow-hidden text-center',
         'h-20 w-20',
-        backgroundUrl ? 'bg-gray-800 ring-gray-700' : 'bg-linear-to-b from-gray-800 to-gray-900 ring-gray-700',
-        isDragActive ? 'outline outline-2 outline-blue-500' : 'hover:ring-gray-600',
+        backgroundUrl ? 'bg-zinc-100 dark:bg-zinc-800 ring-zinc-300 dark:ring-zinc-700' : 'bg-linear-to-b from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900 ring-zinc-300 dark:ring-zinc-700',
+        isDragActive ? 'outline outline-2 outline-blue-500' : 'hover:ring-zinc-400 dark:hover:ring-zinc-600',
         className,
       )}
       style={
@@ -137,7 +137,7 @@ export default function SampleControlImage({
 
       {/* Empty state — centered */}
       {!backgroundUrl && (
-        <div className="flex flex-col items-center justify-center text-gray-300 text-center">
+        <div className="flex flex-col items-center justify-center text-zinc-600 dark:text-zinc-300 text-center">
           <FaImage className="opacity-80" />
           <div className="mt-1 text-[10px] font-semibold tracking-wide opacity-80">{instruction}</div>
           <div className="mt-0.5 text-[9px] opacity-60">Click or drop</div>

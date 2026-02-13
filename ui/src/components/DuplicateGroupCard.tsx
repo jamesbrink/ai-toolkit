@@ -51,8 +51,8 @@ export default function DuplicateGroupCard({
 
   if (dismissed) {
     return (
-      <div className="rounded-lg border border-zinc-200 dark:border-gray-700 bg-zinc-100/50 dark:bg-gray-800/50 p-3 opacity-50">
-        <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-gray-400">
+      <div className="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-100/50 dark:bg-zinc-800/50 p-3 opacity-50">
+        <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
           <span>Group dismissed</span>
           <span>
             ({imagePaths.length} images, {Math.round(maxSimilarity)}% similar)
@@ -63,14 +63,14 @@ export default function DuplicateGroupCard({
   }
 
   return (
-    <div className="rounded-lg border border-zinc-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-3 space-y-3">
+    <div className="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-3 space-y-3">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-700">
             {Math.round(maxSimilarity)}% similar
           </span>
-          <span className="text-xs text-zinc-500 dark:text-gray-400">{imagePaths.length} images</span>
+          <span className="text-xs text-zinc-500 dark:text-zinc-400">{imagePaths.length} images</span>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -82,7 +82,7 @@ export default function DuplicateGroupCard({
           </button>
           <button
             onClick={() => onDismiss(groupId)}
-            className="text-xs text-zinc-500 dark:text-gray-400 hover:text-zinc-700 dark:hover:text-gray-200"
+            className="text-xs text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
             aria-label="Dismiss duplicate group"
           >
             Dismiss
@@ -101,7 +101,7 @@ export default function DuplicateGroupCard({
               className={`relative cursor-pointer rounded-lg border-2 transition-colors ${
                 isSelected
                   ? 'border-red-500 bg-red-50 dark:bg-red-950/20'
-                  : 'border-zinc-300 dark:border-gray-600 hover:border-zinc-400 dark:hover:border-gray-500'
+                  : 'border-zinc-300 dark:border-zinc-600 hover:border-zinc-400 dark:hover:border-zinc-500'
               }`}
               onClick={() => toggleSelect(imgPath)}
               title={filename}
@@ -110,7 +110,7 @@ export default function DuplicateGroupCard({
               <img
                 src={`/api/img/${encodeURIComponent(imgPath)}`}
                 alt={filename}
-                className="w-20 h-20 object-cover rounded-md bg-zinc-200 dark:bg-gray-700"
+                className="w-20 h-20 object-cover rounded-md bg-zinc-200 dark:bg-zinc-700"
                 onError={e => {
                   (e.target as HTMLImageElement).style.display = 'none';
                 }}
@@ -132,7 +132,7 @@ export default function DuplicateGroupCard({
       {hasMore && (
         <button
           onClick={() => setExpanded(!expanded)}
-          className="flex items-center gap-1 text-xs text-zinc-500 dark:text-gray-400 hover:text-zinc-700 dark:hover:text-gray-200"
+          className="flex items-center gap-1 text-xs text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
         >
           {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
           {expanded ? 'Show less' : `Show all ${imagePaths.length} images`}
@@ -141,8 +141,8 @@ export default function DuplicateGroupCard({
 
       {/* Actions */}
       {selected.size > 0 && (
-        <div className="flex items-center justify-between pt-2 border-t border-zinc-200 dark:border-gray-700">
-          <span className="text-xs text-zinc-500 dark:text-gray-400">{selected.size} selected for deletion</span>
+        <div className="flex items-center justify-between pt-2 border-t border-zinc-200 dark:border-zinc-700">
+          <span className="text-xs text-zinc-500 dark:text-zinc-400">{selected.size} selected for deletion</span>
           <button
             onClick={handleDelete}
             className="px-3 py-1 text-xs bg-red-700 hover:bg-red-600 text-white rounded-lg transition-colors"

@@ -45,7 +45,7 @@ export default function ChatInput({ onSend, disabled, isStreaming, onStop }: Cha
   }, []);
 
   return (
-    <div className="flex items-end gap-2 p-3 border-t border-gray-700">
+    <div className="flex items-end gap-2 p-3 border-t border-zinc-200 dark:border-zinc-700">
       <textarea
         ref={textareaRef}
         value={text}
@@ -57,7 +57,7 @@ export default function ChatInput({ onSend, disabled, isStreaming, onStop }: Cha
         placeholder="Ask about training config..."
         disabled={disabled}
         rows={1}
-        className="flex-1 bg-gray-800 text-gray-100 text-sm rounded-lg px-3 py-2 resize-none outline-none focus:ring-1 focus:ring-gray-600 placeholder-gray-500 disabled:opacity-50"
+        className="flex-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-sm rounded-lg px-3 py-2 resize-none outline-none focus:ring-1 focus:ring-zinc-400 dark:focus:ring-zinc-600 placeholder-zinc-500 disabled:opacity-50"
       />
       {isStreaming ? (
         <button
@@ -72,7 +72,7 @@ export default function ChatInput({ onSend, disabled, isStreaming, onStop }: Cha
         <button
           onClick={handleSend}
           disabled={disabled || !text.trim()}
-          className="p-2 text-gray-400 hover:text-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          className="p-2 text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
           aria-label="Send message"
         >
           <SendHorizontal className="w-5 h-5" />

@@ -118,14 +118,14 @@ export default function Datasets() {
       sortable: true,
       className: 'w-28 text-right',
       render: (row: SourcedDatasetInfo) => {
-        if (row.imageCount === 0) return <span className="text-zinc-400 dark:text-zinc-500">-</span>;
+        if (row.imageCount === 0) return <span className="text-zinc-500 dark:text-zinc-400">-</span>;
         const pct = Math.round((row.captionCount / row.imageCount) * 100);
         const color =
           pct === 100
             ? 'text-green-600 dark:text-green-400'
             : pct > 0
               ? 'text-yellow-600 dark:text-yellow-400'
-              : 'text-zinc-400 dark:text-zinc-500';
+              : 'text-zinc-500 dark:text-zinc-400';
         return (
           <span className={`tabular-nums ${color}`}>
             {row.captionCount}/{row.imageCount}

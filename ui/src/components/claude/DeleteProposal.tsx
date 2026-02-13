@@ -24,7 +24,7 @@ export default function DeleteProposal({ toolUseId, imagePaths, reason }: Delete
   const [submitted, setSubmitted] = useState(false);
 
   if (safePaths.length === 0) {
-    return <div className="text-gray-400 text-xs p-2">No images proposed for deletion</div>;
+    return <div className="text-zinc-500 dark:text-zinc-400 text-xs p-2">No images proposed for deletion</div>;
   }
 
   const handleDecision = (index: number, decision: 'accepted' | 'rejected') => {
@@ -56,17 +56,17 @@ export default function DeleteProposal({ toolUseId, imagePaths, reason }: Delete
 
   return (
     <div className="my-2 space-y-2">
-      <div className="text-xs text-gray-400 font-medium">Proposed image deletions:</div>
-      <div className="text-xs text-gray-400 mb-1">{reason}</div>
+      <div className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">Proposed image deletions:</div>
+      <div className="text-xs text-zinc-500 dark:text-zinc-400 mb-1">{reason}</div>
       {safePaths.map((imgPath, i) => (
         <div
           key={i}
           className={`rounded-lg border text-xs p-2 ${
             decisions[i] === 'accepted'
-              ? 'border-red-700 bg-red-950/30'
+              ? 'border-red-300 bg-red-50 dark:border-red-700 dark:bg-red-950/30'
               : decisions[i] === 'rejected'
-                ? 'border-green-700 bg-green-950/30 opacity-60'
-                : 'border-gray-700 bg-gray-800'
+                ? 'border-green-300 bg-green-50 dark:border-green-700 dark:bg-green-950/30 opacity-60'
+                : 'border-zinc-200 bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800'
           }`}
         >
           <div className="flex items-center justify-between gap-2">
@@ -77,14 +77,14 @@ export default function DeleteProposal({ toolUseId, imagePaths, reason }: Delete
                 alt={imgPath.split('/').pop() || ''}
                 className="w-16 h-16 object-cover rounded shrink-0"
               />
-              <div className="font-mono text-gray-300 truncate">{imgPath.split('/').pop()}</div>
+              <div className="font-mono text-zinc-700 dark:text-zinc-300 truncate">{imgPath.split('/').pop()}</div>
             </div>
             {!submitted && (
               <div className="flex gap-1 shrink-0">
                 <button
                   onClick={() => handleDecision(i, 'accepted')}
                   className={`p-1 rounded transition-colors ${
-                    decisions[i] === 'accepted' ? 'bg-red-700 text-white' : 'text-gray-400 hover:text-red-400'
+                    decisions[i] === 'accepted' ? 'bg-red-700 text-white' : 'text-zinc-500 dark:text-zinc-400 hover:text-red-400'
                   }`}
                   title="Delete"
                 >
@@ -93,7 +93,7 @@ export default function DeleteProposal({ toolUseId, imagePaths, reason }: Delete
                 <button
                   onClick={() => handleDecision(i, 'rejected')}
                   className={`p-1 rounded transition-colors ${
-                    decisions[i] === 'rejected' ? 'bg-green-700 text-white' : 'text-gray-400 hover:text-green-400'
+                    decisions[i] === 'rejected' ? 'bg-green-700 text-white' : 'text-zinc-500 dark:text-zinc-400 hover:text-green-400'
                   }`}
                   title="Keep"
                 >
@@ -115,13 +115,13 @@ export default function DeleteProposal({ toolUseId, imagePaths, reason }: Delete
       {!submitted && allDecided && acceptedCount === 0 && (
         <button
           onClick={handleSubmit}
-          className="w-full py-1.5 text-xs bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
+          className="w-full py-1.5 text-xs bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 text-zinc-900 dark:text-white rounded-lg transition-colors"
         >
           Reject All Deletions
         </button>
       )}
       {submitted && (
-        <div className="text-xs text-gray-400">
+        <div className="text-xs text-zinc-500 dark:text-zinc-400">
           {acceptedCount > 0
             ? `${acceptedCount} image${acceptedCount !== 1 ? 's' : ''} deleted.`
             : 'All deletions rejected.'}

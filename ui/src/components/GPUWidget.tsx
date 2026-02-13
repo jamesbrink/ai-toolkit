@@ -30,7 +30,7 @@ export default function GPUWidget({ gpu, hostName, isRemote }: GPUWidgetProps) {
       <div className="bg-zinc-50 dark:bg-zinc-800 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <h2 className="font-semibold text-zinc-900 dark:text-gray-100">{gpu.name}</h2>
-          <span className="px-2 py-0.5 bg-zinc-200 dark:bg-gray-700 rounded-full text-xs text-zinc-600 dark:text-gray-300">
+          <span className="px-2 py-0.5 bg-zinc-200 dark:bg-gray-700 rounded-full text-xs text-zinc-700 dark:text-gray-300">
             {gpu.isMps ? 'MPS' : `# ${gpu.index}`}
           </span>
         </div>
@@ -50,7 +50,7 @@ export default function GPUWidget({ gpu, hostName, isRemote }: GPUWidgetProps) {
                 <div className="flex items-center space-x-2">
                   <Thermometer className={`w-4 h-4 ${getTemperatureColor(gpu.temperature!)}`} />
                   <div>
-                    <p className="text-xs text-zinc-500 dark:text-gray-400">Temperature</p>
+                    <p className="text-xs text-zinc-600 dark:text-gray-400">Temperature</p>
                     <p className={`text-sm font-medium ${getTemperatureColor(gpu.temperature!)}`}>
                       {gpu.temperature}°C
                     </p>
@@ -59,10 +59,10 @@ export default function GPUWidget({ gpu, hostName, isRemote }: GPUWidgetProps) {
               )}
               {hasFan && (
                 <div className="flex items-center space-x-2">
-                  <Fan className="w-4 h-4 text-blue-400" />
+                  <Fan className="w-4 h-4 text-blue-500 dark:text-blue-400" />
                   <div>
-                    <p className="text-xs text-zinc-500 dark:text-gray-400">Fan Speed</p>
-                    <p className="text-sm font-medium text-blue-400">{gpu.fan!.speed}%</p>
+                    <p className="text-xs text-zinc-600 dark:text-gray-400">Fan Speed</p>
+                    <p className="text-sm font-medium text-blue-600 dark:text-blue-400">{gpu.fan!.speed}%</p>
                   </div>
                 </div>
               )}
@@ -71,7 +71,7 @@ export default function GPUWidget({ gpu, hostName, isRemote }: GPUWidgetProps) {
           <div>
             <div className="flex items-center space-x-2 mb-1">
               <Cpu className="w-4 h-4 text-zinc-400 dark:text-gray-400" />
-              <p className="text-xs text-zinc-500 dark:text-gray-400">GPU Load</p>
+              <p className="text-xs text-zinc-600 dark:text-gray-400">GPU Load</p>
               <span className="text-xs text-zinc-600 dark:text-gray-300 ml-auto">{gpu.utilization.gpu}%</span>
             </div>
             <div className="w-full bg-zinc-200 dark:bg-gray-700 rounded-full h-1">
@@ -81,8 +81,8 @@ export default function GPUWidget({ gpu, hostName, isRemote }: GPUWidgetProps) {
               />
             </div>
             <div className="flex items-center space-x-2 mb-1 mt-3">
-              <HardDrive className="w-4 h-4 text-blue-400" />
-              <p className="text-xs text-zinc-500 dark:text-gray-400">{gpu.isMps ? 'Unified Memory' : 'Memory'}</p>
+              <HardDrive className="w-4 h-4 text-blue-500 dark:text-blue-400" />
+              <p className="text-xs text-zinc-600 dark:text-gray-400">{gpu.isMps ? 'Unified Memory' : 'Memory'}</p>
               <span className="text-xs text-zinc-600 dark:text-gray-300 ml-auto">
                 {((gpu.memory.used / gpu.memory.total) * 100).toFixed(1)}%
               </span>
@@ -93,10 +93,10 @@ export default function GPUWidget({ gpu, hostName, isRemote }: GPUWidgetProps) {
                 style={{ width: `${(gpu.memory.used / gpu.memory.total) * 100}%` }}
               />
             </div>
-            <p className="text-xs text-zinc-500 dark:text-gray-400 mt-0.5">
+            <p className="text-xs text-zinc-600 dark:text-gray-400 mt-0.5">
               {formatMemory(gpu.memory.used)} / {formatMemory(gpu.memory.total)}
             </p>
-            {gpu.isMps && <p className="text-xs text-zinc-500 dark:text-gray-400 mt-0.5">Shared with CPU</p>}
+            {gpu.isMps && <p className="text-xs text-zinc-600 dark:text-gray-400 mt-0.5">Shared with CPU</p>}
           </div>
         </div>
 
@@ -107,7 +107,7 @@ export default function GPUWidget({ gpu, hostName, isRemote }: GPUWidgetProps) {
               <div className="flex items-start space-x-2">
                 <Clock className="w-4 h-4 text-purple-400" />
                 <div>
-                  <p className="text-xs text-zinc-500 dark:text-gray-400">Clock Speed</p>
+                  <p className="text-xs text-zinc-600 dark:text-gray-400">Clock Speed</p>
                   <p className="text-sm text-zinc-700 dark:text-gray-200">{gpu.clocks!.graphics} MHz</p>
                 </div>
               </div>
@@ -116,10 +116,10 @@ export default function GPUWidget({ gpu, hostName, isRemote }: GPUWidgetProps) {
               <div className="flex items-start space-x-2">
                 <Zap className="w-4 h-4 text-amber-400" />
                 <div>
-                  <p className="text-xs text-zinc-500 dark:text-gray-400">Power Draw</p>
+                  <p className="text-xs text-zinc-600 dark:text-gray-400">Power Draw</p>
                   <p className="text-sm text-zinc-700 dark:text-gray-200">
                     {gpu.power!.draw?.toFixed(1)}W
-                    <span className="text-zinc-500 dark:text-gray-400 text-xs">
+                    <span className="text-zinc-600 dark:text-gray-400 text-xs">
                       {' '}
                       / {gpu.power!.limit?.toFixed(1) || ' ? '}W
                     </span>

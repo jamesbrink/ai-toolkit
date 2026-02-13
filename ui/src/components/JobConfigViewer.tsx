@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import YAML from 'yaml';
 import Editor from '@monaco-editor/react';
+import { useTheme } from 'next-themes';
 
 import { Job } from '@/server/prismaTypes';
 import { UnifiedJob } from '@/types';
@@ -24,6 +25,7 @@ const yamlConfig: YAML.DocumentOptions &
 };
 
 export default function JobConfigViewer({ job }: Props) {
+  const { resolvedTheme } = useTheme();
   const [editorValue, setEditorValue] = useState<string>('');
   useEffect(() => {
     if (job?.job_config) {
@@ -38,7 +40,7 @@ export default function JobConfigViewer({ job }: Props) {
         width="100%"
         defaultLanguage="yaml"
         value={editorValue}
-        theme="vs-dark"
+        theme={resolvedTheme === 'dark' ? 'vs-dark' : 'vs'}
         options={{
           minimap: { enabled: true },
           scrollBeyondLastLine: false,

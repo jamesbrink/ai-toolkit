@@ -13,7 +13,7 @@ import { ConfigDoc, GroupedSelectOption, SelectOption } from '@/types';
 
 function DocIcon({ doc }: { doc: ConfigDoc }) {
   return (
-    <span className="inline-flex ml-1 text-zinc-500 dark:text-zinc-400 cursor-pointer" onClick={() => openDoc(doc)}>
+    <span className="inline-flex ml-1 text-zinc-600 dark:text-zinc-400 cursor-pointer" onClick={() => openDoc(doc)}>
       <CircleHelp className="inline-block w-4 h-4" />
     </span>
   );
@@ -323,7 +323,7 @@ export const SliderInput: React.FC<SliderInputProps> = props => {
   return (
     <div className={clsx(className, disabled ? 'opacity-30 cursor-not-allowed' : '')}>
       {label && (
-        <label className="block text-xs mb-1.5 mt-3 text-zinc-500 dark:text-zinc-400">
+        <label className="block text-xs mb-1.5 mt-3 text-zinc-600 dark:text-zinc-400">
           {label} {doc && <DocIcon doc={doc} />}
         </label>
       )}
@@ -360,7 +360,7 @@ export const SliderInput: React.FC<SliderInputProps> = props => {
             />
           </div>
 
-          <div className="flex justify-between text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 select-none">
+          <div className="flex justify-between text-xs text-zinc-600 dark:text-zinc-400 mt-0.5 select-none">
             <span>{min}</span>
             <span>{max}</span>
           </div>

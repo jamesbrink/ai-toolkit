@@ -16,7 +16,7 @@ export default function ConfigProposal({ toolUseId, changes }: ConfigProposalPro
   const [submitted, setSubmitted] = useState(false);
 
   if (!Array.isArray(changes) || changes.length === 0) {
-    return <div className="text-gray-400 text-xs p-2">No changes proposed</div>;
+    return <div className="text-zinc-500 dark:text-zinc-400 text-xs p-2">No changes proposed</div>;
   }
 
   const handleDecision = (index: number, decision: 'accepted' | 'rejected') => {
@@ -44,30 +44,30 @@ export default function ConfigProposal({ toolUseId, changes }: ConfigProposalPro
 
   return (
     <div className="my-2 space-y-2">
-      <div className="text-xs text-gray-400 font-medium">Proposed config changes:</div>
+      <div className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">Proposed config changes:</div>
       {changes.map((change, i) => (
         <div
           key={i}
           className={`rounded-lg border text-xs p-2 ${
             decisions[i] === 'accepted'
-              ? 'border-green-700 bg-green-950/30'
+              ? 'border-green-300 bg-green-50 dark:border-green-700 dark:bg-green-950/30'
               : decisions[i] === 'rejected'
-                ? 'border-red-700 bg-red-950/30 opacity-60'
-                : 'border-gray-700 bg-gray-800'
+                ? 'border-red-300 bg-red-50 dark:border-red-700 dark:bg-red-950/30 opacity-60'
+                : 'border-zinc-200 bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800'
           }`}
         >
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
-              <div className="font-mono text-gray-300 truncate">{change.path}</div>
-              <div className="text-gray-400 mt-0.5">{change.reason}</div>
-              <div className="mt-1 font-mono text-blue-400">{JSON.stringify(change.value)}</div>
+              <div className="font-mono text-zinc-700 dark:text-zinc-300 truncate">{change.path}</div>
+              <div className="text-zinc-500 dark:text-zinc-400 mt-0.5">{change.reason}</div>
+              <div className="mt-1 font-mono text-blue-600 dark:text-blue-400">{JSON.stringify(change.value)}</div>
             </div>
             {!submitted && (
               <div className="flex gap-1 shrink-0">
                 <button
                   onClick={() => handleDecision(i, 'accepted')}
                   className={`p-1 rounded transition-colors ${
-                    decisions[i] === 'accepted' ? 'bg-green-700 text-white' : 'text-gray-400 hover:text-green-400'
+                    decisions[i] === 'accepted' ? 'bg-green-700 text-white' : 'text-zinc-500 dark:text-zinc-400 hover:text-green-400'
                   }`}
                   title="Accept"
                 >
@@ -76,7 +76,7 @@ export default function ConfigProposal({ toolUseId, changes }: ConfigProposalPro
                 <button
                   onClick={() => handleDecision(i, 'rejected')}
                   className={`p-1 rounded transition-colors ${
-                    decisions[i] === 'rejected' ? 'bg-red-700 text-white' : 'text-gray-400 hover:text-red-400'
+                    decisions[i] === 'rejected' ? 'bg-red-700 text-white' : 'text-zinc-500 dark:text-zinc-400 hover:text-red-400'
                   }`}
                   title="Reject"
                 >
@@ -95,7 +95,7 @@ export default function ConfigProposal({ toolUseId, changes }: ConfigProposalPro
           Apply {Object.values(decisions).filter(d => d === 'accepted').length} change(s)
         </button>
       )}
-      {submitted && <div className="text-xs text-gray-400">Changes applied.</div>}
+      {submitted && <div className="text-xs text-zinc-500 dark:text-zinc-400">Changes applied.</div>}
     </div>
   );
 }

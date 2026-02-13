@@ -34,7 +34,7 @@ function MultiHostGpuMonitor({ hosts }: { hosts: HostInfo[] }) {
 
     if (allGpus.length === 0) {
       return (
-        <div className="bg-yellow-900 border border-yellow-700 text-yellow-300 px-4 py-3 rounded relative" role="alert">
+        <div className="bg-yellow-50 border border-yellow-300 text-yellow-800 dark:bg-yellow-900 dark:border-yellow-700 dark:text-yellow-300 px-4 py-3 rounded relative" role="alert">
           <span className="block sm:inline">No GPUs detected on any host.</span>
         </div>
       );
@@ -58,7 +58,7 @@ function MultiHostGpuMonitor({ hosts }: { hosts: HostInfo[] }) {
     <div className="w-full">
       <div className="flex justify-between items-center mb-2">
         <h1 className="text-md">GPU Monitor</h1>
-        <div className="text-xs text-gray-400">Last updated: {lastUpdated?.toLocaleTimeString()}</div>
+        <div className="text-xs text-zinc-500 dark:text-gray-400">Last updated: {lastUpdated?.toLocaleTimeString()}</div>
       </div>
       {content}
     </div>
@@ -113,7 +113,7 @@ function LocalGpuMonitor() {
 
     if (error) {
       return (
-        <div className="bg-red-900 border border-red-600 text-red-200 px-4 py-3 rounded relative" role="alert">
+        <div className="bg-red-50 border border-red-300 text-red-800 dark:bg-red-900 dark:border-red-600 dark:text-red-200 px-4 py-3 rounded relative" role="alert">
           <strong className="font-bold">Error!</strong>
           <span className="block sm:inline"> {error}</span>
         </div>
@@ -122,7 +122,7 @@ function LocalGpuMonitor() {
 
     if (!gpuData) {
       return (
-        <div className="bg-yellow-900 border border-yellow-700 text-yellow-300 px-4 py-3 rounded relative" role="alert">
+        <div className="bg-yellow-50 border border-yellow-300 text-yellow-800 dark:bg-yellow-900 dark:border-yellow-700 dark:text-yellow-300 px-4 py-3 rounded relative" role="alert">
           <span className="block sm:inline">No GPU data available.</span>
         </div>
       );
@@ -130,7 +130,7 @@ function LocalGpuMonitor() {
 
     if (!gpuData.hasNvidiaSmi && gpuData.deviceType !== 'mps') {
       return (
-        <div className="bg-yellow-900 border border-yellow-700 text-yellow-300 px-4 py-3 rounded relative" role="alert">
+        <div className="bg-yellow-50 border border-yellow-300 text-yellow-800 dark:bg-yellow-900 dark:border-yellow-700 dark:text-yellow-300 px-4 py-3 rounded relative" role="alert">
           <strong className="font-bold">No GPUs detected!</strong>
           <span className="block sm:inline"> No NVIDIA or Apple Silicon GPU found on this system.</span>
           {gpuData.error && <p className="mt-2 text-sm">{gpuData.error}</p>}
@@ -140,7 +140,7 @@ function LocalGpuMonitor() {
 
     if (gpuData.gpus.length === 0) {
       return (
-        <div className="bg-yellow-900 border border-yellow-700 text-yellow-300 px-4 py-3 rounded relative" role="alert">
+        <div className="bg-yellow-50 border border-yellow-300 text-yellow-800 dark:bg-yellow-900 dark:border-yellow-700 dark:text-yellow-300 px-4 py-3 rounded relative" role="alert">
           <span className="block sm:inline">No GPUs found, but nvidia-smi is available.</span>
         </div>
       );
@@ -159,7 +159,7 @@ function LocalGpuMonitor() {
     <div className="w-full">
       <div className="flex justify-between items-center mb-2">
         <h1 className="text-md">GPU Monitor</h1>
-        <div className="text-xs text-gray-400">Last updated: {lastUpdated?.toLocaleTimeString()}</div>
+        <div className="text-xs text-zinc-500 dark:text-gray-400">Last updated: {lastUpdated?.toLocaleTimeString()}</div>
       </div>
       {content}
     </div>

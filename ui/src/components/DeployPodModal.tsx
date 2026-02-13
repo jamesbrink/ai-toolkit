@@ -27,9 +27,9 @@ interface DeployPodModalProps {
 type InstanceType = 'ON_DEMAND' | 'SPOT';
 
 const stockBadge: Record<string, { color: string; label: string }> = {
-  High: { color: 'bg-green-900 text-green-300', label: 'High' },
-  Medium: { color: 'bg-yellow-900 text-yellow-300', label: 'Medium' },
-  Low: { color: 'bg-red-900 text-red-300', label: 'Low' },
+  High: { color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300', label: 'High' },
+  Medium: { color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300', label: 'Medium' },
+  Low: { color: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300', label: 'Low' },
 };
 
 function getStockBadge(status: string | null | undefined) {
@@ -177,16 +177,16 @@ export default function DeployPodModal({
     <Dialog open={isOpen} onClose={onClose} className="relative z-10">
       <DialogBackdrop
         transition
-        className="fixed inset-0 bg-gray-900/75 transition-opacity data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in"
+        className="fixed inset-0 bg-zinc-900/75 transition-opacity data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in"
       />
 
       <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
         <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
           <DialogPanel
             transition
-            className="relative transform overflow-hidden rounded-lg bg-gray-800 text-left shadow-xl transition-all data-closed:translate-y-4 data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in sm:my-8 sm:w-full sm:max-w-lg data-closed:sm:translate-y-0 data-closed:sm:scale-95"
+            className="relative transform overflow-hidden rounded-lg bg-white dark:bg-zinc-800 text-left shadow-xl transition-all data-closed:translate-y-4 data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in sm:my-8 sm:w-full sm:max-w-lg data-closed:sm:translate-y-0 data-closed:sm:scale-95"
           >
-            <div className="bg-gray-800 px-4 pt-5 pb-4 sm:p-6">
+            <div className="bg-white dark:bg-zinc-800 px-4 pt-5 pb-4 sm:p-6">
               <div className="flex items-center space-x-3 mb-6">
                 <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-blue-500">
                   <Cloud className="size-5 text-blue-950" />
@@ -199,7 +199,7 @@ export default function DeployPodModal({
               <div className="space-y-4">
                 {/* Name */}
                 <div>
-                  <label htmlFor="pod-name" className="block text-sm font-medium text-gray-300 mb-1">
+                  <label htmlFor="pod-name" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                     Pod Name
                   </label>
                   <input
@@ -207,14 +207,14 @@ export default function DeployPodModal({
                     type="text"
                     value={name}
                     onChange={e => setName(e.target.value)}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 bg-white dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 rounded-lg text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="my-training-pod"
                   />
                 </div>
 
                 {/* Cloud Type */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Cloud Type</label>
+                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Cloud Type</label>
                   <div className="flex space-x-4">
                     <label className="flex items-center space-x-2 cursor-pointer">
                       <input
@@ -225,7 +225,7 @@ export default function DeployPodModal({
                         onChange={() => handleCloudTypeChange('COMMUNITY')}
                         className="text-blue-500"
                       />
-                      <span className="text-sm text-gray-300">Community</span>
+                      <span className="text-sm text-zinc-700 dark:text-zinc-300">Community</span>
                     </label>
                     <label className="flex items-center space-x-2 cursor-pointer">
                       <input
@@ -236,14 +236,14 @@ export default function DeployPodModal({
                         onChange={() => handleCloudTypeChange('SECURE')}
                         className="text-blue-500"
                       />
-                      <span className="text-sm text-gray-300">Secure</span>
+                      <span className="text-sm text-zinc-700 dark:text-zinc-300">Secure</span>
                     </label>
                   </div>
                 </div>
 
                 {/* Instance Type */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Instance Type</label>
+                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Instance Type</label>
                   <div className="flex space-x-4">
                     <label className="flex items-center space-x-2 cursor-pointer">
                       <input
@@ -254,7 +254,7 @@ export default function DeployPodModal({
                         onChange={() => handleInstanceTypeChange('ON_DEMAND')}
                         className="text-blue-500"
                       />
-                      <span className="text-sm text-gray-300">On-Demand</span>
+                      <span className="text-sm text-zinc-700 dark:text-zinc-300">On-Demand</span>
                     </label>
                     <label className="flex items-center space-x-2 cursor-pointer">
                       <input
@@ -265,7 +265,7 @@ export default function DeployPodModal({
                         onChange={() => handleInstanceTypeChange('SPOT')}
                         className="text-blue-500"
                       />
-                      <span className="text-sm text-gray-300">Spot</span>
+                      <span className="text-sm text-zinc-700 dark:text-zinc-300">Spot</span>
                       <span className="text-xs text-green-400">(cheaper, interruptible)</span>
                     </label>
                   </div>
@@ -273,19 +273,19 @@ export default function DeployPodModal({
 
                 {/* GPU Type (Listbox) */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">GPU Type</label>
+                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">GPU Type</label>
                   <Listbox value={gpuTypeId} onChange={handleGpuChange}>
-                    <ListboxButton className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-left flex items-center justify-between">
+                    <ListboxButton className="w-full px-3 py-2 bg-white dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 rounded-lg text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-left flex items-center justify-between">
                       {selectedGpu ? (
                         <GpuOptionLabel gpu={selectedGpu} cloudType={cloudType} />
                       ) : (
-                        <span className="text-gray-300">Select GPU...</span>
+                        <span className="text-zinc-500 dark:text-zinc-400">Select GPU...</span>
                       )}
-                      <ChevronDown className="w-4 h-4 text-gray-400 shrink-0 ml-2" />
+                      <ChevronDown className="w-4 h-4 text-zinc-500 dark:text-zinc-400 shrink-0 ml-2" />
                     </ListboxButton>
                     <ListboxOptions
                       anchor="bottom start"
-                      className="z-50 w-[var(--button-width)] max-h-60 overflow-auto rounded-lg bg-gray-700 border border-gray-600 py-1 shadow-lg focus:outline-none text-gray-100 [--anchor-gap:4px]"
+                      className="z-50 w-[var(--button-width)] max-h-60 overflow-auto rounded-lg bg-white dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 py-1 shadow-lg focus:outline-none text-zinc-900 dark:text-zinc-100 [--anchor-gap:4px]"
                     >
                       {filteredGpus.map(gpu => {
                         const badge = getStockBadge(gpu.lowestPrice?.stockStatus);
@@ -297,7 +297,7 @@ export default function DeployPodModal({
                             value={gpu.id}
                             disabled={unavailable}
                             className={clsx(
-                              'relative cursor-pointer select-none px-3 py-2 data-focus:bg-gray-600',
+                              'relative cursor-pointer select-none px-3 py-2 data-focus:bg-zinc-100 dark:data-focus:bg-zinc-600',
                               unavailable && 'opacity-50 cursor-not-allowed',
                             )}
                           >
@@ -311,7 +311,7 @@ export default function DeployPodModal({
                                     </span>
                                   )}
                                   {unavailable && (
-                                    <span className="px-1.5 py-0.5 rounded text-xs bg-gray-600 text-gray-300">
+                                    <span className="px-1.5 py-0.5 rounded text-xs bg-zinc-200 text-zinc-600 dark:bg-zinc-600 dark:text-zinc-300">
                                       No Price
                                     </span>
                                   )}
@@ -329,14 +329,14 @@ export default function DeployPodModal({
                 {/* GPU Count */}
                 {selectedGpu && maxGpuCount > 1 && (
                   <div>
-                    <label htmlFor="gpu-count" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="gpu-count" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                       GPU Count
                     </label>
                     <select
                       id="gpu-count"
                       value={gpuCount}
                       onChange={e => setGpuCount(parseInt(e.target.value, 10))}
-                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 bg-white dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 rounded-lg text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
                       {Array.from({ length: maxGpuCount }, (_, i) => i + 1).map(n => (
                         <option key={n} value={n}>
@@ -350,23 +350,23 @@ export default function DeployPodModal({
                 {/* Datacenter */}
                 {selectedGpu && selectedGpu.nodeGroupDatacenters.length > 0 && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">Datacenter</label>
+                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Datacenter</label>
                     <Listbox value={dataCenterId} onChange={setDataCenterId}>
-                      <ListboxButton className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-left flex items-center justify-between">
+                      <ListboxButton className="w-full px-3 py-2 bg-white dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 rounded-lg text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-left flex items-center justify-between">
                         <span>
                           {dataCenterId
                             ? selectedGpu.nodeGroupDatacenters.find(dc => dc.id === dataCenterId)?.name || dataCenterId
                             : 'Any (Fastest Available)'}
                         </span>
-                        <ChevronDown className="w-4 h-4 text-gray-400 shrink-0 ml-2" />
+                        <ChevronDown className="w-4 h-4 text-zinc-500 dark:text-zinc-400 shrink-0 ml-2" />
                       </ListboxButton>
                       <ListboxOptions
                         anchor="bottom start"
-                        className="z-50 w-[var(--button-width)] max-h-60 overflow-auto rounded-lg bg-gray-700 border border-gray-600 py-1 shadow-lg focus:outline-none text-gray-100 [--anchor-gap:4px]"
+                        className="z-50 w-[var(--button-width)] max-h-60 overflow-auto rounded-lg bg-white dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 py-1 shadow-lg focus:outline-none text-zinc-900 dark:text-zinc-100 [--anchor-gap:4px]"
                       >
                         <ListboxOption
                           value=""
-                          className="relative cursor-pointer select-none px-3 py-2 data-focus:bg-gray-600"
+                          className="relative cursor-pointer select-none px-3 py-2 data-focus:bg-zinc-100 dark:data-focus:bg-zinc-600"
                         >
                           {({ selected }) => (
                             <div className="flex items-center justify-between">
@@ -379,13 +379,15 @@ export default function DeployPodModal({
                           <ListboxOption
                             key={dc.id}
                             value={dc.id}
-                            className="relative cursor-pointer select-none px-3 py-2 data-focus:bg-gray-600"
+                            className="relative cursor-pointer select-none px-3 py-2 data-focus:bg-zinc-100 dark:data-focus:bg-zinc-600"
                           >
                             {({ selected }) => (
                               <div className="flex items-center justify-between">
                                 <div>
                                   <span>{dc.name}</span>
-                                  {dc.location && <span className="text-gray-300 text-xs ml-2">{dc.location}</span>}
+                                  {dc.location && (
+                                    <span className="text-zinc-500 dark:text-zinc-400 text-xs ml-2">{dc.location}</span>
+                                  )}
                                 </div>
                                 {selected && <Check className="w-4 h-4 text-blue-400" />}
                               </div>
@@ -400,7 +402,7 @@ export default function DeployPodModal({
                 {/* Spot Bid Price */}
                 {instanceType === 'SPOT' && selectedGpu && (
                   <div>
-                    <label htmlFor="bid-price" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="bid-price" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                       Max Bid Price ($/hr per GPU)
                     </label>
                     <input
@@ -410,9 +412,9 @@ export default function DeployPodModal({
                       step={0.01}
                       value={bidPerGpu}
                       onChange={e => setBidPerGpu(parseFloat(e.target.value) || 0)}
-                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 bg-white dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 rounded-lg text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
-                    <p className="text-xs text-gray-300 mt-1">
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
                       Current spot price: $
                       {(
                         (cloudType === 'SECURE' ? selectedGpu.secureSpotPrice : selectedGpu.communitySpotPrice) || 0
@@ -425,7 +427,7 @@ export default function DeployPodModal({
                 {/* Volume / Disk */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="volume-size" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="volume-size" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                       Volume (GB)
                     </label>
                     <input
@@ -434,11 +436,11 @@ export default function DeployPodModal({
                       min={0}
                       value={volumeInGb}
                       onChange={e => setVolumeInGb(parseInt(e.target.value, 10) || 0)}
-                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 bg-white dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 rounded-lg text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
                   <div>
-                    <label htmlFor="disk-size" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="disk-size" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                       Container Disk (GB)
                     </label>
                     <input
@@ -447,7 +449,7 @@ export default function DeployPodModal({
                       min={1}
                       value={containerDiskInGb}
                       onChange={e => setContainerDiskInGb(parseInt(e.target.value, 10) || 1)}
-                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 bg-white dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 rounded-lg text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
                 </div>
@@ -457,15 +459,15 @@ export default function DeployPodModal({
                   <button
                     type="button"
                     onClick={() => setShowAdvanced(!showAdvanced)}
-                    className="text-sm text-gray-300 hover:text-gray-100 transition-colors"
+                    className="text-sm text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
                   >
                     {showAdvanced ? 'Hide' : 'Show'} Advanced Options
                   </button>
                   {showAdvanced && (
-                    <div className="mt-3 space-y-4 border-t border-gray-700 pt-3">
+                    <div className="mt-3 space-y-4 border-t border-zinc-200 dark:border-zinc-700 pt-3">
                       {/* SSH Public Key */}
                       <div>
-                        <label htmlFor="ssh-key" className="block text-sm font-medium text-gray-300 mb-1">
+                        <label htmlFor="ssh-key" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                           SSH Public Key
                         </label>
                         <textarea
@@ -473,7 +475,7 @@ export default function DeployPodModal({
                           value={sshPublicKey}
                           onChange={e => setSshPublicKey(e.target.value)}
                           rows={3}
-                          className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs font-mono"
+                          className="w-full px-3 py-2 bg-white dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 rounded-lg text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs font-mono"
                           placeholder="ssh-ed25519 AAAA..."
                         />
                       </div>
@@ -481,7 +483,7 @@ export default function DeployPodModal({
                       {/* Environment Variables */}
                       <div>
                         <div className="flex items-center justify-between mb-1">
-                          <label className="block text-sm font-medium text-gray-300">Environment Variables</label>
+                          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">Environment Variables</label>
                           <button
                             type="button"
                             onClick={handleAddEnvVar}
@@ -497,19 +499,19 @@ export default function DeployPodModal({
                               value={ev.key}
                               onChange={e => handleEnvVarChange(i, 'key', e.target.value)}
                               placeholder="KEY"
-                              className="flex-1 px-2 py-1.5 bg-gray-700 border border-gray-600 rounded text-gray-100 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              className="flex-1 px-2 py-1.5 bg-white dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 rounded text-zinc-900 dark:text-zinc-100 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             />
                             <input
                               type="text"
                               value={ev.value}
                               onChange={e => handleEnvVarChange(i, 'value', e.target.value)}
                               placeholder="value"
-                              className="flex-1 px-2 py-1.5 bg-gray-700 border border-gray-600 rounded text-gray-100 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              className="flex-1 px-2 py-1.5 bg-white dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 rounded text-zinc-900 dark:text-zinc-100 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             />
                             <button
                               type="button"
                               onClick={() => handleRemoveEnvVar(i)}
-                              className="text-gray-300 hover:text-red-400 text-sm"
+                              className="text-zinc-500 dark:text-zinc-400 hover:text-red-500 dark:hover:text-red-400 text-sm"
                             >
                               &times;
                             </button>
@@ -522,19 +524,21 @@ export default function DeployPodModal({
 
                 {/* Cost Estimate */}
                 {selectedGpu && (
-                  <div className="bg-gray-700 rounded-lg p-3">
-                    <p className="text-sm text-gray-300">
+                  <div className="bg-zinc-100 dark:bg-zinc-700 rounded-lg p-3">
+                    <p className="text-sm text-zinc-700 dark:text-zinc-300">
                       Estimated cost:{' '}
-                      <span className="font-semibold text-gray-100">
+                      <span className="font-semibold text-zinc-900 dark:text-zinc-100">
                         ${estimatedCost.toFixed(2)}/hr
                         {gpuCount > 1 && (
-                          <span className="text-gray-300 font-normal">
+                          <span className="text-zinc-600 dark:text-zinc-300 font-normal">
                             {' '}
                             (${pricePerGpu.toFixed(2)} x {gpuCount})
                           </span>
                         )}
                       </span>
-                      {instanceType === 'SPOT' && <span className="ml-2 text-xs text-green-400">Spot pricing</span>}
+                      {instanceType === 'SPOT' && (
+                        <span className="ml-2 text-xs text-green-600 dark:text-green-400">Spot pricing</span>
+                      )}
                     </p>
                   </div>
                 )}
@@ -543,7 +547,7 @@ export default function DeployPodModal({
               </div>
             </div>
 
-            <div className="bg-gray-700 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+            <div className="bg-zinc-100 dark:bg-zinc-700 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
               <button
                 type="button"
                 onClick={handleDeploy}
@@ -555,7 +559,7 @@ export default function DeployPodModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="mt-3 inline-flex w-full justify-center rounded-md bg-gray-800 px-3 py-2 text-sm font-semibold text-gray-200 hover:bg-gray-600 sm:mt-0 sm:w-auto"
+                className="mt-3 inline-flex w-full justify-center rounded-md bg-zinc-200 dark:bg-zinc-800 px-3 py-2 text-sm font-semibold text-zinc-800 dark:text-zinc-200 hover:bg-zinc-300 dark:hover:bg-zinc-600 sm:mt-0 sm:w-auto"
               >
                 Cancel
               </button>
@@ -570,9 +574,9 @@ export default function DeployPodModal({
 function GpuOptionLabel({ gpu, cloudType }: { gpu: GpuTypeInfo; cloudType: 'COMMUNITY' | 'SECURE' }) {
   const price = cloudType === 'SECURE' ? gpu.securePrice : gpu.communityPrice;
   return (
-    <span className="truncate text-gray-100">
+    <span className="truncate text-zinc-900 dark:text-zinc-100">
       {gpu.displayName}{' '}
-      <span className="text-gray-300">
+      <span className="text-zinc-500 dark:text-zinc-300">
         ({gpu.memoryInGb}GB) — ${price?.toFixed(2) ?? '?'}/hr
       </span>
     </span>

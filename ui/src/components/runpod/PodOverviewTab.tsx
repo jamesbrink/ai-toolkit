@@ -46,8 +46,8 @@ function formatUptime(seconds: number): string {
 function MetaRow({ label, value }: { label: string; value: string }) {
   return (
     <tr>
-      <td className="px-4 py-3 text-sm text-gray-400 whitespace-nowrap">{label}</td>
-      <td className="px-4 py-3 text-sm text-gray-100">{value}</td>
+      <td className="px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400 whitespace-nowrap">{label}</td>
+      <td className="px-4 py-3 text-sm text-zinc-900 dark:text-zinc-100">{value}</td>
     </tr>
   );
 }
@@ -63,12 +63,17 @@ function CopyableField({ value, mono = true }: { value: string; mono?: boolean }
 
   return (
     <div className="flex items-center gap-2">
-      <code className={clsx('text-sm text-gray-100 bg-gray-800 px-3 py-1.5 rounded-lg flex-1', mono && 'font-mono')}>
+      <code
+        className={clsx(
+          'text-sm text-zinc-900 dark:text-zinc-100 bg-zinc-100 dark:bg-zinc-800 px-3 py-1.5 rounded-lg flex-1',
+          mono && 'font-mono',
+        )}
+      >
         {value}
       </code>
       <button
         onClick={handleCopy}
-        className="p-1.5 text-gray-400 hover:text-white rounded-md hover:bg-gray-700 transition-colors"
+        className="p-1.5 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
         title="Copy to clipboard"
       >
         {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
@@ -94,8 +99,8 @@ const deploymentStages = [
 
 function DeploymentStepper({ stage }: { stage: number }) {
   return (
-    <div className="bg-gray-900 rounded-xl border border-gray-800 p-4">
-      <h3 className="text-sm font-medium text-gray-300 mb-4">Deployment Progress</h3>
+    <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4">
+      <h3 className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-4">Deployment Progress</h3>
       <div className="flex items-center justify-between">
         {deploymentStages.map((s, i) => {
           const stepNum = i + 1;
@@ -111,7 +116,7 @@ function DeploymentStepper({ stage }: { stage: number }) {
                     'w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium border-2 transition-colors',
                     isCompleted && 'bg-green-600 border-green-600 text-white',
                     isActive && 'bg-blue-600 border-blue-600 text-white animate-pulse',
-                    isFuture && 'bg-gray-800 border-gray-600 text-gray-500',
+                    isFuture && 'bg-zinc-100 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600 text-zinc-500',
                   )}
                 >
                   {isCompleted ? <Check className="w-4 h-4" /> : stepNum}
@@ -119,7 +124,7 @@ function DeploymentStepper({ stage }: { stage: number }) {
                 <span
                   className={clsx(
                     'text-xs mt-1.5 whitespace-nowrap',
-                    isActive ? 'text-blue-400 font-medium' : isCompleted ? 'text-green-400' : 'text-gray-500',
+                    isActive ? 'text-blue-400 font-medium' : isCompleted ? 'text-green-400' : 'text-zinc-500',
                   )}
                 >
                   {s.label}
@@ -127,7 +132,10 @@ function DeploymentStepper({ stage }: { stage: number }) {
               </div>
               {i < deploymentStages.length - 1 && (
                 <div
-                  className={clsx('flex-1 h-0.5 mx-2 mt-[-1.25rem]', isCompleted ? 'bg-green-600' : 'bg-gray-700')}
+                  className={clsx(
+                    'flex-1 h-0.5 mx-2 mt-[-1.25rem]',
+                    isCompleted ? 'bg-green-600' : 'bg-zinc-300 dark:bg-zinc-700',
+                  )}
                 />
               )}
             </div>
@@ -153,26 +161,26 @@ export default function PodOverviewTab({ pod, liveData }: PodOverviewTabProps) {
     <div className="max-w-2xl space-y-6">
       {/* Quick Info Cards */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="bg-gray-900 rounded-xl border border-gray-800 p-4">
-          <div className="flex items-center gap-2 text-gray-400 mb-1">
+        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4">
+          <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400 mb-1">
             <DollarSign className="w-4 h-4" />
             <span className="text-xs">Cost/hr</span>
           </div>
-          <p className="text-lg font-medium text-gray-100">${pod.costPerHr.toFixed(2)}</p>
+          <p className="text-lg font-medium text-zinc-900 dark:text-zinc-100">${pod.costPerHr.toFixed(2)}</p>
         </div>
-        <div className="bg-gray-900 rounded-xl border border-gray-800 p-4">
-          <div className="flex items-center gap-2 text-gray-400 mb-1">
+        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4">
+          <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400 mb-1">
             <Clock className="w-4 h-4" />
             <span className="text-xs">Uptime</span>
           </div>
-          <p className="text-lg font-medium text-gray-100">{formatUptime(pod.totalUptimeSeconds)}</p>
+          <p className="text-lg font-medium text-zinc-900 dark:text-zinc-100">{formatUptime(pod.totalUptimeSeconds)}</p>
         </div>
-        <div className="bg-gray-900 rounded-xl border border-gray-800 p-4">
-          <div className="flex items-center gap-2 text-gray-400 mb-1">
+        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4">
+          <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400 mb-1">
             <DollarSign className="w-4 h-4" />
             <span className="text-xs">Total Spend</span>
           </div>
-          <p className="text-lg font-medium text-gray-100">${pod.estimatedSpend.toFixed(2)}</p>
+          <p className="text-lg font-medium text-zinc-900 dark:text-zinc-100">${pod.estimatedSpend.toFixed(2)}</p>
         </div>
       </div>
 
@@ -181,9 +189,9 @@ export default function PodOverviewTab({ pod, liveData }: PodOverviewTabProps) {
 
       {/* Auth Password */}
       {pod.authPassword && (
-        <div className="bg-gray-900 rounded-xl border border-gray-800 p-4">
-          <h3 className="text-sm font-medium text-gray-300 mb-2">Pod Auth Password</h3>
-          <p className="text-xs text-gray-400 mb-3">
+        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4">
+          <h3 className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Pod Auth Password</h3>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-3">
             Used to authenticate with the AI Toolkit instance running on this pod.
           </p>
           <div className="flex items-center gap-2">
@@ -192,11 +200,11 @@ export default function PodOverviewTab({ pod, liveData }: PodOverviewTabProps) {
                 type={showPassword ? 'text' : 'password'}
                 value={pod.authPassword}
                 readOnly
-                className="w-full px-3 py-1.5 bg-gray-800 border border-gray-700 rounded-lg text-sm font-mono text-gray-100 pr-10"
+                className="w-full px-3 py-1.5 bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg text-sm font-mono text-zinc-900 dark:text-zinc-100 pr-10"
               />
               <button
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-white transition-colors"
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors"
                 title={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -209,15 +217,15 @@ export default function PodOverviewTab({ pod, liveData }: PodOverviewTabProps) {
 
       {/* GPU Utilization */}
       {gpus && gpus.length > 0 && (
-        <div className="bg-gray-900 rounded-xl border border-gray-800 p-4">
+        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4">
           <div className="flex items-center space-x-2 mb-3">
-            <Cpu className="w-4 h-4 text-gray-400" />
-            <h3 className="text-sm font-medium text-gray-300">GPU Utilization</h3>
+            <Cpu className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
+            <h3 className="text-sm font-medium text-zinc-700 dark:text-zinc-300">GPU Utilization</h3>
           </div>
           <div className="space-y-3">
             {gpus.map((gpu, i) => (
               <div key={gpu.id} className="space-y-1">
-                <div className="flex items-center justify-between text-xs text-gray-400">
+                <div className="flex items-center justify-between text-xs text-zinc-600 dark:text-zinc-400">
                   <span>
                     GPU {i}
                     {gpus.length > 1 ? ` (${gpu.id})` : ''}
@@ -228,7 +236,7 @@ export default function PodOverviewTab({ pod, liveData }: PodOverviewTabProps) {
                 </div>
                 <div className="flex space-x-2">
                   <div className="flex-1">
-                    <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+                    <div className="h-2 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-blue-500 rounded-full transition-all duration-500"
                         style={{ width: `${gpu.gpuUtilPerc}%` }}
@@ -236,7 +244,7 @@ export default function PodOverviewTab({ pod, liveData }: PodOverviewTabProps) {
                     </div>
                   </div>
                   <div className="flex-1">
-                    <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+                    <div className="h-2 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-purple-500 rounded-full transition-all duration-500"
                         style={{ width: `${gpu.memoryUtilPerc}%` }}
@@ -251,9 +259,9 @@ export default function PodOverviewTab({ pod, liveData }: PodOverviewTabProps) {
       )}
 
       {/* Metadata Table */}
-      <div className="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden">
+      <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
         <table className="w-full">
-          <tbody className="divide-y divide-gray-800">
+          <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
             <MetaRow label="RunPod ID" value={pod.runpodId} />
             <MetaRow label="GPU" value={`${pod.gpuTypeDisplay}${pod.gpuCount > 1 ? ` x${pod.gpuCount}` : ''}`} />
             <MetaRow label="Cloud Type" value={pod.cloudType === 'SECURE' ? 'Secure Cloud' : 'Community Cloud'} />
@@ -286,8 +294,8 @@ export default function PodOverviewTab({ pod, liveData }: PodOverviewTabProps) {
       </div>
 
       {/* External Links */}
-      <div className="bg-gray-900 rounded-xl border border-gray-800 p-4 space-y-3">
-        <h3 className="text-sm font-medium text-gray-300">Quick Links</h3>
+      <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4 space-y-3">
+        <h3 className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Quick Links</h3>
         <div className="flex flex-col gap-2">
           <a
             href={`https://www.runpod.io/console/pods/${pod.runpodId}`}
@@ -311,7 +319,7 @@ export default function PodOverviewTab({ pod, liveData }: PodOverviewTabProps) {
           )}
           {sshCommand && (
             <div className="space-y-1">
-              <div className="flex items-center gap-2 text-sm text-gray-400">
+              <div className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
                 <Terminal className="w-4 h-4" />
                 SSH Command
               </div>
@@ -323,19 +331,26 @@ export default function PodOverviewTab({ pod, liveData }: PodOverviewTabProps) {
 
       {/* Host Link */}
       {pod.hostId && (
-        <div className="bg-gray-900 rounded-xl border border-gray-800 p-4">
-          <h3 className="text-sm font-medium text-gray-300 mb-2">Linked Host</h3>
+        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4">
+          <h3 className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Linked Host</h3>
           <div className="flex items-center gap-2">
             <span
               className={clsx(
                 'w-2.5 h-2.5 rounded-full shrink-0',
-                pod.currentStatus === 'running' ? 'bg-green-500' : 'bg-gray-500',
+                pod.currentStatus === 'running' ? 'bg-green-500' : 'bg-zinc-400 dark:bg-zinc-500',
               )}
             />
-            <span className={clsx('text-sm', pod.currentStatus === 'running' ? 'text-green-400' : 'text-gray-400')}>
+            <span
+              className={clsx(
+                'text-sm',
+                pod.currentStatus === 'running'
+                  ? 'text-green-600 dark:text-green-400'
+                  : 'text-zinc-600 dark:text-zinc-400',
+              )}
+            >
               {pod.currentStatus === 'running' ? 'Connected' : 'Offline'}
             </span>
-            <span className="text-gray-600">·</span>
+            <span className="text-zinc-400 dark:text-zinc-600">·</span>
             <button
               onClick={() => router.push(`/hosts/${pod.hostId}`)}
               className="text-blue-400 hover:text-blue-300 text-sm transition-colors"
@@ -348,9 +363,9 @@ export default function PodOverviewTab({ pod, liveData }: PodOverviewTabProps) {
 
       {/* Error */}
       {pod.errorMessage && (
-        <div className="bg-red-900/30 border border-red-800 rounded-xl p-4">
-          <h3 className="text-sm font-medium text-red-400 mb-1">Error</h3>
-          <p className="text-sm text-red-300">{pod.errorMessage}</p>
+        <div className="bg-red-50 dark:bg-red-900/30 border border-red-300 dark:border-red-800 rounded-xl p-4">
+          <h3 className="text-sm font-medium text-red-600 dark:text-red-400 mb-1">Error</h3>
+          <p className="text-sm text-red-700 dark:text-red-300">{pod.errorMessage}</p>
         </div>
       )}
     </div>
@@ -369,7 +384,7 @@ function CopyButton({ value }: { value: string }) {
   return (
     <button
       onClick={handleCopy}
-      className="p-1.5 text-gray-400 hover:text-white rounded-md hover:bg-gray-700 transition-colors"
+      className="p-1.5 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
       title="Copy to clipboard"
     >
       {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}

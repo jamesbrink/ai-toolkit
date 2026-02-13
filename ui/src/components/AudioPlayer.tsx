@@ -666,11 +666,11 @@ export default function AudioPlayer({
   const bgUrl = albumArtUrl || (defaultAlbumArtUrl ?? null);
 
   return (
-    <div ref={wrapRef} className={`relative h-full w-full overflow-hidden bg-gray-900 ${className}`}>
+    <div ref={wrapRef} className={`relative h-full w-full overflow-hidden bg-zinc-100 dark:bg-zinc-900 ${className}`}>
       {bgUrl ? (
         <>
           <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${bgUrl})` }} />
-          <div className="absolute inset-0 bg-gray-900/50" />
+          <div className="absolute inset-0 bg-zinc-100/50 dark:bg-zinc-900/50" />
         </>
       ) : null}
 
@@ -678,22 +678,22 @@ export default function AudioPlayer({
         {/* Header */}
         <div className="min-h-0">
           <div
-            className="truncate text-gray-200"
+            className="truncate text-zinc-800 dark:text-zinc-200"
             style={{ fontSize: titleSize, lineHeight: 1.1, letterSpacing: '0.01em' }}
           >
             {effectiveTitle}
           </div>
           {effectiveSubtitle ? (
-            <div className="mt-1 truncate text-gray-400" style={{ fontSize: subSize, lineHeight: 1.15 }}>
+            <div className="mt-1 truncate text-zinc-600 dark:text-zinc-400" style={{ fontSize: subSize, lineHeight: 1.15 }}>
               {effectiveSubtitle}
             </div>
           ) : null}
           {err ? (
-            <div className="mt-2 text-gray-300" style={{ fontSize: subSize }}>
+            <div className="mt-2 text-zinc-700 dark:text-zinc-300" style={{ fontSize: subSize }}>
               {err}
             </div>
           ) : !isReady ? (
-            <div className="mt-2 text-gray-400" style={{ fontSize: subSize }}>
+            <div className="mt-2 text-zinc-600 dark:text-zinc-400" style={{ fontSize: subSize }}>
               Loading…
             </div>
           ) : null}
@@ -702,7 +702,7 @@ export default function AudioPlayer({
         {/* Waveform + controls */}
         <div className="mt-3 flex-1 min-h-0">
           <div
-            className="group relative w-full overflow-hidden rounded-lg border border-2 border-yellow-400 bg-gray-900/80"
+            className="group relative w-full overflow-hidden rounded-lg border border-2 border-yellow-400 bg-zinc-100/80 dark:bg-zinc-900/80"
             style={{ height: `calc(100% - ${bottomBlock}px)` }}
           >
             {/* semi-transparent background so album art shows through */}
@@ -712,9 +712,9 @@ export default function AudioPlayer({
               <button
                 onClick={restart}
                 className={[
-                  'rounded-full border border-gray-700 bg-gray-950/80 text-gray-200',
-                  'transition group-hover:border-gray-600 group-hover:bg-gray-950/90',
-                  'focus:outline-none focus:ring-2 focus:ring-gray-500/40',
+                  'rounded-full border border-zinc-300 dark:border-zinc-700 bg-zinc-50/80 dark:bg-zinc-950/80 text-zinc-800 dark:text-zinc-200',
+                  'transition group-hover:border-zinc-400 dark:group-hover:border-zinc-600 group-hover:bg-zinc-50/90 dark:group-hover:bg-zinc-950/90',
+                  'focus:outline-none focus:ring-2 focus:ring-zinc-400/40 dark:focus:ring-zinc-500/40',
                 ].join(' ')}
                 style={{ width: restartBtn, height: restartBtn }}
                 aria-label="Restart"
@@ -728,9 +728,9 @@ export default function AudioPlayer({
               <button
                 onClick={togglePlay}
                 className={[
-                  'rounded-full border border-gray-700 bg-gray-950/80 text-gray-200',
-                  'transition group-hover:border-gray-600 group-hover:bg-gray-950/90',
-                  'focus:outline-none focus:ring-2 focus:ring-gray-500/40',
+                  'rounded-full border border-zinc-300 dark:border-zinc-700 bg-zinc-50/80 dark:bg-zinc-950/80 text-zinc-800 dark:text-zinc-200',
+                  'transition group-hover:border-zinc-400 dark:group-hover:border-zinc-600 group-hover:bg-zinc-50/90 dark:group-hover:bg-zinc-950/90',
+                  'focus:outline-none focus:ring-2 focus:ring-zinc-400/40 dark:focus:ring-zinc-500/40',
                 ].join(' ')}
                 style={{ width: playBtn, height: playBtn }}
                 aria-label={isPlaying ? 'Pause' : 'Play'}
@@ -747,7 +747,7 @@ export default function AudioPlayer({
                 )}
 
                 {isBuffering ? (
-                  <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 text-xs text-gray-300">Buffering…</div>
+                  <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 text-xs text-zinc-700 dark:text-zinc-300">Buffering…</div>
                 ) : null}
               </button>
             </div>
@@ -756,7 +756,7 @@ export default function AudioPlayer({
           {/* Bottom block: always visible */}
           <div className="mt-3">
             <div
-              className="flex items-center justify-between tabular-nums text-gray-300"
+              className="flex items-center justify-between tabular-nums text-zinc-700 dark:text-zinc-300"
               style={{ fontSize: timeSize }}
             >
               <div>{fmtTime(dragging ? dragValue : t)}</div>
@@ -765,7 +765,7 @@ export default function AudioPlayer({
 
             <div
               ref={barRef}
-              className="mt-2 relative w-full cursor-pointer select-none rounded-full bg-gray-800"
+              className="mt-2 relative w-full cursor-pointer select-none rounded-full bg-zinc-200 dark:bg-zinc-800"
               style={{ height: barH }}
               onPointerDown={onBarPointerDown}
               onPointerMove={onBarPointerMove}
@@ -774,14 +774,14 @@ export default function AudioPlayer({
               title="Scrub"
             >
               <div
-                className="absolute left-0 top-0 h-full rounded-full bg-gray-600"
+                className="absolute left-0 top-0 h-full rounded-full bg-zinc-400 dark:bg-zinc-600"
                 style={{
                   width: `${progress * 100}%`,
                   transition: dragging ? 'none' : 'width 80ms linear',
                 }}
               />
               <div
-                className="absolute top-1/2 -translate-y-1/2 rounded-full bg-gray-200"
+                className="absolute top-1/2 -translate-y-1/2 rounded-full bg-zinc-700 dark:bg-zinc-200"
                 style={{
                   left: `calc(${progress * 100}% - ${Math.floor(thumb / 2)}px)`,
                   width: thumb,
