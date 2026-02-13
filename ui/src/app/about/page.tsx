@@ -96,27 +96,17 @@ export default function AboutPage() {
               >
                 Ostris AI-Toolkit
               </a>{' '}
-              that adds Nix packaging, Apple Silicon training, multi-host orchestration, RunPod cloud integration, Claude
-              AI tools, and a modernized UI. All original training functionality is preserved — Kiln Remix builds on top
-              of the upstream project&apos;s core engine.
+              that adds Nix packaging, Apple Silicon training, multi-host orchestration, RunPod cloud integration,
+              Claude AI tools, and a modernized UI. All original training functionality is preserved — Kiln Remix builds
+              on top of the upstream project&apos;s core engine.
             </p>
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <StatCard label="Files Changed" value="254" />
-            <StatCard label="Lines Added" value="30.9k" />
-            <StatCard label="New Features" value={String(features.length)} />
-            <StatCard label="Upstream" value="100%" sub="in sync" />
           </div>
 
           {/* Features */}
           <div>
-            <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wider mb-4">
-              What Kiln Remix Adds
-            </h3>
+            <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wider mb-4">What Kiln Remix Adds</h3>
             <div className="space-y-3">
-              {features.map((feature) => (
+              {features.map(feature => (
                 <div key={feature.title} className="bg-gray-900 rounded-xl border border-gray-800 p-4">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
@@ -125,7 +115,7 @@ export default function AboutPage() {
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-1.5 mt-3">
-                    {feature.tags.map((tag) => (
+                    {feature.tags.map(tag => (
                       <span
                         key={tag}
                         className="px-2 py-0.5 rounded-full text-xs bg-gray-800 text-gray-400 border border-gray-700"
@@ -156,7 +146,7 @@ export default function AboutPage() {
               SDXL, SD, WAN, Lumina, CHROMA, CogView4, OmniGen2, and more — is entirely their work. Licensed under MIT.
             </p>
             <div className="flex flex-wrap gap-3">
-              {upstreamLinks.map((link) => (
+              {upstreamLinks.map(link => (
                 <a
                   key={link.label}
                   href={link.href}
@@ -173,15 +163,5 @@ export default function AboutPage() {
         </div>
       </MainContent>
     </>
-  );
-}
-
-function StatCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
-  return (
-    <div className="bg-gray-900 rounded-xl border border-gray-800 p-3 text-center">
-      <p className="text-xl font-bold text-gray-100">{value}</p>
-      {sub && <p className="text-xs text-green-400">{sub}</p>}
-      <p className="text-xs text-gray-400 mt-0.5">{label}</p>
-    </div>
   );
 }
