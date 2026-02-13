@@ -114,6 +114,8 @@ pkgs.dockerTools.streamLayeredImage {
       "TRAINING_FOLDER=/workspace/output"
       "DATA_ROOT=/workspace/data"
       "DATABASE_URL=file:/workspace/aitk_db.db"
+      # CUDA compute capabilities for RunPod GPU coverage (Ampere→Blackwell)
+      "TORCH_CUDA_ARCH_LIST=8.0;8.6;8.9;9.0;10.0;12.0"
     ];
   };
 }

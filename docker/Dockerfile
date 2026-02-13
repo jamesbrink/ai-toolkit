@@ -5,8 +5,9 @@ LABEL authors="jaret"
 # Set noninteractive to avoid timezone prompts
 ENV DEBIAN_FRONTEND=noninteractive
 
-# ref https://en.wikipedia.org/wiki/CUDA
-ENV TORCH_CUDA_ARCH_LIST="8.0 8.6 8.9 9.0 10.0 12.0"
+# CUDA compute capabilities for RunPod GPU coverage (Ampere→Blackwell)
+# See: https://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/
+ENV TORCH_CUDA_ARCH_LIST="8.0 8.6 8.9 9.0 10.0 12.0+PTX"
 
 # Install dependencies
 RUN apt-get update && apt-get install --no-install-recommends -y \
