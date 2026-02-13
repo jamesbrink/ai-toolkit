@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { TopBar, MainContent } from '@/components/layout';
 import { ArrowLeft, Square, Play, Trash2, Download } from 'lucide-react';
 import { Button } from '@headlessui/react';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { RunPodPodInfo } from '@/hooks/useRunPodPods';
 import useRemoteJobs from '@/hooks/useRemoteJobs';
 import { openConfirm } from '@/components/ConfirmModal';
@@ -197,7 +197,7 @@ export default function RunPodPodDetailPage() {
         </button>
         <div className="flex items-center space-x-3">
           <h1 className="text-lg">{pod.name}</h1>
-          <span className={classNames('px-2 py-0.5 rounded-full text-xs', status.color)}>{status.label}</span>
+          <span className={clsx('px-2 py-0.5 rounded-full text-xs', status.color)}>{status.label}</span>
           {pod.instanceType === 'SPOT' && (
             <span className="px-2 py-0.5 rounded-full text-xs bg-green-900 text-green-300">Spot</span>
           )}
@@ -271,7 +271,7 @@ export default function RunPodPodDetailPage() {
           <Button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={classNames('px-4 py-2 h-10 whitespace-nowrap shrink-0', activeTab === tab.key && 'bg-gray-700')}
+            className={clsx('px-4 py-2 h-10 whitespace-nowrap shrink-0', activeTab === tab.key && 'bg-gray-700')}
           >
             {tab.label}
           </Button>

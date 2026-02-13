@@ -3,6 +3,8 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
+  --font-sans: var(--font-inter), 'Inter', ui-sans-serif, system-ui, sans-serif;
+
   --color-gray-950: #0a0a0a;
   --color-gray-900: #171717;
   --color-gray-800: #262626;
@@ -13,6 +15,8 @@
   --color-gray-300: #d4d4d4;
   --color-gray-200: #e5e5e5;
   --color-gray-100: #f5f5f5;
+  --color-gray-50: #fafafa;
+
   --color-yellow-950: #1a1203;
   --color-yellow-900: #2a1c05;
   --color-yellow-800: #3a2607;
@@ -24,6 +28,30 @@
   --color-yellow-200: #fde68a;
   --color-yellow-100: #fef3c7;
   --color-yellow-50: #fffbeb;
+
+  --color-blue-950: #172554;
+  --color-blue-900: #1e3a5f;
+  --color-blue-800: #1e40af;
+  --color-blue-700: #1d4ed8;
+  --color-blue-600: #2563eb;
+  --color-blue-500: #3b82f6;
+  --color-blue-400: #60a5fa;
+  --color-blue-300: #93c5fd;
+  --color-blue-200: #bfdbfe;
+  --color-blue-100: #dbeafe;
+  --color-blue-50: #eff6ff;
+
+  --color-indigo-950: #1e1b4b;
+  --color-indigo-900: #312e81;
+  --color-indigo-800: #3730a3;
+  --color-indigo-700: #4338ca;
+  --color-indigo-600: #4f46e5;
+  --color-indigo-500: #6366f1;
+  --color-indigo-400: #818cf8;
+  --color-indigo-300: #a5b4fc;
+  --color-indigo-200: #c7d2fe;
+  --color-indigo-100: #e0e7ff;
+  --color-indigo-50: #eef2ff;
 }
 
 :root {
@@ -31,78 +59,14 @@
   --foreground: #171717;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-}
-
-@layer components {
-  /* control */
-  .aitk-react-select-container .aitk-react-select__control {
-    @apply flex w-full h-8 min-h-0 px-0 text-sm bg-gray-800 border border-gray-700 rounded-sm hover:border-gray-600 items-center;
-  }
-
-  /* selected label */
-  .aitk-react-select-container .aitk-react-select__single-value {
-    @apply flex-1 min-w-0 truncate text-sm text-neutral-200;
-  }
-
-  /* invisible input (keeps focus & typing, never wraps) */
-  .aitk-react-select-container .aitk-react-select__input-container {
-    @apply text-neutral-200;
-  }
-
-  /* focus */
-  .aitk-react-select-container .aitk-react-select__control--is-focused {
-    @apply ring-2 ring-gray-600 border-transparent hover:border-transparent shadow-none;
-  }
-
-  /* menu */
-  .aitk-react-select-container .aitk-react-select__menu {
-    @apply bg-gray-800 border border-gray-700;
-  }
-
-  /* options */
-  .aitk-react-select-container .aitk-react-select__option {
-    @apply text-sm text-neutral-200 bg-gray-800 hover:bg-gray-700;
-  }
-
-  /* option selected / focused state */
-  .aitk-react-select-container .aitk-react-select__option--is-selected {
-    @apply bg-gray-700 text-white;
-  }
-  .aitk-react-select-container .aitk-react-select__option--is-focused {
-    @apply bg-gray-700;
-  }
-
-  /* group label */
-  .aitk-react-select-container .aitk-react-select__group-heading {
-    @apply text-xs text-gray-400 uppercase;
-  }
-
-  /* indicator separator */
-  .aitk-react-select-container .aitk-react-select__indicator-separator {
-    @apply bg-gray-600;
-  }
-
-  /* indicators */
-  .aitk-react-select-container .aitk-react-select__indicators,
-  .aitk-react-select-container .aitk-react-select__indicator {
-    @apply py-0 flex items-center;
-  }
-
-  /* placeholder */
-  .aitk-react-select-container .aitk-react-select__placeholder {
-    @apply text-sm text-neutral-200;
-  }
 }
 
 /* Dark scrollbar for chat panel */
@@ -113,15 +77,24 @@ body {
   background: transparent;
 }
 .chat-scrollbar::-webkit-scrollbar-thumb {
-  background: #404040;
+  background: #d4d4d4;
   border-radius: 3px;
 }
 .chat-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #a3a3a3;
+}
+.dark .chat-scrollbar::-webkit-scrollbar-thumb {
+  background: #404040;
+}
+.dark .chat-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #525252;
 }
 /* Firefox */
 .chat-scrollbar {
   scrollbar-width: thin;
+  scrollbar-color: #d4d4d4 transparent;
+}
+.dark .chat-scrollbar {
   scrollbar-color: #404040 transparent;
 }
 
@@ -134,6 +107,11 @@ body {
   }
 }
 .animate-shimmer {
+  background: linear-gradient(90deg, #e5e5e5 25%, #d4d4d4 50%, #e5e5e5 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+.dark .animate-shimmer {
   background: linear-gradient(90deg, #262626 25%, #404040 50%, #262626 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;

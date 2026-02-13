@@ -7,7 +7,7 @@ import { LuImageOff, LuLoader, LuBan } from 'react-icons/lu';
 import { Button } from '@headlessui/react';
 import { FaDownload } from 'react-icons/fa';
 import { apiClient } from '@/utils/api';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { FaCaretDown, FaCaretUp } from 'react-icons/fa';
 import SampleImageViewer from './SampleImageViewer';
 import { getImageUrlPrefix, getFileUrlPrefix } from '@/utils/remoteApi';
@@ -50,7 +50,7 @@ export const SampleImagesMenu = ({ job, hostId }: SampleImagesMenuProps) => {
   return (
     <Button
       onClick={downloadZip}
-      className={classNames(`px-4 py-1 h-8 hover:bg-gray-200 dark:hover:bg-gray-700 inline-flex items-center`, {
+      className={clsx(`px-4 py-1 h-8 hover:bg-gray-200 dark:hover:bg-gray-700 inline-flex items-center`, {
         'opacity-50 cursor-not-allowed': isZipping,
       })}
     >

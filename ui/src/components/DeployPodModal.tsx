@@ -12,7 +12,7 @@ import {
   ListboxOptions,
 } from '@headlessui/react';
 import { Cloud, ChevronDown, Check } from 'lucide-react';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { GpuTypeInfo, GpuTypeDatacenterInfo } from '@/hooks/useRunPodGpuTypes';
 import { apiClient } from '@/utils/api';
 
@@ -296,7 +296,7 @@ export default function DeployPodModal({
                             key={gpu.id}
                             value={gpu.id}
                             disabled={unavailable}
-                            className={classNames(
+                            className={clsx(
                               'relative cursor-pointer select-none px-3 py-2 data-focus:bg-gray-600',
                               unavailable && 'opacity-50 cursor-not-allowed',
                             )}
@@ -306,7 +306,7 @@ export default function DeployPodModal({
                                 <GpuOptionLabel gpu={gpu} cloudType={cloudType} />
                                 <div className="flex items-center gap-2 shrink-0 ml-2">
                                   {badge && (
-                                    <span className={classNames('px-1.5 py-0.5 rounded text-xs', badge.color)}>
+                                    <span className={clsx('px-1.5 py-0.5 rounded text-xs', badge.color)}>
                                       {badge.label}
                                     </span>
                                   )}

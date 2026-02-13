@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import clsx from 'clsx';
 
 interface SkeletonProps {
   className?: string;
@@ -10,7 +10,7 @@ interface SkeletonProps {
 export function Skeleton({ className, variant = 'rect', width, height }: SkeletonProps) {
   return (
     <div
-      className={classNames(
+      className={clsx(
         'animate-shimmer',
         {
           'h-4 rounded': variant === 'text',

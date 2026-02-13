@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Eye, Trash2, Pen, Play, Pause, Cog, X } from 'lucide-react';
-import { Button } from '@headlessui/react';
+import { Button } from '@/components/catalyst/button';
 import { openConfirm } from '@/components/ConfirmModal';
 import { Job } from '@/server/prismaTypes';
 import { DataSource, UnifiedJob } from '@/types';
@@ -83,6 +83,7 @@ export default function JobActionBar({
     <div className={`flex items-center ${className ?? ''}`}>
       {canStart && (
         <Button
+          plain
           onClick={async () => {
             if (!canStart) return;
             await doStartJob();
@@ -91,25 +92,27 @@ export default function JobActionBar({
             }
             if (onRefresh) onRefresh();
           }}
-          className="ml-1 p-2.5 rounded-lg hover:bg-gray-700 flex items-center justify-center"
+          className="ml-1"
         >
           <Play className="w-5 h-5" />
         </Button>
       )}
       {canRemoveFromQueue && (
         <Button
+          plain
           onClick={async () => {
             if (!canRemoveFromQueue) return;
             await doMarkStopped();
             if (onRefresh) onRefresh();
           }}
-          className="ml-1 p-2.5 rounded-lg hover:bg-gray-700 flex items-center justify-center"
+          className="ml-1"
         >
           <X className="w-5 h-5" />
         </Button>
       )}
       {canStop && (
         <Button
+          plain
           onClick={() => {
             if (!canStop) return;
             openConfirm({
@@ -123,37 +126,28 @@ export default function JobActionBar({
               },
             });
           }}
-          className="ml-1 p-2.5 rounded-lg hover:bg-gray-700 flex items-center justify-center"
+          className="ml-1"
         >
           <Pause className="w-5 h-5" />
         </Button>
       )}
       {!hideView && !isRemote && (
-        <Link
-          href={`/jobs/${job.id}`}
-          className="ml-1 p-2.5 rounded-lg hover:bg-gray-700 text-gray-200 hover:text-gray-100 flex items-center justify-center"
-        >
+        <Button plain href={`/jobs/${job.id}`} className="ml-1">
           <Eye className="w-5 h-5" />
-        </Link>
+        </Button>
       )}
       {!hideView && isRemote && source?.hostId && (
-        <Link
-          href={`/jobs/${job.id}?hostId=${source.hostId}`}
-          className="ml-1 p-2.5 rounded-lg hover:bg-gray-700 text-gray-200 hover:text-gray-100 flex items-center justify-center"
-          title={`View on ${source.hostName}`}
-        >
+        <Button plain href={`/jobs/${job.id}?hostId=${source.hostId}`} className="ml-1">
           <Eye className="w-5 h-5" />
-        </Link>
+        </Button>
       )}
       {canEdit && !isRemote && (
-        <Link
-          href={`/jobs/new?id=${job.id}`}
-          className="ml-1 p-2.5 rounded-lg hover:bg-gray-700 hover:text-gray-100 flex items-center justify-center"
-        >
+        <Button plain href={`/jobs/new?id=${job.id}`} className="ml-1">
           <Pen className="w-5 h-5" />
-        </Link>
+        </Button>
       )}
       <Button
+        plain
         onClick={() => {
           let message = `Are you sure you want to delete the job "${job.name}"? This will also permanently remove it from ${isRemote ? source?.hostName || 'the remote host' : 'your disk'}.`;
           if (job.status === 'running') {
@@ -177,30 +171,30 @@ export default function JobActionBar({
             },
           });
         }}
-        className="ml-1 p-2.5 rounded-lg hover:bg-gray-700 flex items-center justify-center"
+        className="ml-1"
       >
         <Trash2 className="w-5 h-5" />
       </Button>
-      <div className="border-r border-gray-700 ml-2 h-6"></div>
+      <div className="border-r border-zinc-300 dark:border-zinc-700 ml-2 h-6"></div>
       <Menu as="div" className="flex items-center">
-        <MenuButton className="ml-1 p-2.5 rounded-lg hover:bg-gray-700 flex items-center justify-center">
+        <MenuButton className="ml-1 p-2.5 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-700 flex items-center justify-center text-zinc-600 dark:text-zinc-300">
           <Cog className="w-5 h-5" />
         </MenuButton>
         <MenuItems
           anchor="bottom"
-          className="bg-gray-900 border border-gray-700 rounded shadow-lg w-48 px-2 py-2 mt-4 text-gray-200"
+          className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded shadow-lg w-48 px-2 py-2 mt-4 text-zinc-800 dark:text-zinc-200"
         >
           <MenuItem>
             <Link
               href={`/jobs/new?cloneId=${job.id}${isRemote && source?.hostId ? `&sourceHostId=${source.hostId}` : ''}`}
-              className="cursor-pointer px-4 py-1 hover:bg-gray-800 rounded block text-gray-200"
+              className="cursor-pointer px-4 py-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded block text-zinc-800 dark:text-zinc-200"
             >
               Clone Job
             </Link>
           </MenuItem>
           <MenuItem>
             <div
-              className="cursor-pointer px-4 py-1 hover:bg-gray-800 rounded text-gray-200"
+              className="cursor-pointer px-4 py-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded text-zinc-800 dark:text-zinc-200"
               onClick={() => {
                 const message = `Are you sure you want to mark this job as stopped? This will set the job status to 'stopped' if the status is hung. Only do this if you are 100% sure the job is stopped. This will NOT stop the job.`;
                 openConfirm({

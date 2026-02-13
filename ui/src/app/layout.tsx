@@ -1,14 +1,17 @@
 import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
+import { ThemeProvider } from 'next-themes';
 import './globals.css';
 import Sidebar from '@/components/Sidebar';
 import { SidebarProvider } from '@/components/SidebarContext';
-import { ThemeProvider } from '@/components/ThemeProvider';
 import ConfirmModal from '@/components/ConfirmModal';
 import { Suspense } from 'react';
 import AuthWrapper from '@/components/AuthWrapper';
 import DocModal from '@/components/DocModal';
 import { ClaudeChatProvider } from '@/components/claude/ClaudeChatContext';
 import ChatPanel from '@/components/claude/ChatPanel';
+
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
 export const dynamic = 'force-dynamic';
 
@@ -22,19 +25,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const authRequired = process.env.AI_TOOLKIT_AUTH ? true : false;
 
   return (
-    <html lang="en" className="dark">
+    <html lang="en" className={inter.variable} suppressHydrationWarning>
       <head>
         <meta name="apple-mobile-web-app-title" content="Kiln" />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
       </head>
       <body className="font-sans">
-        <ThemeProvider>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
           <AuthWrapper authRequired={authRequired}>
             <SidebarProvider>
               <ClaudeChatProvider>
-                <div className="flex h-dvh bg-gray-950">
+                <div className="flex h-dvh bg-white dark:bg-gray-950">
                   <Sidebar />
-                  <main className="flex-1 min-w-0 overflow-auto bg-gray-950 text-gray-100 relative">
+                  <main className="flex-1 min-w-0 overflow-auto bg-white text-zinc-950 dark:bg-gray-950 dark:text-gray-100 relative">
                     <Suspense>{children}</Suspense>
                   </main>
                   <ChatPanel />

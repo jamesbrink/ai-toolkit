@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { useDropzone } from 'react-dropzone';
 import { FaUpload, FaImage, FaTimes } from 'react-icons/fa';
 import { apiClient } from '@/utils/api';
@@ -104,7 +104,7 @@ export default function SampleControlImage({
   return (
     <div
       {...rootProps}
-      className={classNames(
+      className={clsx(
         'group relative flex items-center justify-center rounded-xl cursor-pointer ring-1 ring-inset',
         'transition-all duration-200 select-none overflow-hidden text-center',
         'h-20 w-20',
@@ -148,7 +148,7 @@ export default function SampleControlImage({
       {backgroundUrl && !isUploading && (
         <>
           <div
-            className={classNames(
+            className={clsx(
               'pointer-events-none absolute inset-0 flex items-center justify-center',
               'bg-black/0 group-hover:bg-black/20',
               isDragActive && 'bg-black/35',
@@ -156,7 +156,7 @@ export default function SampleControlImage({
             )}
           >
             <div
-              className={classNames(
+              className={clsx(
                 'inline-flex items-center gap-1 rounded-md px-2 py-1',
                 'text-[10px] font-semibold',
                 'bg-black/45 text-white/90 backdrop-blur-sm',
@@ -174,7 +174,7 @@ export default function SampleControlImage({
             onClick={clearImage}
             title="Clear image"
             aria-label="Clear image"
-            className={classNames(
+            className={clsx(
               'absolute right-1.5 top-1.5 z-10 inline-flex items-center justify-center',
               'h-5 w-5 rounded-md bg-black/55 text-white/90',
               'opacity-0 group-hover:opacity-100 transition-opacity',

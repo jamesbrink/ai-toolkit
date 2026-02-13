@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { RunPodPodInfo } from '@/hooks/useRunPodPods';
 import { Cpu, DollarSign, Clock, ExternalLink, Terminal, Eye, EyeOff, Copy, Check } from 'lucide-react';
-import classNames from 'classnames';
+import clsx from 'clsx';
 
 interface LiveGpu {
   id: string;
@@ -64,7 +64,7 @@ function CopyableField({ value, mono = true }: { value: string; mono?: boolean }
   return (
     <div className="flex items-center gap-2">
       <code
-        className={classNames('text-sm text-gray-100 bg-gray-800 px-3 py-1.5 rounded-lg flex-1', mono && 'font-mono')}
+        className={clsx('text-sm text-gray-100 bg-gray-800 px-3 py-1.5 rounded-lg flex-1', mono && 'font-mono')}
       >
         {value}
       </code>
@@ -109,7 +109,7 @@ function DeploymentStepper({ stage }: { stage: number }) {
             <div key={s.label} className="flex items-center flex-1 last:flex-initial">
               <div className="flex flex-col items-center">
                 <div
-                  className={classNames(
+                  className={clsx(
                     'w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium border-2 transition-colors',
                     isCompleted && 'bg-green-600 border-green-600 text-white',
                     isActive && 'bg-blue-600 border-blue-600 text-white animate-pulse',
@@ -119,7 +119,7 @@ function DeploymentStepper({ stage }: { stage: number }) {
                   {isCompleted ? <Check className="w-4 h-4" /> : stepNum}
                 </div>
                 <span
-                  className={classNames(
+                  className={clsx(
                     'text-xs mt-1.5 whitespace-nowrap',
                     isActive ? 'text-blue-400 font-medium' : isCompleted ? 'text-green-400' : 'text-gray-500',
                   )}
@@ -129,7 +129,7 @@ function DeploymentStepper({ stage }: { stage: number }) {
               </div>
               {i < deploymentStages.length - 1 && (
                 <div
-                  className={classNames(
+                  className={clsx(
                     'flex-1 h-0.5 mx-2 mt-[-1.25rem]',
                     isCompleted ? 'bg-green-600' : 'bg-gray-700',
                   )}
@@ -332,13 +332,13 @@ export default function PodOverviewTab({ pod, liveData }: PodOverviewTabProps) {
           <h3 className="text-sm font-medium text-gray-300 mb-2">Linked Host</h3>
           <div className="flex items-center gap-2">
             <span
-              className={classNames(
+              className={clsx(
                 'w-2.5 h-2.5 rounded-full shrink-0',
                 pod.currentStatus === 'running' ? 'bg-green-500' : 'bg-gray-500',
               )}
             />
             <span
-              className={classNames('text-sm', pod.currentStatus === 'running' ? 'text-green-400' : 'text-gray-400')}
+              className={clsx('text-sm', pod.currentStatus === 'running' ? 'text-green-400' : 'text-gray-400')}
             >
               {pod.currentStatus === 'running' ? 'Connected' : 'Offline'}
             </span>

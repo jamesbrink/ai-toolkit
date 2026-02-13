@@ -5,7 +5,10 @@ import { LuImageOff, LuLoader, LuBan } from 'react-icons/lu';
 import { FaChevronLeft, FaPen, FaCopy } from 'react-icons/fa';
 import { Sparkles, Search, Download, Upload } from 'lucide-react';
 import DatasetImageCard from '@/components/DatasetImageCard';
-import { Button } from '@headlessui/react';
+import { Button } from '@/components/catalyst/button';
+import { Badge } from '@/components/catalyst/badge';
+import { Heading } from '@/components/catalyst/heading';
+import { Text } from '@/components/catalyst/text';
 import AddImagesModal, { openImagesModal } from '@/components/AddImagesModal';
 import { TopBar, MainContent } from '@/components/layout';
 import { apiClient } from '@/utils/api';
@@ -206,9 +209,9 @@ export default function DatasetPage({ params }: { params: Promise<{ datasetName:
       text = 'Loading Images';
       subtitle = 'Please wait while we fetch your dataset images...';
       showIt = true;
-      bgColor = 'bg-gray-50 dark:bg-gray-800/50';
-      textColor = 'text-gray-900 dark:text-gray-100';
-      iconColor = 'text-gray-400';
+      bgColor = 'bg-zinc-50 dark:bg-zinc-800/50';
+      textColor = 'text-zinc-900 dark:text-zinc-100';
+      iconColor = 'text-zinc-400';
     }
     if (status == 'error') {
       icon = <LuBan className="w-8 h-8" />;
@@ -226,16 +229,16 @@ export default function DatasetPage({ params }: { params: Promise<{ datasetName:
         ? 'This remote dataset is empty.'
         : 'This dataset is empty. Click "Add Images" to get started.';
       showIt = true;
-      bgColor = 'bg-gray-50 dark:bg-gray-800/50';
-      textColor = 'text-gray-900 dark:text-gray-100';
-      iconColor = 'text-gray-400';
+      bgColor = 'bg-zinc-50 dark:bg-zinc-800/50';
+      textColor = 'text-zinc-900 dark:text-zinc-100';
+      iconColor = 'text-zinc-400';
     }
 
     if (!showIt) return null;
 
     return (
       <div
-        className={`mt-10 flex flex-col items-center justify-center py-16 px-8 rounded-xl border-2 border-gray-700 border-dashed ${bgColor} ${textColor} mx-auto max-w-md text-center`}
+        className={`mt-10 flex flex-col items-center justify-center py-16 px-8 rounded-xl border-2 border-zinc-300 dark:border-zinc-700 border-dashed ${bgColor} ${textColor} mx-auto max-w-md text-center`}
       >
         <div className={`${iconColor} mb-4`}>{icon}</div>
         <h3 className="text-lg font-semibold mb-2">{text}</h3>
@@ -249,40 +252,35 @@ export default function DatasetPage({ params }: { params: Promise<{ datasetName:
       {/* Fixed top bar */}
       <TopBar>
         <div>
-          <Button className="text-gray-300 px-3 mt-1" onClick={() => history.back()}>
+          <Button plain onClick={() => history.back()}>
             <FaChevronLeft />
           </Button>
         </div>
         <div className="flex items-center gap-2">
-          <h1 className="text-lg">Dataset: {datasetName}</h1>
+          <Heading level={1} className="text-lg">
+            Dataset: {datasetName}
+          </Heading>
           {!isRemote && (
             <button
               onClick={handleRename}
-              className="text-gray-400 hover:text-gray-200 p-1 rounded transition-colors"
+              className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 p-1 rounded transition-colors"
               title="Rename dataset"
             >
               <FaPen className="w-3 h-3" />
             </button>
           )}
           {status === 'success' && (
-            <span className="text-sm text-gray-400 ml-1">
+            <Text className="text-sm ml-1">
               {imgList.length} image{imgList.length !== 1 ? 's' : ''}
               {datasetSize !== null && ` · ${formatBytes(datasetSize)}`}
-            </span>
+            </Text>
           )}
-          {isRemote && (
-            <span className="px-2 py-0.5 bg-blue-900/50 rounded-full text-xs text-blue-300 ml-2">
-              {hostName || 'Remote'}
-            </span>
-          )}
+          {isRemote && <Badge color="blue">{hostName || 'Remote'}</Badge>}
         </div>
         <div className="flex-1"></div>
         {imgList.length > 0 && (
           <div className="mr-2">
-            <Button
-              className="text-gray-200 bg-teal-700 hover:bg-teal-600 px-3 py-1 rounded-md flex items-center gap-1.5 text-sm"
-              onClick={() => setAnalysisModalOpen(true)}
-            >
+            <Button color="teal" onClick={() => setAnalysisModalOpen(true)}>
               <Search className="w-4 h-4" />
               Analyze Quality
             </Button>
@@ -290,11 +288,7 @@ export default function DatasetPage({ params }: { params: Promise<{ datasetName:
         )}
         {!isRemote && imgList.length > 0 && (
           <div className="mr-2">
-            <Button
-              className="text-gray-200 bg-gray-600 hover:bg-gray-500 px-3 py-1 rounded-md flex items-center gap-1.5 text-sm disabled:opacity-50"
-              onClick={handleExport}
-              disabled={exporting}
-            >
+            <Button outline onClick={handleExport} disabled={exporting}>
               <Download className="w-4 h-4" />
               {exporting ? 'Exporting...' : 'Export ZIP'}
             </Button>
@@ -302,10 +296,7 @@ export default function DatasetPage({ params }: { params: Promise<{ datasetName:
         )}
         {!isRemote && onlineHosts.length > 0 && imgList.length > 0 && (
           <div className="mr-2">
-            <Button
-              className="text-gray-200 bg-blue-700 hover:bg-blue-600 px-3 py-1 rounded-md flex items-center gap-1.5 text-sm"
-              onClick={() => setPushModalOpen(true)}
-            >
+            <Button color="blue" onClick={() => setPushModalOpen(true)}>
               <Upload className="w-4 h-4" />
               Push to Host
             </Button>
@@ -313,10 +304,7 @@ export default function DatasetPage({ params }: { params: Promise<{ datasetName:
         )}
         {!isRemote && (
           <div className="mr-2">
-            <Button
-              className="text-gray-200 bg-gray-600 hover:bg-gray-500 px-3 py-1 rounded-md flex items-center gap-1.5 text-sm"
-              onClick={handleDuplicate}
-            >
+            <Button outline onClick={handleDuplicate}>
               <FaCopy className="w-3.5 h-3.5" />
               Duplicate
             </Button>
@@ -324,10 +312,7 @@ export default function DatasetPage({ params }: { params: Promise<{ datasetName:
         )}
         {isConfigured && imgList.length > 0 && (
           <div className="mr-2">
-            <Button
-              className="text-gray-200 bg-purple-700 hover:bg-purple-600 px-3 py-1 rounded-md flex items-center gap-1.5 text-sm"
-              onClick={() => setCaptionModalOpen(true)}
-            >
+            <Button color="purple" onClick={() => setCaptionModalOpen(true)}>
               <Sparkles className="w-4 h-4" />
               Caption with Claude
             </Button>
@@ -335,10 +320,7 @@ export default function DatasetPage({ params }: { params: Promise<{ datasetName:
         )}
         {!isRemote && (
           <div>
-            <Button
-              className="text-gray-200 bg-slate-600 px-3 py-1 rounded-md"
-              onClick={() => openImagesModal(datasetName, () => refreshImageList(datasetName))}
-            >
+            <Button color="zinc" onClick={() => openImagesModal(datasetName, () => refreshImageList(datasetName))}>
               Add Images
             </Button>
           </div>
@@ -346,7 +328,7 @@ export default function DatasetPage({ params }: { params: Promise<{ datasetName:
       </TopBar>
       <MainContent>
         {isRemote && (
-          <div className="mb-4 px-4 py-2 bg-blue-900/30 border border-blue-800 rounded-lg text-sm text-blue-200">
+          <div className="mb-4 px-4 py-2 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg text-sm text-blue-700 dark:text-blue-200">
             Viewing remote dataset on <strong>{hostName || 'remote host'}</strong>
           </div>
         )}

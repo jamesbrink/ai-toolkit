@@ -8,7 +8,9 @@ import useDatasetList from '@/hooks/useDatasetList';
 import useHostList from '@/hooks/useHostList';
 import useAllDatasets from '@/hooks/useAllDatasets';
 import { SourcedDatasetInfo } from '@/types';
-import { Button } from '@headlessui/react';
+import { Button } from '@/components/catalyst/button';
+import { Heading } from '@/components/catalyst/heading';
+import { Text } from '@/components/catalyst/text';
 import { FaRegTrashAlt, FaPen, FaCopy } from 'react-icons/fa';
 import { Download, Upload } from 'lucide-react';
 import DatasetPushModal from '@/components/DatasetPushModal';
@@ -72,7 +74,7 @@ export default function Datasets() {
             ? `/datasets/${row.name}?hostId=${row.source.hostId}`
             : `/datasets/${row.name}`;
         return (
-          <Link href={href} className="text-gray-200 hover:text-gray-100 font-medium">
+          <Link href={href} className="text-zinc-800 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white font-medium">
             {row.name}
           </Link>
         );
@@ -87,7 +89,7 @@ export default function Datasets() {
             sortable: true,
             className: 'w-28',
             render: (row: SourcedDatasetInfo) => (
-              <span className={row.source.type === 'local' ? 'text-gray-400' : 'text-blue-300'}>
+              <span className={row.source.type === 'local' ? 'text-zinc-500 dark:text-zinc-400' : 'text-blue-600 dark:text-blue-300'}>
                 {row.source.type === 'local' ? 'Local' : row.source.hostName}
               </span>
             ),
@@ -99,7 +101,7 @@ export default function Datasets() {
       key: 'imageCount',
       sortable: true,
       className: 'w-24 text-right tabular-nums',
-      render: (row: SourcedDatasetInfo) => <span className="text-gray-300">{row.imageCount.toLocaleString()}</span>,
+      render: (row: SourcedDatasetInfo) => <span className="text-zinc-700 dark:text-zinc-300">{row.imageCount.toLocaleString()}</span>,
     },
     {
       title: 'Captioned',
@@ -107,9 +109,9 @@ export default function Datasets() {
       sortable: true,
       className: 'w-28 text-right',
       render: (row: SourcedDatasetInfo) => {
-        if (row.imageCount === 0) return <span className="text-gray-500">-</span>;
+        if (row.imageCount === 0) return <span className="text-zinc-400 dark:text-zinc-500">-</span>;
         const pct = Math.round((row.captionCount / row.imageCount) * 100);
-        const color = pct === 100 ? 'text-green-400' : pct > 0 ? 'text-yellow-400' : 'text-gray-500';
+        const color = pct === 100 ? 'text-green-600 dark:text-green-400' : pct > 0 ? 'text-yellow-600 dark:text-yellow-400' : 'text-zinc-400 dark:text-zinc-500';
         return (
           <span className={`tabular-nums ${color}`}>
             {row.captionCount}/{row.imageCount}
@@ -122,7 +124,7 @@ export default function Datasets() {
       key: 'totalSizeBytes',
       sortable: true,
       className: 'w-24 text-right tabular-nums',
-      render: (row: SourcedDatasetInfo) => <span className="text-gray-400">{formatBytes(row.totalSizeBytes)}</span>,
+      render: (row: SourcedDatasetInfo) => <span className="text-zinc-500 dark:text-zinc-400">{formatBytes(row.totalSizeBytes)}</span>,
     },
     {
       title: 'Modified',
@@ -130,7 +132,7 @@ export default function Datasets() {
       sortable: true,
       className: 'w-28 text-right',
       render: (row: SourcedDatasetInfo) => (
-        <span className="text-gray-400">{formatRelativeTime(row.lastModified)}</span>
+        <span className="text-zinc-500 dark:text-zinc-400">{formatRelativeTime(row.lastModified)}</span>
       ),
     },
     {
@@ -144,7 +146,7 @@ export default function Datasets() {
             <div className="flex items-center justify-end gap-1">
               <Link
                 href={`/datasets/${row.name}?hostId=${row.source.hostId}`}
-                className="text-gray-400 hover:text-gray-200 p-2 rounded-full transition-colors text-xs"
+                className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 p-2 rounded-full transition-colors text-xs"
                 title="View remote dataset"
               >
                 View
@@ -155,7 +157,7 @@ export default function Datasets() {
         return (
           <div className="flex items-center justify-end gap-1">
             <button
-              className="text-gray-400 hover:text-gray-200 p-2 rounded-full transition-colors disabled:opacity-40"
+              className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 p-2 rounded-full transition-colors disabled:opacity-40"
               onClick={() => handleExportDataset(row.name)}
               disabled={exportingDataset === row.name || row.imageCount === 0}
               title="Export ZIP"
@@ -164,7 +166,7 @@ export default function Datasets() {
             </button>
             {onlineHosts.length > 0 && row.imageCount > 0 && (
               <button
-                className="text-gray-400 hover:text-blue-400 p-2 rounded-full transition-colors"
+                className="text-zinc-500 dark:text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 p-2 rounded-full transition-colors"
                 onClick={() => setPushDataset(row.name)}
                 title="Push to Host"
               >
@@ -172,21 +174,21 @@ export default function Datasets() {
               </button>
             )}
             <button
-              className="text-gray-400 hover:text-gray-200 p-2 rounded-full transition-colors"
+              className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 p-2 rounded-full transition-colors"
               onClick={() => handleCopyDataset(row.name)}
               title="Duplicate"
             >
               <FaCopy className="w-3.5 h-3.5" />
             </button>
             <button
-              className="text-gray-400 hover:text-gray-200 p-2 rounded-full transition-colors"
+              className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 p-2 rounded-full transition-colors"
               onClick={() => handleRenameDataset(row.name)}
               title="Rename"
             >
               <FaPen className="w-3 h-3" />
             </button>
             <button
-              className="text-gray-400 hover:text-red-400 p-2 rounded-full transition-colors"
+              className="text-zinc-500 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 p-2 rounded-full transition-colors"
               onClick={() => handleDeleteDataset(row.name)}
               title="Delete"
             >
@@ -329,19 +331,18 @@ export default function Datasets() {
     <>
       <TopBar>
         <div>
-          <h1 className="text-2xl font-semibold text-gray-100">Datasets</h1>
+          <Heading level={1} className="text-lg">
+            Datasets
+          </Heading>
         </div>
         <div className="flex-1"></div>
         {onlineHosts.length > 0 && (
-          <span className="text-xs text-gray-400 mr-3">
+          <Text className="text-xs mr-3">
             {onlineHosts.length} remote host{onlineHosts.length !== 1 ? 's' : ''} connected
-          </span>
+          </Text>
         )}
         <div>
-          <Button
-            className="text-gray-200 bg-slate-600 px-4 py-2 rounded-md hover:bg-slate-500 transition-colors"
-            onClick={() => openNewDatasetModal()}
-          >
+          <Button color="blue" onClick={() => openNewDatasetModal()}>
             New Dataset
           </Button>
         </div>
@@ -371,9 +372,9 @@ export default function Datasets() {
         title="New Dataset"
         size="md"
       >
-        <div className="space-y-4 text-gray-200">
+        <div className="space-y-4 text-zinc-800 dark:text-zinc-200">
           <form onSubmit={handleCreateDataset}>
-            <div className="text-sm text-gray-400">
+            <div className="text-sm text-zinc-500 dark:text-zinc-400">
               This will create a new folder with the name below in your dataset folder.
             </div>
             <div className="mt-4">
@@ -381,19 +382,12 @@ export default function Datasets() {
             </div>
 
             <div className="mt-6 flex justify-end space-x-3">
-              <button
-                type="button"
-                className="rounded-md bg-gray-700 px-4 py-2 text-gray-200 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500"
-                onClick={() => setIsNewDatasetModalOpen(false)}
-              >
+              <Button outline onClick={() => setIsNewDatasetModalOpen(false)}>
                 Cancel
-              </button>
-              <button
-                type="submit"
-                className="rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
+              </Button>
+              <Button color="blue" type="submit">
                 Confirm
-              </button>
+              </Button>
             </div>
           </form>
         </div>

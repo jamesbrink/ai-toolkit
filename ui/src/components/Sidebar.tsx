@@ -2,13 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
-import { Home, Settings, BrainCircuit, Images, Plus, X, Network, Info } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Home, Settings, BrainCircuit, Images, Plus, X, Network, Info, Sun, Moon } from 'lucide-react';
 import { FaXTwitter, FaDiscord, FaYoutube } from 'react-icons/fa6';
 import { Dialog, DialogBackdrop, DialogPanel } from '@headlessui/react';
 import Image from 'next/image';
 import { useSidebar } from './SidebarContext';
-import classNames from 'classnames';
+import { useTheme } from 'next-themes';
+import clsx from 'clsx';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: Home },
@@ -47,6 +48,31 @@ function isActive(href: string, pathname: string): boolean {
   return pathname.startsWith(href);
 }
 
+function ThemeToggle({ collapsed }: { collapsed: boolean }) {
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
+
+  if (!mounted) return null;
+
+  const isDark = theme === 'dark';
+
+  return (
+    <button
+      onClick={() => setTheme(isDark ? 'light' : 'dark')}
+      className={clsx(
+        'flex items-center rounded-lg transition-colors text-zinc-500 hover:text-zinc-900 dark:text-gray-400 dark:hover:text-white',
+        collapsed ? 'justify-center p-2' : 'px-4 py-2 gap-3',
+      )}
+      title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+    >
+      {isDark ? <Sun className="w-5 h-5 shrink-0" /> : <Moon className="w-5 h-5 shrink-0" />}
+      {!collapsed && <span className="text-sm">{isDark ? 'Light Mode' : 'Dark Mode'}</span>}
+    </button>
+  );
+}
+
 /**
  * Shared nav content rendered in all sidebar modes (mobile drawer, tablet rail, desktop full).
  */
@@ -54,13 +80,13 @@ function NavContent({ collapsed, onNavClick }: { collapsed: boolean; onNavClick?
   const pathname = usePathname();
 
   const socialsBoxClass =
-    'flex flex-col items-center justify-center p-1 hover:bg-gray-800 rounded-lg transition-colors';
-  const socialIconClass = 'w-5 h-5 text-gray-400 hover:text-white';
+    'flex flex-col items-center justify-center p-1 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-lg transition-colors';
+  const socialIconClass = 'w-5 h-5 text-zinc-500 hover:text-zinc-900 dark:text-gray-400 dark:hover:text-white';
 
   return (
-    <div className="flex flex-col h-full bg-gray-900 text-gray-100">
+    <div className="flex flex-col h-full bg-gray-50 text-zinc-900 dark:bg-gray-900 dark:text-gray-100">
       {/* Logo */}
-      <div className={classNames('py-3', collapsed ? 'px-2 flex justify-center' : 'px-4')}>
+      <div className={clsx('py-3', collapsed ? 'px-2 flex justify-center' : 'px-4')}>
         {collapsed ? (
           <Image
             src="/ostris_logo.png"
@@ -84,16 +110,16 @@ function NavContent({ collapsed, onNavClick }: { collapsed: boolean; onNavClick?
                 style={{ width: 'auto' }}
               />
               <span className="font-bold uppercase">Ostris</span>
-              <span className="ml-2 uppercase text-gray-300">AI-Toolkit</span>
+              <span className="ml-2 uppercase text-zinc-500 dark:text-gray-300">AI-Toolkit</span>
             </h1>
-            <p className="text-xs text-gray-500 uppercase tracking-widest mt-1 pl-10">Kiln Remix</p>
+            <p className="text-xs text-zinc-400 dark:text-gray-500 uppercase tracking-widest mt-1 pl-10">Kiln Remix</p>
           </div>
         )}
       </div>
 
       {/* Navigation */}
       <nav className="flex-1">
-        <ul className={classNames('py-4 space-y-2', collapsed ? 'px-1' : 'px-2')}>
+        <ul className={clsx('py-4 space-y-2', collapsed ? 'px-1' : 'px-2')}>
           {navigation.map(item => {
             const active = isActive(item.href, pathname);
             return (
@@ -102,13 +128,15 @@ function NavContent({ collapsed, onNavClick }: { collapsed: boolean; onNavClick?
                   href={item.href}
                   onClick={onNavClick}
                   title={collapsed ? item.name : undefined}
-                  className={classNames(
+                  className={clsx(
                     'flex items-center py-3 rounded-lg transition-colors',
                     collapsed ? 'justify-center px-2' : 'px-4',
-                    active ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-800',
+                    active
+                      ? 'bg-gray-200 text-zinc-950 dark:bg-gray-800 dark:text-white'
+                      : 'text-zinc-600 hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-800',
                   )}
                 >
-                  <item.icon className={classNames('w-5 h-5 shrink-0', !collapsed && 'mr-3')} />
+                  <item.icon className={clsx('w-5 h-5 shrink-0', !collapsed && 'mr-3')} />
                   {!collapsed && item.name}
                 </Link>
               </li>
@@ -140,12 +168,19 @@ function NavContent({ collapsed, onNavClick }: { collapsed: boolean; onNavClick?
           <div className="min-w-[26px] min-h-[26px]">
             <HeartIcon />
           </div>
-          <div className="uppercase text-gray-400 text-sm mb-2 flex-1 pt-2 pl-0">Support AI-Toolkit</div>
+          <div className="uppercase text-zinc-500 dark:text-gray-400 text-sm mb-2 flex-1 pt-2 pl-0">
+            Support AI-Toolkit
+          </div>
         </a>
       )}
 
+      {/* Theme toggle */}
+      <div className={clsx('px-1', collapsed ? 'flex justify-center' : '')}>
+        <ThemeToggle collapsed={collapsed} />
+      </div>
+
       {/* Social links */}
-      <div className="px-1 py-1 border-t border-gray-800">
+      <div className="px-1 py-1 border-t border-gray-200 dark:border-gray-800">
         {collapsed ? (
           <div className="flex flex-col items-center gap-2 py-1">
             {socialLinks.map(link => (
@@ -201,7 +236,7 @@ const Sidebar = () => {
             {/* Close button */}
             <button
               onClick={close}
-              className="absolute top-2 right-2 p-2 text-gray-400 hover:text-white z-10"
+              className="absolute top-2 right-2 p-2 text-zinc-500 hover:text-zinc-900 dark:text-gray-400 dark:hover:text-white z-10"
               aria-label="Close sidebar"
             >
               <X className="w-5 h-5" />
@@ -222,7 +257,7 @@ const Sidebar = () => {
 
         {/* Actual rail / expanded panel */}
         <div
-          className={classNames(
+          className={clsx(
             'absolute inset-y-0 left-0 z-40 transition-all duration-200 ease-in-out overflow-hidden',
             railHovered ? 'w-59' : 'w-16',
           )}

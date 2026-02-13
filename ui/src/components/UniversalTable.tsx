@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { TableSkeleton } from '@/components/Skeleton';
-import classNames from 'classnames';
+import clsx from 'clsx';
 
 export interface TableColumn<T = Record<string, unknown>> {
   title: string;
@@ -24,7 +24,7 @@ export default function UniversalTable<T>({
   columns,
   rows,
   isLoading,
-  theadClassName = 'text-gray-400',
+  theadClassName = 'text-zinc-500 dark:text-zinc-400',
   defaultSortKey,
   defaultSortDir = 'asc',
   onRefresh = () => {},
@@ -60,11 +60,10 @@ export default function UniversalTable<T>({
   }, [rows, sortKey, sortDir]);
 
   const SortIndicator = ({ columnKey }: { columnKey: string }) => {
-    if (sortKey !== columnKey) return <span className="ml-1 text-gray-600">↕</span>;
-    return <span className="ml-1">{sortDir === 'asc' ? '↑' : '↓'}</span>;
+    if (sortKey !== columnKey) return <span className="ml-1 text-zinc-400 dark:text-zinc-600">&#x21D5;</span>;
+    return <span className="ml-1">{sortDir === 'asc' ? '\u2191' : '\u2193'}</span>;
   };
 
-  /** Get a cell value for default (non-render) display */
   const getCellValue = (row: T, key: string): React.ReactNode => {
     const val = (row as Record<string, unknown>)[key];
     if (val == null) return '';
@@ -73,15 +72,15 @@ export default function UniversalTable<T>({
   };
 
   return (
-    <div className="w-full bg-gray-900 rounded-md shadow-md">
+    <div className="w-full bg-white dark:bg-zinc-900 rounded-md shadow-md">
       {isLoading ? (
         <TableSkeleton />
       ) : rows.length === 0 ? (
-        <div className="p-6 text-center text-gray-400">
+        <div className="p-6 text-center text-zinc-500 dark:text-zinc-400">
           <p className="text-sm">Empty</p>
           <button
             onClick={() => onRefresh()}
-            className="mt-2 px-3 py-1 text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 rounded transition-colors"
+            className="mt-2 px-3 py-1 text-xs bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded transition-colors"
           >
             Refresh
           </button>
@@ -89,13 +88,13 @@ export default function UniversalTable<T>({
       ) : (
         <>
           {/* Mobile card view */}
-          <div className="sm:hidden divide-y divide-gray-700">
+          <div className="sm:hidden divide-y divide-zinc-200 dark:divide-zinc-700">
             {sortedRows?.map((row, index) => (
               <div key={index} className="p-3 space-y-2">
                 {columns.map(column => (
                   <div key={column.key} className="flex justify-between items-start gap-2">
-                    <span className="text-xs text-gray-400 uppercase shrink-0">{column.title}</span>
-                    <span className={classNames('text-sm text-right', column.className)}>
+                    <span className="text-xs text-zinc-500 dark:text-zinc-400 uppercase shrink-0">{column.title}</span>
+                    <span className={clsx('text-sm text-right', column.className)}>
                       {column.render ? column.render(row) : getCellValue(row, column.key)}
                     </span>
                   </div>
@@ -105,15 +104,15 @@ export default function UniversalTable<T>({
           </div>
           {/* Desktop table view */}
           <div className="hidden sm:block overflow-x-auto">
-            <table className="w-full text-sm text-left text-gray-300">
-              <thead className={classNames('text-xs uppercase bg-gray-800', theadClassName)}>
+            <table className="w-full text-sm text-left text-zinc-700 dark:text-zinc-300">
+              <thead className={clsx('text-xs uppercase bg-zinc-50 dark:bg-zinc-800', theadClassName)}>
                 <tr>
                   {columns.map(column => (
-                    <th key={column.key} className={classNames('px-3 py-2', column.className)}>
+                    <th key={column.key} className={clsx('px-3 py-2', column.className)}>
                       {column.sortable ? (
                         <button
                           type="button"
-                          className="inline-flex items-center cursor-pointer select-none hover:text-gray-200 transition-colors"
+                          className="inline-flex items-center cursor-pointer select-none hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors"
                           onClick={() => handleSort(column.key)}
                         >
                           {column.title}
@@ -128,13 +127,18 @@ export default function UniversalTable<T>({
               </thead>
               <tbody>
                 {sortedRows?.map((row, index) => {
-                  // Style for alternating rows
-                  const rowClass = index % 2 === 0 ? 'bg-gray-900' : 'bg-gray-800';
+                  const rowClass =
+                    index % 2 === 0
+                      ? 'bg-white dark:bg-zinc-900'
+                      : 'bg-zinc-50 dark:bg-zinc-800';
 
                   return (
-                    <tr key={index} className={`${rowClass} border-b border-gray-700 hover:bg-gray-700`}>
+                    <tr
+                      key={index}
+                      className={`${rowClass} border-b border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700`}
+                    >
                       {columns.map(column => (
-                        <td key={column.key} className={classNames('px-3 py-2', column.className)}>
+                        <td key={column.key} className={clsx('px-3 py-2', column.className)}>
                           {column.render ? column.render(row) : getCellValue(row, column.key)}
                         </td>
                       ))}

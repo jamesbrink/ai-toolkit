@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react';
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react';
 import { X, Check, RotateCcw, Loader2 } from 'lucide-react';
+import { Button } from '@/components/catalyst/button';
 import { apiClient } from '@/utils/api';
 import { getImageUrlPrefix } from '@/utils/remoteApi';
 import { proxyApiPath } from '@/utils/proxyPath';
@@ -161,10 +162,10 @@ export default function CaptionHelper({
     <Dialog open={isOpen} onClose={onClose} className="relative z-50">
       <div className="fixed inset-0 bg-black/60" aria-hidden="true" />
       <div className="fixed inset-0 flex items-center justify-center p-4">
-        <DialogPanel className="w-full max-w-4xl max-h-[85vh] bg-gray-900 rounded-xl border border-gray-700 flex flex-col">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-700 shrink-0">
-            <DialogTitle className="text-lg font-medium text-gray-100">Caption with Claude — {datasetName}</DialogTitle>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-200">
+        <DialogPanel className="w-full max-w-4xl max-h-[85vh] bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-700 flex flex-col">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-200 dark:border-zinc-700 shrink-0">
+            <DialogTitle className="text-lg font-medium text-zinc-900 dark:text-zinc-100">Caption with Claude — {datasetName}</DialogTitle>
+            <button onClick={onClose} className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200">
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -173,7 +174,7 @@ export default function CaptionHelper({
             {/* Style selector */}
             {!isProcessing && results.length === 0 && (
               <div className="space-y-3">
-                <label className="block text-sm text-gray-300">Caption style</label>
+                <label className="block text-sm text-zinc-700 dark:text-zinc-300">Caption style</label>
                 <div className="flex flex-wrap gap-2">
                   {(['descriptive', 'booru', 'natural', 'trigger'] as const).map(s => (
                     <button
@@ -181,8 +182,8 @@ export default function CaptionHelper({
                       onClick={() => setStyle(s)}
                       className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
                         style === s
-                          ? 'border-blue-500 bg-blue-900/30 text-blue-300'
-                          : 'border-gray-700 text-gray-400 hover:text-gray-200'
+                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300'
+                          : 'border-zinc-300 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200'
                       }`}
                     >
                       {s.charAt(0).toUpperCase() + s.slice(1)}
@@ -191,32 +192,32 @@ export default function CaptionHelper({
                 </div>
                 {style === 'trigger' && (
                   <div className="space-y-1">
-                    <label className="block text-xs text-gray-400">Trigger word</label>
+                    <label className="block text-xs text-zinc-500 dark:text-zinc-400">Trigger word</label>
                     <input
                       type="text"
                       value={triggerWord}
                       onChange={e => setTriggerWord(e.target.value)}
                       placeholder="e.g. ohwx"
-                      className="w-48 bg-gray-800 text-gray-100 text-sm rounded-lg px-3 py-1.5 outline-none focus:ring-1 focus:ring-gray-600 placeholder-gray-500 border border-gray-700"
+                      className="w-48 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-sm rounded-lg px-3 py-1.5 outline-none focus:ring-1 focus:ring-zinc-400 dark:focus:ring-zinc-600 placeholder-zinc-400 dark:placeholder-zinc-500 border border-zinc-300 dark:border-zinc-700"
                     />
                   </div>
                 )}
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">
                   {imagePaths.length} image{imagePaths.length !== 1 ? 's' : ''} selected
                 </p>
-                <button
+                <Button
+                  color="blue"
                   onClick={startBatchCaption}
                   disabled={style === 'trigger' && !triggerWord.trim()}
-                  className="px-4 py-2 bg-blue-700 hover:bg-blue-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm rounded-lg transition-colors"
                 >
                   Generate Captions
-                </button>
+                </Button>
               </div>
             )}
 
             {/* Progress */}
             {isProcessing && (
-              <div className="flex items-center gap-3 text-sm text-gray-300">
+              <div className="flex items-center gap-3 text-sm text-zinc-700 dark:text-zinc-300">
                 <Loader2 className="w-4 h-4 animate-spin" />
                 Processing {progress.current} of {progress.total}...
               </div>
@@ -227,10 +228,10 @@ export default function CaptionHelper({
               <div className="space-y-3">
                 {!isProcessing && (
                   <div className="flex items-center gap-3">
-                    <button onClick={acceptAll} className="text-xs text-blue-400 hover:text-blue-300">
+                    <button onClick={acceptAll} className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300">
                       Accept all
                     </button>
-                    <span className="text-xs text-gray-400">
+                    <span className="text-xs text-zinc-500 dark:text-zinc-400">
                       {acceptedCount} of {results.length} accepted
                     </span>
                   </div>
@@ -239,7 +240,7 @@ export default function CaptionHelper({
                   <div
                     key={i}
                     className={`rounded-lg border p-3 text-sm ${
-                      result.accepted ? 'border-green-700 bg-green-950/20' : 'border-gray-700 bg-gray-800'
+                      result.accepted ? 'border-green-600 dark:border-green-700 bg-green-50 dark:bg-green-950/20' : 'border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800'
                     }`}
                   >
                     <div className="flex items-start gap-3">
@@ -251,18 +252,18 @@ export default function CaptionHelper({
                       />
                       <div className="flex-1 min-w-0 space-y-1">
                         {result.error ? (
-                          <p className="text-red-400 text-xs">{result.error}</p>
+                          <p className="text-red-600 dark:text-red-400 text-xs">{result.error}</p>
                         ) : (
                           <>
                             {result.oldCaption && (
                               <div>
-                                <span className="text-xs text-gray-400">Old: </span>
-                                <span className="text-xs text-gray-400 line-through">{result.oldCaption}</span>
+                                <span className="text-xs text-zinc-500 dark:text-zinc-400">Old: </span>
+                                <span className="text-xs text-zinc-500 dark:text-zinc-400 line-through">{result.oldCaption}</span>
                               </div>
                             )}
                             <div>
-                              <span className="text-xs text-gray-400">New: </span>
-                              <span className="text-xs text-gray-200">{result.caption}</span>
+                              <span className="text-xs text-zinc-500 dark:text-zinc-400">New: </span>
+                              <span className="text-xs text-zinc-800 dark:text-zinc-200">{result.caption}</span>
                             </div>
                           </>
                         )}
@@ -271,7 +272,7 @@ export default function CaptionHelper({
                         <button
                           onClick={() => toggleAccept(i)}
                           className={`p-1.5 rounded shrink-0 transition-colors ${
-                            result.accepted ? 'bg-green-700 text-white' : 'text-gray-400 hover:text-green-400'
+                            result.accepted ? 'bg-green-600 dark:bg-green-700 text-white' : 'text-zinc-500 dark:text-zinc-400 hover:text-green-600 dark:hover:text-green-400'
                           }`}
                         >
                           <Check className="w-4 h-4" />
@@ -286,39 +287,31 @@ export default function CaptionHelper({
 
           {/* Footer */}
           {results.length > 0 && !isProcessing && (
-            <div className="flex items-center justify-between px-5 py-3 border-t border-gray-700 shrink-0">
-              <button
+            <div className="flex items-center justify-between px-5 py-3 border-t border-zinc-200 dark:border-zinc-700 shrink-0">
+              <Button
+                plain
                 onClick={() => {
                   setResults([]);
                   setProgress({ current: 0, total: 0 });
                 }}
                 disabled={isSaving}
-                className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-200 disabled:opacity-40"
               >
                 <RotateCcw className="w-4 h-4" />
                 Regenerate
-              </button>
+              </Button>
               <div className="flex items-center gap-2">
                 {isSaving && (
-                  <span className="flex items-center gap-1.5 text-xs text-gray-400">
+                  <span className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
                     <Loader2 className="w-3 h-3 animate-spin" />
                     Saving...
                   </span>
                 )}
-                <button
-                  onClick={applyAccepted}
-                  disabled={acceptedCount === 0 || isSaving}
-                  className="px-4 py-2 bg-green-700 hover:bg-green-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm rounded-lg transition-colors"
-                >
+                <Button color="green" onClick={applyAccepted} disabled={acceptedCount === 0 || isSaving}>
                   Apply {acceptedCount} caption{acceptedCount !== 1 ? 's' : ''}
-                </button>
-                <button
-                  onClick={applyAll}
-                  disabled={appliableCount === 0 || isSaving}
-                  className="px-4 py-2 bg-blue-700 hover:bg-blue-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm rounded-lg transition-colors"
-                >
+                </Button>
+                <Button color="blue" onClick={applyAll} disabled={appliableCount === 0 || isSaving}>
                   Apply All ({appliableCount})
-                </button>
+                </Button>
               </div>
             </div>
           )}

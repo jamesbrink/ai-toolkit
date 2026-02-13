@@ -2,7 +2,8 @@
 
 import { useRouter } from 'next/navigation';
 import { Server, Edit, EyeOff, Trash2, Wifi, WifiOff } from 'lucide-react';
-import classNames from 'classnames';
+import clsx from 'clsx';
+import { Badge } from '@/components/catalyst/badge';
 import { HostInfo } from '@/hooks/useHostList';
 import { openConfirm } from '@/components/ConfirmModal';
 import { apiClient } from '@/utils/api';
@@ -79,35 +80,35 @@ export default function HostCard({ host, onRefresh }: HostCardProps) {
   return (
     <div
       onClick={() => router.push(`/hosts/${host.id}`)}
-      className="bg-gray-900 rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 border border-gray-800 cursor-pointer"
+      className="bg-white dark:bg-zinc-900 rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 border border-zinc-200 dark:border-zinc-800 cursor-pointer"
     >
       {/* Header */}
-      <div className="bg-gray-800 px-4 py-3 flex items-center justify-between">
+      <div className="bg-zinc-100 dark:bg-zinc-800 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center space-x-2 min-w-0">
-          <Server className="w-4 h-4 text-gray-400 shrink-0" />
-          <h2 className="font-semibold text-gray-100 truncate">{host.name}</h2>
+          <Server className="w-4 h-4 text-zinc-500 dark:text-zinc-400 shrink-0" />
+          <h2 className="font-semibold text-zinc-900 dark:text-zinc-100 truncate">{host.name}</h2>
           <span
-            className={classNames('w-2 h-2 rounded-full shrink-0', host.isOnline ? 'bg-green-500' : 'bg-red-500')}
+            className={clsx('w-2 h-2 rounded-full shrink-0', host.isOnline ? 'bg-green-500' : 'bg-red-500')}
           />
         </div>
         <div className="flex items-center space-x-1 shrink-0">
           <button
             onClick={handleEdit}
-            className="p-1.5 text-gray-400 hover:text-white rounded transition-colors"
+            className="p-1.5 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white rounded transition-colors"
             title="Edit"
           >
             <Edit className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={handleHide}
-            className="p-1.5 text-gray-400 hover:text-yellow-400 rounded transition-colors"
+            className="p-1.5 text-zinc-500 dark:text-zinc-400 hover:text-yellow-600 dark:hover:text-yellow-400 rounded transition-colors"
             title="Hide"
           >
             <EyeOff className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={handleRemove}
-            className="p-1.5 text-gray-400 hover:text-red-400 rounded transition-colors"
+            className="p-1.5 text-zinc-500 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 rounded transition-colors"
             title="Remove"
           >
             <Trash2 className="w-3.5 h-3.5" />
@@ -119,34 +120,27 @@ export default function HostCard({ host, onRefresh }: HostCardProps) {
       <div className="p-4 space-y-3">
         <div className="flex items-center space-x-2">
           {host.isOnline ? <Wifi className="w-4 h-4 text-green-500" /> : <WifiOff className="w-4 h-4 text-red-500" />}
-          <span className="text-sm text-gray-300">
+          <span className="text-sm text-zinc-700 dark:text-zinc-300">
             {host.address}:{host.port}
           </span>
         </div>
 
         <div className="flex items-center space-x-2">
-          <span
-            className={classNames(
-              'px-2 py-0.5 rounded-full text-xs',
-              host.source === 'mdns'
-                ? 'bg-blue-900 text-blue-300'
-                : host.source === 'runpod'
-                  ? 'bg-purple-900 text-purple-300'
-                  : 'bg-gray-700 text-gray-300',
-            )}
+          <Badge
+            color={host.source === 'mdns' ? 'blue' : host.source === 'runpod' ? 'purple' : 'zinc'}
           >
             {host.source === 'mdns' ? 'mDNS' : host.source === 'runpod' ? 'RunPod' : 'Manual'}
-          </span>
+          </Badge>
           {host.deviceType && (
-            <span className="px-2 py-0.5 bg-gray-700 rounded-full text-xs text-gray-300">
+            <Badge color="zinc">
               {host.deviceType.toUpperCase()}
-            </span>
+            </Badge>
           )}
         </div>
 
-        {host.gpuSummary && <p className="text-sm text-gray-400 truncate">{host.gpuSummary}</p>}
+        {host.gpuSummary && <p className="text-sm text-zinc-500 dark:text-zinc-400 truncate">{host.gpuSummary}</p>}
 
-        <p className="text-xs text-gray-400">Last seen: {relativeTime(host.lastSeen)}</p>
+        <p className="text-xs text-zinc-500 dark:text-zinc-400">Last seen: {relativeTime(host.lastSeen)}</p>
       </div>
     </div>
   );

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogPanel, DialogTitle, Tab, TabGroup, TabList, TabPanel, TabPanels } from '@headlessui/react';
 import { X, Loader2, AlertTriangle, Eye, Sun, Moon, Minimize2, Copy, Contrast, User, Crop } from 'lucide-react';
+import { Button } from '@/components/catalyst/button';
 import { useDatasetAnalysis } from '@/hooks/useDatasetAnalysis';
 import DuplicateGroupCard from '@/components/DuplicateGroupCard';
 
@@ -131,13 +132,13 @@ export default function DatasetAnalysisPanel({
     <Dialog open={isOpen} onClose={onClose} className="relative z-50">
       <div className="fixed inset-0 bg-black/60" aria-hidden="true" />
       <div className="fixed inset-0 flex items-center justify-center p-4">
-        <DialogPanel className="w-full max-w-5xl max-h-[85vh] bg-gray-900 rounded-xl border border-gray-700 flex flex-col">
+        <DialogPanel className="w-full max-w-5xl max-h-[85vh] bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-700 flex flex-col">
           {/* Header */}
-          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-700 shrink-0">
-            <DialogTitle className="text-lg font-medium text-gray-100">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-200 dark:border-zinc-700 shrink-0">
+            <DialogTitle className="text-lg font-medium text-zinc-900 dark:text-zinc-100">
               Dataset Quality Analysis — {datasetName}
             </DialogTitle>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-200">
+            <button onClick={onClose} className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200">
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -146,26 +147,23 @@ export default function DatasetAnalysisPanel({
           <div className="flex-1 overflow-y-auto">
             {/* Analysis controls — single button, always force */}
             {(status === 'idle' || status === 'complete' || status === 'error') && (
-              <div className="px-5 py-3 border-b border-gray-800 flex items-center gap-3">
-                <button
-                  onClick={() => startAnalysis(true)}
-                  className="px-4 py-2 bg-blue-700 hover:bg-blue-600 text-white text-sm rounded-lg transition-colors"
-                >
+              <div className="px-5 py-3 border-b border-zinc-200 dark:border-zinc-800 flex items-center gap-3">
+                <Button color="blue" onClick={() => startAnalysis(true)}>
                   {result ? 'Re-analyze Dataset' : 'Analyze Dataset'}
-                </button>
-                {error && <span className="text-sm text-red-400">{error}</span>}
+                </Button>
+                {error && <span className="text-sm text-red-600 dark:text-red-400">{error}</span>}
               </div>
             )}
 
             {/* Progress */}
             {status === 'analyzing' && (
               <div className="px-5 py-6 space-y-3">
-                <div className="flex items-center gap-3 text-sm text-gray-300">
+                <div className="flex items-center gap-3 text-sm text-zinc-700 dark:text-zinc-300">
                   <Loader2 className="w-4 h-4 animate-spin" />
                   Analyzing {progress.current} of {progress.total} images...
                 </div>
                 {progress.total > 0 && (
-                  <div className="w-full bg-gray-800 rounded-full h-2">
+                  <div className="w-full bg-zinc-200 dark:bg-zinc-800 rounded-full h-2">
                     <div
                       className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                       style={{ width: `${(progress.current / progress.total) * 100}%` }}
@@ -178,15 +176,15 @@ export default function DatasetAnalysisPanel({
             {/* Results */}
             {result && status !== 'analyzing' && (
               <TabGroup>
-                <TabList className="flex border-b border-gray-700 px-5">
+                <TabList className="flex border-b border-zinc-200 dark:border-zinc-700 px-5">
                   {tabLabels.map(tab => (
                     <Tab
                       key={tab}
                       className={({ selected }) =>
                         `px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px outline-none ${
                           selected
-                            ? 'text-blue-400 border-blue-400'
-                            : 'text-gray-400 border-transparent hover:text-gray-200'
+                            ? 'text-blue-600 dark:text-blue-400 border-blue-600 dark:border-blue-400'
+                            : 'text-zinc-500 dark:text-zinc-400 border-transparent hover:text-zinc-800 dark:hover:text-zinc-200'
                         }`
                       }
                     >
@@ -259,14 +257,14 @@ export default function DatasetAnalysisPanel({
                       />
                     </div>
 
-                    <div className="rounded-lg border border-gray-700 bg-gray-800 p-4">
+                    <div className="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 p-4">
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm text-gray-300">Average Quality Score</span>
-                        <span className="text-lg font-semibold text-gray-100">
+                        <span className="text-sm text-zinc-700 dark:text-zinc-300">Average Quality Score</span>
+                        <span className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
                           {result.summary.avgQualityScore}/100
                         </span>
                       </div>
-                      <div className="w-full bg-gray-700 rounded-full h-3">
+                      <div className="w-full bg-zinc-200 dark:bg-zinc-700 rounded-full h-3">
                         <div
                           className={`h-3 rounded-full transition-all ${
                             result.summary.avgQualityScore >= 80
@@ -284,7 +282,7 @@ export default function DatasetAnalysisPanel({
                   {/* Duplicates Tab */}
                   <TabPanel className="space-y-4">
                     {result.duplicateGroups.length === 0 ? (
-                      <div className="text-center py-8 text-gray-400">
+                      <div className="text-center py-8 text-zinc-500 dark:text-zinc-400">
                         <Copy className="w-8 h-8 mx-auto mb-2 opacity-40" />
                         <p>No duplicate groups found</p>
                       </div>
@@ -292,50 +290,38 @@ export default function DatasetAnalysisPanel({
                       <>
                         {/* Bulk actions */}
                         {activeGroups.length > 0 && (
-                          <div className="flex items-center justify-between bg-gray-800 rounded-lg p-3 border border-gray-700">
-                            <span className="text-sm text-gray-300">
+                          <div className="flex items-center justify-between bg-zinc-100 dark:bg-zinc-800 rounded-lg p-3 border border-zinc-200 dark:border-zinc-700">
+                            <span className="text-sm text-zinc-700 dark:text-zinc-300">
                               {activeGroups.length} duplicate group{activeGroups.length !== 1 ? 's' : ''}{' '}
-                              <span className="text-gray-400">
+                              <span className="text-zinc-500 dark:text-zinc-400">
                                 ({activeGroups.reduce((sum, g) => sum + g.imagePaths.length - 1, 0)} extra images)
                               </span>
                             </span>
                             {bulkAction === 'confirm-keep-first' ? (
                               <div className="flex items-center gap-2">
-                                <span className="text-xs text-amber-400">
+                                <span className="text-xs text-amber-600 dark:text-amber-400">
                                   Delete {activeGroups.reduce((sum, g) => sum + g.imagePaths.length - 1, 0)} duplicates?
                                 </span>
-                                <button
-                                  onClick={handleKeepFirstAll}
-                                  className="px-3 py-1.5 text-xs bg-red-700 hover:bg-red-600 text-white rounded-lg transition-colors"
-                                >
+                                <Button color="red" className="text-xs" onClick={handleKeepFirstAll}>
                                   Confirm
-                                </button>
-                                <button
-                                  onClick={() => setBulkAction('idle')}
-                                  className="px-3 py-1.5 text-xs text-gray-400 hover:text-gray-200"
-                                >
+                                </Button>
+                                <Button plain className="text-xs" onClick={() => setBulkAction('idle')}>
                                   Cancel
-                                </button>
+                                </Button>
                               </div>
                             ) : bulkAction === 'deleting' ? (
-                              <div className="flex items-center gap-2 text-sm text-gray-400">
+                              <div className="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
                                 <Loader2 className="w-4 h-4 animate-spin" />
                                 Deleting...
                               </div>
                             ) : (
                               <div className="flex items-center gap-2">
-                                <button
-                                  onClick={() => setBulkAction('confirm-keep-first')}
-                                  className="px-3 py-1.5 text-xs bg-amber-700 hover:bg-amber-600 text-white rounded-lg transition-colors"
-                                >
+                                <Button color="amber" className="text-xs" onClick={() => setBulkAction('confirm-keep-first')}>
                                   Keep First in All
-                                </button>
-                                <button
-                                  onClick={dismissAllGroups}
-                                  className="px-3 py-1.5 text-xs text-gray-400 hover:text-gray-200 border border-gray-600 rounded-lg"
-                                >
+                                </Button>
+                                <Button outline className="text-xs" onClick={dismissAllGroups}>
                                   Dismiss All
-                                </button>
+                                </Button>
                               </div>
                             )}
                           </div>
@@ -358,30 +344,30 @@ export default function DatasetAnalysisPanel({
                   {/* Faces Tab */}
                   <TabPanel className="space-y-4">
                     {result.summary.facesCount === 0 ? (
-                      <div className="text-center py-8 text-gray-400">
+                      <div className="text-center py-8 text-zinc-500 dark:text-zinc-400">
                         <User className="w-8 h-8 mx-auto mb-2 opacity-40" />
                         <p>No faces detected in this dataset</p>
                       </div>
                     ) : (
                       <>
-                        <div className="flex items-center justify-between bg-gray-800 rounded-lg p-3 border border-gray-700">
-                          <span className="text-sm text-gray-300">
+                        <div className="flex items-center justify-between bg-zinc-100 dark:bg-zinc-800 rounded-lg p-3 border border-zinc-200 dark:border-zinc-700">
+                          <span className="text-sm text-zinc-700 dark:text-zinc-300">
                             {result.summary.facesCount} image{result.summary.facesCount !== 1 ? 's' : ''} with detected
                             faces
                           </span>
-                          <button
+                          <Button
+                            color="purple"
                             onClick={() => {
                               setCropDialogOpen(true);
                               setCropStatus('idle');
                               setCropResult(null);
                             }}
-                            className="px-3 py-1.5 text-sm bg-purple-700 hover:bg-purple-600 text-white rounded-lg transition-colors flex items-center gap-1.5"
                           >
                             <Crop className="w-4 h-4" />
                             Crop Faces
-                          </button>
+                          </Button>
                         </div>
-                        <p className="text-xs text-gray-400">
+                        <p className="text-xs text-zinc-500 dark:text-zinc-400">
                           Face detection uses OpenCV YuNet DNN. &quot;Crop Faces&quot; will create a new sibling dataset
                           with square face crops padded to include head, hair, neck, and shoulders — ideal for LoRA
                           person training.
@@ -393,23 +379,20 @@ export default function DatasetAnalysisPanel({
                   {/* Quality Issues Tab */}
                   <TabPanel className="space-y-4">
                     {allIssueImages.length === 0 ? (
-                      <div className="text-center py-8 text-gray-400">
+                      <div className="text-center py-8 text-zinc-500 dark:text-zinc-400">
                         <AlertTriangle className="w-8 h-8 mx-auto mb-2 opacity-40" />
                         <p>No quality issues found</p>
                       </div>
                     ) : (
                       <>
                         {selectedQualityImages.size > 0 && (
-                          <div className="flex items-center justify-between bg-gray-800 rounded-lg p-3 border border-gray-700">
-                            <span className="text-sm text-gray-300">
+                          <div className="flex items-center justify-between bg-zinc-100 dark:bg-zinc-800 rounded-lg p-3 border border-zinc-200 dark:border-zinc-700">
+                            <span className="text-sm text-zinc-700 dark:text-zinc-300">
                               {selectedQualityImages.size} image{selectedQualityImages.size !== 1 ? 's' : ''} selected
                             </span>
-                            <button
-                              onClick={handleDeleteQualityImages}
-                              className="px-3 py-1.5 text-xs bg-red-700 hover:bg-red-600 text-white rounded-lg transition-colors"
-                            >
+                            <Button color="red" className="text-xs" onClick={handleDeleteQualityImages}>
                               Delete Selected
-                            </button>
+                            </Button>
                           </div>
                         )}
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
@@ -426,7 +409,7 @@ export default function DatasetAnalysisPanel({
                               <div
                                 key={imgPath}
                                 className={`relative rounded-lg border-2 cursor-pointer transition-colors ${
-                                  isSelected ? 'border-red-500 bg-red-950/20' : 'border-gray-700 hover:border-gray-600'
+                                  isSelected ? 'border-red-500 bg-red-50 dark:bg-red-950/20' : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-600'
                                 }`}
                                 onClick={() => toggleQualitySelect(imgPath)}
                               >
@@ -470,10 +453,10 @@ export default function DatasetAnalysisPanel({
 
             {/* Empty state */}
             {!result && status !== 'analyzing' && !error && (
-              <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+              <div className="flex flex-col items-center justify-center py-16 text-zinc-500 dark:text-zinc-400">
                 <AlertTriangle className="w-10 h-10 mb-3 opacity-40" />
                 <p className="text-sm">No analysis results yet</p>
-                <p className="text-xs mt-1 text-gray-400">
+                <p className="text-xs mt-1 text-zinc-500 dark:text-zinc-400">
                   Click &quot;Analyze Dataset&quot; to scan for quality issues
                 </p>
               </div>
@@ -486,63 +469,57 @@ export default function DatasetAnalysisPanel({
       <Dialog open={cropDialogOpen} onClose={() => setCropDialogOpen(false)} className="relative z-[60]">
         <div className="fixed inset-0 bg-black/60" aria-hidden="true" />
         <div className="fixed inset-0 flex items-center justify-center p-4">
-          <DialogPanel className="w-full max-w-md bg-gray-900 rounded-xl border border-gray-700 p-5 space-y-4">
-            <DialogTitle className="text-lg font-medium text-gray-100">Crop Faces</DialogTitle>
+          <DialogPanel className="w-full max-w-md bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-700 p-5 space-y-4">
+            <DialogTitle className="text-lg font-medium text-zinc-900 dark:text-zinc-100">Crop Faces</DialogTitle>
 
             {cropStatus === 'idle' && (
               <>
                 <div className="space-y-3">
                   <label className="block">
-                    <span className="text-sm text-gray-300">Output Dataset Name</span>
+                    <span className="text-sm text-zinc-700 dark:text-zinc-300">Output Dataset Name</span>
                     <input
                       type="text"
                       value={cropConfig.outputName}
                       onChange={e => setCropConfig(prev => ({ ...prev, outputName: e.target.value }))}
-                      className="mt-1 w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 text-sm"
+                      className="mt-1 w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-zinc-100 text-sm"
                     />
                   </label>
                   <label className="block">
-                    <span className="text-sm text-gray-300">Training Resolution</span>
+                    <span className="text-sm text-zinc-700 dark:text-zinc-300">Training Resolution</span>
                     <input
                       type="number"
                       value={cropConfig.resolution}
                       onChange={e => setCropConfig(prev => ({ ...prev, resolution: parseInt(e.target.value) || 512 }))}
-                      className="mt-1 w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 text-sm"
+                      className="mt-1 w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-zinc-100 text-sm"
                     />
                   </label>
                   <label className="block">
-                    <span className="text-sm text-gray-300">Padding Multiplier</span>
+                    <span className="text-sm text-zinc-700 dark:text-zinc-300">Padding Multiplier</span>
                     <input
                       type="number"
                       step="0.1"
                       value={cropConfig.padding}
                       onChange={e => setCropConfig(prev => ({ ...prev, padding: parseFloat(e.target.value) || 1.8 }))}
-                      className="mt-1 w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 text-sm"
+                      className="mt-1 w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-zinc-100 text-sm"
                     />
-                    <span className="text-xs text-gray-400 mt-1 block">
+                    <span className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 block">
                       1.8x includes head, hair, neck, shoulders. Lower = tighter crop.
                     </span>
                   </label>
                 </div>
                 <div className="flex justify-end gap-2 pt-2">
-                  <button
-                    onClick={() => setCropDialogOpen(false)}
-                    className="px-3 py-2 text-sm text-gray-400 hover:text-gray-200"
-                  >
+                  <Button plain onClick={() => setCropDialogOpen(false)}>
                     Cancel
-                  </button>
-                  <button
-                    onClick={handleCropFaces}
-                    className="px-4 py-2 text-sm bg-purple-700 hover:bg-purple-600 text-white rounded-lg transition-colors"
-                  >
+                  </Button>
+                  <Button color="purple" onClick={handleCropFaces}>
                     Start Cropping
-                  </button>
+                  </Button>
                 </div>
               </>
             )}
 
             {cropStatus === 'cropping' && (
-              <div className="flex items-center gap-3 text-sm text-gray-300 py-4">
+              <div className="flex items-center gap-3 text-sm text-zinc-700 dark:text-zinc-300 py-4">
                 <Loader2 className="w-4 h-4 animate-spin" />
                 Cropping faces...
               </div>
@@ -550,37 +527,33 @@ export default function DatasetAnalysisPanel({
 
             {cropStatus === 'done' && cropResult && (
               <div className="space-y-3">
-                <p className="text-sm text-green-400">
+                <p className="text-sm text-green-600 dark:text-green-400">
                   Created {cropResult.totalCrops as number} face crops from {cropResult.totalImages as number} images.
                 </p>
-                <p className="text-xs text-gray-400">
-                  Output dataset: <span className="text-gray-200">{cropConfig.outputName}</span>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                  Output dataset: <span className="text-zinc-800 dark:text-zinc-200">{cropConfig.outputName}</span>
                 </p>
                 <div className="flex justify-end">
-                  <button
+                  <Button
+                    color="blue"
                     onClick={() => {
                       setCropDialogOpen(false);
-                      // Navigate to the new dataset
                       window.location.href = `/datasets/${encodeURIComponent(cropConfig.outputName)}`;
                     }}
-                    className="px-4 py-2 text-sm bg-blue-700 hover:bg-blue-600 text-white rounded-lg transition-colors"
                   >
                     View New Dataset
-                  </button>
+                  </Button>
                 </div>
               </div>
             )}
 
             {cropStatus === 'error' && (
               <div className="space-y-3">
-                <p className="text-sm text-red-400">Face cropping failed. Check the console for details.</p>
+                <p className="text-sm text-red-600 dark:text-red-400">Face cropping failed. Check the console for details.</p>
                 <div className="flex justify-end">
-                  <button
-                    onClick={() => setCropStatus('idle')}
-                    className="px-3 py-2 text-sm text-gray-400 hover:text-gray-200"
-                  >
+                  <Button plain onClick={() => setCropStatus('idle')}>
                     Try Again
-                  </button>
+                  </Button>
                 </div>
               </div>
             )}
@@ -609,7 +582,7 @@ function SummaryCard({
     amber: 'border-amber-800 bg-amber-950/20 text-amber-400',
     orange: 'border-orange-800 bg-orange-950/20 text-orange-400',
     purple: 'border-purple-800 bg-purple-950/20 text-purple-400',
-    gray: 'border-gray-700 bg-gray-800 text-gray-300',
+    gray: 'border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300',
   };
 
   return (

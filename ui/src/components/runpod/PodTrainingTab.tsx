@@ -6,7 +6,7 @@ import { UnifiedJob } from '@/types';
 import JobLossGraph from '@/components/JobLossGraph';
 import SampleImages from '@/components/SampleImages';
 import { Loader2, RefreshCw } from 'lucide-react';
-import classNames from 'classnames';
+import clsx from 'clsx';
 
 interface PodTrainingTabProps {
   hostId: string | null;
@@ -109,7 +109,7 @@ export default function PodTrainingTab({
           <div className="flex items-center gap-3">
             <span className="text-sm font-medium text-gray-200">{activeJob.name}</span>
             <span
-              className={classNames(
+              className={clsx(
                 'px-2 py-0.5 rounded-full text-xs',
                 statusColors[activeJob.status] || 'bg-gray-700 text-gray-300',
               )}

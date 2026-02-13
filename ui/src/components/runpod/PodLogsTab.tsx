@@ -6,7 +6,7 @@ import { RemoteJob } from '@/hooks/useRemoteJobs';
 import { RunPodPodInfo } from '@/hooks/useRunPodPods';
 import { LivePodData } from '@/app/runpod/[podId]/page';
 import { Loader2, RefreshCw } from 'lucide-react';
-import classNames from 'classnames';
+import clsx from 'clsx';
 
 interface PodLogsTabProps {
   pod: RunPodPodInfo;
@@ -137,7 +137,7 @@ function DeploymentLog({
         className="bg-gray-950 rounded-lg font-mono text-xs overflow-y-auto max-h-[calc(100vh-14rem)] flex-1 p-4"
       >
         {events.map((event, i) => (
-          <div key={i} className={classNames('py-0.5', eventTypeColors[event.type])}>
+          <div key={i} className={clsx('py-0.5', eventTypeColors[event.type])}>
             {event.time && <span className="text-gray-600 mr-2">[{event.time}]</span>}
             {event.type === 'success' && <span className="mr-1">✓</span>}
             {event.type === 'waiting' && i === events.length - 1 && <span className="mr-1">⏳</span>}
@@ -241,7 +241,7 @@ export default function PodLogsTab({
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-gray-200">{activeJob.name}</span>
           <span
-            className={classNames(
+            className={clsx(
               'px-2 py-0.5 rounded-full text-xs',
               statusColors[activeJob.status] || 'bg-gray-700 text-gray-300',
             )}
@@ -251,7 +251,7 @@ export default function PodLogsTab({
         </div>
         <button
           onClick={() => setIsFollowing(!isFollowing)}
-          className={classNames(
+          className={clsx(
             'px-2.5 py-1 text-xs rounded-md transition-colors border',
             isFollowing
               ? 'bg-blue-600/20 text-blue-400 border-blue-500/30'

@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { Cloud, Square, Play, Trash2, DollarSign, Clock } from 'lucide-react';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { RunPodPodInfo } from '@/hooks/useRunPodPods';
 import { openConfirm } from '@/components/ConfirmModal';
 import { apiClient } from '@/utils/api';
@@ -86,7 +86,7 @@ export default function RunPodPodCard({ pod, onRefresh }: RunPodPodCardProps) {
         <div className="flex items-center space-x-2 min-w-0">
           <Cloud className="w-4 h-4 text-gray-400 shrink-0" />
           <h2 className="font-semibold text-gray-100 truncate">{pod.name}</h2>
-          <span className={classNames('px-2 py-0.5 rounded-full text-xs', status.color)}>{status.label}</span>
+          <span className={clsx('px-2 py-0.5 rounded-full text-xs', status.color)}>{status.label}</span>
         </div>
         <div className="flex items-center space-x-1 shrink-0">
           {isActive && (
@@ -144,7 +144,7 @@ export default function RunPodPodCard({ pod, onRefresh }: RunPodPodCardProps) {
               <span className="px-2 py-0.5 rounded-full text-xs bg-green-900 text-green-300">Spot</span>
             )}
             <span
-              className={classNames(
+              className={clsx(
                 'px-2 py-0.5 rounded-full text-xs',
                 pod.cloudType === 'SECURE' ? 'bg-blue-900 text-blue-300' : 'bg-gray-700 text-gray-300',
               )}
@@ -164,7 +164,7 @@ export default function RunPodPodCard({ pod, onRefresh }: RunPodPodCardProps) {
         {pod.hostId && (
           <div className="flex items-center space-x-1.5">
             <span
-              className={classNames(
+              className={clsx(
                 'w-2 h-2 rounded-full shrink-0',
                 pod.currentStatus === 'running' ? 'bg-green-500' : 'bg-gray-500',
               )}

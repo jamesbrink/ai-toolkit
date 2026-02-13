@@ -17,7 +17,8 @@ import useRemoteSettings from '@/hooks/useRemoteSettings';
 import useRemoteDatasetList from '@/hooks/useRemoteDatasetList';
 import path from 'path';
 import { TopBar, MainContent } from '@/components/layout';
-import { Button } from '@headlessui/react';
+import { Heading } from '@/components/catalyst/heading';
+import { Button } from '@/components/catalyst/button';
 import { FaChevronLeft } from 'react-icons/fa';
 import SimpleJob from './SimpleJob';
 import AdvancedJob from './AdvancedJob';
@@ -303,12 +304,14 @@ export default function TrainingForm() {
     <>
       <TopBar>
         <div>
-          <Button className="text-gray-300 px-3 mt-1" onClick={() => history.back()}>
+          <Button plain onClick={() => history.back()}>
             <FaChevronLeft />
           </Button>
         </div>
         <div>
-          <h1 className="text-lg">{runId ? 'Edit Training Job' : 'New Training Job'}</h1>
+          <Heading level={1} className="text-lg">
+            {runId ? 'Edit Training Job' : 'New Training Job'}
+          </Heading>
         </div>
         <div className="flex-1"></div>
 
@@ -318,7 +321,7 @@ export default function TrainingForm() {
             <div>
               <SelectInput value={targetHost} onChange={value => setTargetHost(value)} options={targetHostOptions} />
             </div>
-            <div className="mx-4 bg-gray-200 dark:bg-gray-800 w-1 h-6"></div>
+            <div className="mx-4 w-px h-6 bg-zinc-300 dark:bg-zinc-700"></div>
           </>
         )}
 
@@ -335,7 +338,7 @@ export default function TrainingForm() {
                 }
               />
             </div>
-            <div className="mx-4 bg-gray-200 dark:bg-gray-800 w-1 h-6"></div>
+            <div className="mx-4 w-px h-6 bg-zinc-300 dark:bg-zinc-700"></div>
           </>
         )}
         {!showAdvancedView && (
@@ -367,24 +370,17 @@ export default function TrainingForm() {
                 options={jobTypeOptions}
               />
             </div>
-            <div className="mx-4 bg-gray-200 dark:bg-gray-800 w-1 h-6"></div>
+            <div className="mx-4 w-px h-6 bg-zinc-300 dark:bg-zinc-700"></div>
           </>
         )}
 
         <div className="pr-2 shrink-0">
-          <Button
-            className="text-gray-200 bg-gray-800 px-3 py-1 rounded-md whitespace-nowrap"
-            onClick={() => setShowAdvancedView(!showAdvancedView)}
-          >
+          <Button outline onClick={() => setShowAdvancedView(!showAdvancedView)}>
             {showAdvancedView ? 'Show Simple' : 'Show Advanced'}
           </Button>
         </div>
         <div className="shrink-0">
-          <Button
-            className="text-gray-200 bg-green-800 px-3 py-1 rounded-md whitespace-nowrap"
-            onClick={() => saveJob()}
-            disabled={status === 'saving'}
-          >
+          <Button color="green" onClick={() => saveJob()} disabled={status === 'saving'}>
             {status === 'saving' ? 'Saving...' : runId ? 'Update Job' : 'Create Job'}
           </Button>
         </div>

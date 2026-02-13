@@ -1,11 +1,7 @@
 'use client';
 
-import { createContext, useState } from 'react';
+// Re-export next-themes provider for backward compatibility.
+// The actual ThemeProvider is now configured in layout.tsx.
+// This file is kept so any imports of ThemeProvider/ThemeContext still resolve.
 
-const ThemeContext = createContext({ isDark: true });
-
-export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
-  const [isDark] = useState(true);
-
-  return <ThemeContext.Provider value={{ isDark }}>{children}</ThemeContext.Provider>;
-};
+export { useTheme } from 'next-themes';

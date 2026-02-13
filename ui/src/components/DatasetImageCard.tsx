@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState, ReactNode, KeyboardEvent } from 're
 import { FaTrashAlt } from 'react-icons/fa';
 import { Sparkles, Loader2 } from 'lucide-react';
 import { openConfirm } from './ConfirmModal';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { apiClient } from '@/utils/api';
 import AudioPlayer from './AudioPlayer';
 import { isVideo, isAudio } from '@/utils/basic';
@@ -258,7 +258,7 @@ const DatasetImageCard: React.FC<DatasetImageCardProps> = ({
         )}
       </div>
       <div
-        className={classNames('w-full p-2 bg-gray-800 text-white text-sm rounded-b-lg h-[75px]', {
+        className={clsx('w-full p-2 bg-gray-800 text-white text-sm rounded-b-lg h-[75px]', {
           'border-blue-500 border-2': !isCaptionCurrent,
           'border-transparent border-2': isCaptionCurrent,
         })}

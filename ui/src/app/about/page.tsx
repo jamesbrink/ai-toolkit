@@ -1,6 +1,9 @@
 'use client';
 
 import { TopBar, MainContent } from '@/components/layout';
+import { Heading, Subheading } from '@/components/catalyst/heading';
+import { Text, TextLink } from '@/components/catalyst/text';
+import { Badge } from '@/components/catalyst/badge';
 import { ExternalLink } from 'lucide-react';
 
 const features = [
@@ -78,50 +81,46 @@ export default function AboutPage() {
     <>
       <TopBar>
         <div>
-          <h1 className="text-lg">About</h1>
+          <Heading level={1} className="text-lg">
+            About
+          </Heading>
         </div>
       </TopBar>
       <MainContent>
         <div className="max-w-3xl pb-12 space-y-8">
           {/* Header */}
           <div>
-            <h2 className="text-2xl font-bold text-gray-100">Kiln Remix</h2>
-            <p className="text-gray-400 mt-2">
+            <Heading level={2}>Kiln Remix</Heading>
+            <Text className="mt-2">
               A community fork of{' '}
-              <a
-                href="https://github.com/ostris/ai-toolkit"
-                target="_blank"
-                rel="noreferrer"
-                className="text-blue-400 hover:text-blue-300 transition-colors"
-              >
+              <TextLink href="https://github.com/ostris/ai-toolkit" target="_blank">
                 Ostris AI-Toolkit
-              </a>{' '}
+              </TextLink>{' '}
               that adds Nix packaging, Apple Silicon training, multi-host orchestration, RunPod cloud integration,
               Claude AI tools, and a modernized UI. All original training functionality is preserved — Kiln Remix builds
               on top of the upstream project&apos;s core engine.
-            </p>
+            </Text>
           </div>
 
           {/* Features */}
           <div>
-            <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wider mb-4">What Kiln Remix Adds</h3>
+            <Subheading level={3} className="text-sm uppercase tracking-wider mb-4">
+              What Kiln Remix Adds
+            </Subheading>
             <div className="space-y-3">
               {features.map(feature => (
-                <div key={feature.title} className="bg-gray-900 rounded-xl border border-gray-800 p-4">
+                <div key={feature.title} className="bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
-                      <h4 className="text-sm font-medium text-gray-100">{feature.title}</h4>
-                      <p className="text-sm text-gray-400 mt-1">{feature.description}</p>
+                      <h4 className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{feature.title}</h4>
+                      <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">{feature.description}</p>
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-1.5 mt-3">
                     {feature.tags.map(tag => (
-                      <span
-                        key={tag}
-                        className="px-2 py-0.5 rounded-full text-xs bg-gray-800 text-gray-400 border border-gray-700"
-                      >
+                      <Badge key={tag} color="zinc">
                         {tag}
-                      </span>
+                      </Badge>
                     ))}
                   </div>
                 </div>
@@ -130,33 +129,29 @@ export default function AboutPage() {
           </div>
 
           {/* Upstream Attribution */}
-          <div className="bg-gray-900 rounded-xl border border-gray-800 p-5">
-            <h3 className="text-sm font-medium text-gray-300 mb-2">Built on AI-Toolkit by Ostris</h3>
-            <p className="text-sm text-gray-400 mb-4">
+          <div className="bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-5">
+            <Subheading level={3} className="mb-2">
+              Built on AI-Toolkit by Ostris
+            </Subheading>
+            <Text className="mb-4">
               Kiln Remix is made possible by the excellent foundation of{' '}
-              <a
-                href="https://github.com/ostris/ai-toolkit"
-                target="_blank"
-                rel="noreferrer"
-                className="text-blue-400 hover:text-blue-300 transition-colors"
-              >
+              <TextLink href="https://github.com/ostris/ai-toolkit" target="_blank">
                 AI-Toolkit
-              </a>
+              </TextLink>
               , created by Ostris, LLC. The core training engine — including LoRA/LoKr/full fine-tuning across FLUX,
               SDXL, SD, WAN, Lumina, CHROMA, CogView4, OmniGen2, and more — is entirely their work. Licensed under MIT.
-            </p>
+            </Text>
             <div className="flex flex-wrap gap-3">
               {upstreamLinks.map(link => (
-                <a
+                <TextLink
                   key={link.label}
                   href={link.href}
                   target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-1.5 text-sm text-blue-400 hover:text-blue-300 transition-colors"
+                  className="flex items-center gap-1.5 text-sm"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
                   {link.label}
-                </a>
+                </TextLink>
               ))}
             </div>
           </div>

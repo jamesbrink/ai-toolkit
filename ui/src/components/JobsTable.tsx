@@ -9,7 +9,7 @@ import { GpuInfo, JobConfig, UnifiedJob, UnifiedQueue, DataSource } from '@/type
 import JobActionBar from './JobActionBar';
 import { Job, Queue } from '@/server/prismaTypes';
 import useQueueList from '@/hooks/useQueueList';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { startQueue, stopQueue } from '@/utils/queue';
 import { startQueueOnHost, stopQueueOnHost } from '@/utils/remoteActions';
 import { CgSpinner } from 'react-icons/cg';
@@ -216,7 +216,7 @@ function MultiHostJobsTable({ onlyActive, hosts }: { onlyActive: boolean; hosts:
           return (
             <div key={compositeKey} className="mb-6">
               <div
-                className={classNames(
+                className={clsx(
                   'text-md flex flex-col sm:flex-row px-4 py-1 rounded-t-lg',
                   { 'bg-green-900': queueRunning },
                   { 'bg-red-900': !queueRunning },
@@ -409,7 +409,7 @@ function LocalJobsTable({ onlyActive }: { onlyActive: boolean }) {
           return (
             <div key={gpuKey} className="mb-6">
               <div
-                className={classNames(
+                className={clsx(
                   'text-md flex flex-col sm:flex-row px-4 py-1 rounded-t-lg',
                   { 'bg-green-900': queue?.is_running },
                   { 'bg-red-900': !queue?.is_running },

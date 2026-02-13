@@ -1,89 +1,26 @@
 'use client';
 
 import React, { forwardRef } from 'react';
-import classNames from 'classnames';
-import dynamic from 'next/dynamic';
+import clsx from 'clsx';
 import { CircleHelp } from 'lucide-react';
 import { getDoc } from '@/docs';
 import { openDoc } from '@/components/DocModal';
-import type { CSSObjectWithLabel, StylesConfig } from 'react-select';
+import { Input } from '@/components/catalyst/input';
+import { Select } from '@/components/catalyst/select';
+import { Switch } from '@/components/catalyst/switch';
+import { Field, Label, Fieldset, Legend } from '@/components/catalyst/fieldset';
 import { ConfigDoc, GroupedSelectOption, SelectOption } from '@/types';
 
-const Select = dynamic(() => import('react-select'), { ssr: false });
-
-const labelClasses = 'block text-xs mb-1.5 mt-3 text-gray-300';
-const inputClasses =
-  'w-full text-sm px-3 py-2.5 bg-gray-800 border border-gray-700 rounded-sm focus:ring-2 focus:ring-gray-600 focus:border-transparent text-gray-100 placeholder-gray-400';
-
-// Dark theme styles for react-select (overrides default inline styles).
-// Typed permissively because the dynamic import loses generic type info.
-const reactSelectDarkStyles: StylesConfig = {
-  control: (base: CSSObjectWithLabel, state) => ({
-    ...base,
-    backgroundColor: '#262626',
-    borderColor: state.isFocused ? 'transparent' : '#404040',
-    minHeight: '2rem',
-    boxShadow: state.isFocused ? '0 0 0 2px #525252' : 'none',
-    '&:hover': { borderColor: state.isFocused ? 'transparent' : '#525252' },
-  }),
-  menu: (base: CSSObjectWithLabel) => ({
-    ...base,
-    backgroundColor: '#262626',
-    border: '1px solid #404040',
-    zIndex: 50,
-  }),
-  menuList: (base: CSSObjectWithLabel) => ({
-    ...base,
-    padding: 0,
-  }),
-  option: (base: CSSObjectWithLabel, state) => ({
-    ...base,
-    backgroundColor: state.isSelected ? '#404040' : state.isFocused ? '#404040' : '#262626',
-    color: state.isSelected ? '#ffffff' : '#e5e5e5',
-    fontSize: '0.875rem',
-    '&:hover': { backgroundColor: '#404040' },
-    '&:active': { backgroundColor: '#404040' },
-  }),
-  singleValue: (base: CSSObjectWithLabel) => ({
-    ...base,
-    color: '#e5e5e5',
-    fontSize: '0.875rem',
-  }),
-  input: (base: CSSObjectWithLabel) => ({
-    ...base,
-    color: '#e5e5e5',
-  }),
-  placeholder: (base: CSSObjectWithLabel) => ({
-    ...base,
-    color: '#a3a3a3',
-    fontSize: '0.875rem',
-  }),
-  groupHeading: (base: CSSObjectWithLabel) => ({
-    ...base,
-    color: '#a3a3a3',
-    textTransform: 'uppercase' as const,
-    fontSize: '0.75rem',
-  }),
-  indicatorSeparator: (base: CSSObjectWithLabel) => ({
-    ...base,
-    backgroundColor: '#525252',
-  }),
-  dropdownIndicator: (base: CSSObjectWithLabel) => ({
-    ...base,
-    color: '#a3a3a3',
-    padding: '0 8px',
-    '&:hover': { color: '#d4d4d4' },
-  }),
-  clearIndicator: (base: CSSObjectWithLabel) => ({
-    ...base,
-    color: '#a3a3a3',
-    '&:hover': { color: '#d4d4d4' },
-  }),
-  noOptionsMessage: (base: CSSObjectWithLabel) => ({
-    ...base,
-    color: '#a3a3a3',
-  }),
-};
+function DocIcon({ doc }: { doc: ConfigDoc }) {
+  return (
+    <span
+      className="inline-flex ml-1 text-zinc-500 dark:text-zinc-400 cursor-pointer"
+      onClick={() => openDoc(doc)}
+    >
+      <CircleHelp className="inline-block w-4 h-4" />
+    </span>
+  );
+}
 
 export interface InputProps {
   label?: string;
@@ -108,34 +45,27 @@ export const TextInput = forwardRef<HTMLInputElement, TextInputProps>((props: Te
     doc = getDoc(docKey);
   }
   return (
-    <div className={classNames(className)}>
+    <Field className={clsx(className)} disabled={disabled}>
       {label && (
-        <label className={labelClasses}>
-          {label}{' '}
-          {doc && (
-            <div className="inline-block ml-1 text-xs text-gray-400 cursor-pointer" onClick={() => openDoc(doc)}>
-              <CircleHelp className="inline-block w-4 h-4 cursor-pointer" />
-            </div>
-          )}
-        </label>
+        <Label className="text-xs mb-1.5 mt-3">
+          {label} {doc && <DocIcon doc={doc} />}
+        </Label>
       )}
-      <input
+      <Input
         ref={ref}
         type={type}
         value={value}
         onChange={e => {
           if (!disabled) onChange(e.target.value);
         }}
-        className={`${inputClasses} ${disabled ? 'opacity-30 cursor-not-allowed' : ''}`}
         placeholder={placeholder}
         required={required}
         disabled={disabled}
       />
-    </div>
+    </Field>
   );
 });
 
-// 👇 Helpful for debugging
 TextInput.displayName = 'TextInput';
 
 export interface NumberInputProps extends InputProps {
@@ -152,48 +82,35 @@ export const NumberInput = (props: NumberInputProps) => {
     doc = getDoc(docKey);
   }
 
-  // Add controlled internal state to properly handle partial inputs
   const [inputValue, setInputValue] = React.useState<string | number>(value ?? '');
 
-  // Sync internal state with prop value
   React.useEffect(() => {
     setInputValue(value ?? '');
   }, [value]);
 
   return (
-    <div className={classNames(props.className)}>
+    <Field className={clsx(props.className)}>
       {label && (
-        <label className={labelClasses}>
-          {label}{' '}
-          {doc && (
-            <div className="inline-block ml-1 text-xs text-gray-400 cursor-pointer" onClick={() => openDoc(doc)}>
-              <CircleHelp className="inline-block w-4 h-4 cursor-pointer" />
-            </div>
-          )}
-        </label>
+        <Label className="text-xs mb-1.5 mt-3">
+          {label} {doc && <DocIcon doc={doc} />}
+        </Label>
       )}
-      <input
+      <Input
         type="number"
         value={inputValue}
         onChange={e => {
           const rawValue = e.target.value;
-
-          // Update the input display with the raw value
           setInputValue(rawValue);
 
-          // Handle empty or partial inputs
           if (rawValue === '' || rawValue === '-') {
-            // For empty or partial negative input, don't call onChange yet
             return;
           }
 
           const numValue = Number(rawValue);
 
-          // Only apply constraints and call onChange when we have a valid number
           if (!isNaN(numValue)) {
             let constrainedValue = numValue;
 
-            // Apply min/max constraints if they exist
             if (min !== undefined && constrainedValue < min) {
               constrainedValue = min;
             }
@@ -204,14 +121,13 @@ export const NumberInput = (props: NumberInputProps) => {
             onChange(constrainedValue);
           }
         }}
-        className={inputClasses}
         placeholder={placeholder}
         required={required}
         min={min}
         max={max}
         step="any"
       />
-    </div>
+    </Field>
   );
 };
 
@@ -228,42 +144,38 @@ export const SelectInput = (props: SelectInputProps) => {
   if (!doc && docKey) {
     doc = getDoc(docKey);
   }
-  let selectedOption: SelectOption | undefined;
-  if (options && options.length > 0) {
-    selectedOption = options
-      .flatMap(opt => ('options' in opt ? (opt as GroupedSelectOption).options : [opt as SelectOption]))
-      .find(opt => opt.value === value);
-  }
   return (
-    <div
-      className={classNames(props.className, {
-        'opacity-30 cursor-not-allowed': props.disabled,
-      })}
+    <Field
+      className={clsx(props.className)}
+      disabled={props.disabled}
     >
       {label && (
-        <label className={labelClasses}>
-          {label}{' '}
-          {doc && (
-            <div className="inline-block ml-1 text-xs text-gray-400 cursor-pointer" onClick={() => openDoc(doc)}>
-              <CircleHelp className="inline-block w-4 h-4 cursor-pointer" />
-            </div>
-          )}
-        </label>
+        <Label className="text-xs mb-1.5 mt-3">
+          {label} {doc && <DocIcon doc={doc} />}
+        </Label>
       )}
       <Select
-        value={selectedOption}
-        options={options}
-        isDisabled={props.disabled}
-        className="aitk-react-select-container"
-        classNamePrefix="aitk-react-select"
-        styles={reactSelectDarkStyles}
-        onChange={selected => {
-          if (selected) {
-            onChange((selected as { value: string }).value);
-          }
-        }}
-      />
-    </div>
+        value={value}
+        disabled={props.disabled}
+        onChange={e => onChange(e.target.value)}
+      >
+        {options.map(opt =>
+          'options' in opt ? (
+            <optgroup key={opt.label} label={opt.label}>
+              {(opt as GroupedSelectOption).options.map(sub => (
+                <option key={sub.value} value={sub.value}>
+                  {sub.label}
+                </option>
+              ))}
+            </optgroup>
+          ) : (
+            <option key={(opt as SelectOption).value} value={(opt as SelectOption).value}>
+              {(opt as SelectOption).label}
+            </option>
+          ),
+        )}
+      </Select>
+    </Field>
   );
 };
 
@@ -279,54 +191,34 @@ export interface CheckboxProps {
 }
 
 export const Checkbox = (props: CheckboxProps) => {
-  const { label, checked, onChange, required, disabled } = props;
+  const { label, checked, onChange, disabled } = props;
   let { doc } = props;
   if (!doc && props.docKey) {
     doc = getDoc(props.docKey);
   }
 
-  const id = React.useId();
-
   return (
-    <div className={classNames('flex items-center gap-3', props.className)}>
-      <button
-        type="button"
-        role="switch"
-        id={id}
-        aria-checked={checked}
-        aria-required={required}
+    <div className={clsx('flex items-center gap-3', props.className)}>
+      <Switch
+        color="blue"
+        checked={checked}
+        onChange={onChange}
         disabled={disabled}
-        onClick={() => !disabled && onChange(!checked)}
-        className={classNames(
-          'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2',
-          checked ? 'bg-blue-600' : 'bg-gray-700',
-          disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-opacity-80',
-        )}
-      >
-        <span className="sr-only">Toggle {label}</span>
-        <span
-          className={classNames(
-            'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
-            checked ? 'translate-x-5' : 'translate-x-0',
-          )}
-        />
-      </button>
+      />
       {label && (
         <>
-          <label
-            htmlFor={id}
-            className={classNames(
+          <span
+            className={clsx(
               'text-sm font-medium cursor-pointer select-none',
-              disabled ? 'text-gray-400' : 'text-gray-300',
+              disabled
+                ? 'text-zinc-500 dark:text-zinc-400'
+                : 'text-zinc-700 dark:text-zinc-300',
             )}
+            onClick={() => !disabled && onChange(!checked)}
           >
             {label}
-          </label>
-          {doc && (
-            <div className="inline-block ml-1 text-xs text-gray-400 cursor-pointer" onClick={() => openDoc(doc)}>
-              <CircleHelp className="inline-block w-4 h-4 cursor-pointer" />
-            </div>
-          )}
+          </span>
+          {doc && <DocIcon doc={doc} />}
         </>
       )}
     </div>
@@ -348,19 +240,14 @@ export const FormGroup: React.FC<FormGroupProps> = props => {
     doc = getDoc(docKey);
   }
   return (
-    <div className={classNames(className)}>
+    <Fieldset className={clsx(className)}>
       {label && (
-        <label className={classNames(labelClasses, 'mb-2')}>
-          {label}{' '}
-          {doc && (
-            <div className="inline-block ml-1 text-xs text-gray-400 cursor-pointer" onClick={() => openDoc(doc)}>
-              <CircleHelp className="inline-block w-4 h-4 cursor-pointer" />
-            </div>
-          )}
-        </label>
+        <Legend className="text-xs mb-2 mt-3">
+          {label} {doc && <DocIcon doc={doc} />}
+        </Legend>
       )}
       <div className="space-y-2">{children}</div>
-    </div>
+    </Fieldset>
   );
 };
 
@@ -409,7 +296,6 @@ export const SliderInput: React.FC<SliderInputProps> = props => {
       const width = rect.right - rect.left;
       if (!(width > 0)) return;
 
-      // Clamp ratio to [0, 1] so it can never flip ends.
       const ratioRaw = (clientX - rect.left) / width;
       const ratio = ratioRaw <= 0 ? 0 : ratioRaw >= 1 ? 1 : ratioRaw;
 
@@ -419,12 +305,10 @@ export const SliderInput: React.FC<SliderInputProps> = props => {
     [min, max, onChange, snapToStep],
   );
 
-  // Mouse/touch pointer drag
   const onPointerDown = (e: React.PointerEvent) => {
     if (disabled) return;
     e.preventDefault();
 
-    // Capture the pointer so moves outside the element are still tracked correctly
     try {
       (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
     } catch {
@@ -440,7 +324,6 @@ export const SliderInput: React.FC<SliderInputProps> = props => {
     };
     const handleUp = (_ev: PointerEvent) => {
       setDragging(false);
-      // release capture if we got it
       try {
         (e.currentTarget as HTMLElement).releasePointerCapture?.(e.pointerId);
       } catch {
@@ -455,15 +338,10 @@ export const SliderInput: React.FC<SliderInputProps> = props => {
   };
 
   return (
-    <div className={classNames(className, disabled ? 'opacity-30 cursor-not-allowed' : '')}>
+    <div className={clsx(className, disabled ? 'opacity-30 cursor-not-allowed' : '')}>
       {label && (
-        <label className={labelClasses}>
-          {label}{' '}
-          {doc && (
-            <div className="inline-block ml-1 text-xs text-gray-400 cursor-pointer" onClick={() => openDoc(doc)}>
-              <CircleHelp className="inline-block w-4 h-4 cursor-pointer" />
-            </div>
-          )}
+        <label className="block text-xs mb-1.5 mt-3 text-zinc-500 dark:text-zinc-400">
+          {label} {doc && <DocIcon doc={doc} />}
         </label>
       )}
 
@@ -472,13 +350,13 @@ export const SliderInput: React.FC<SliderInputProps> = props => {
           <div
             ref={trackRef}
             onPointerDown={onPointerDown}
-            className={classNames(
+            className={clsx(
               'relative w-full h-6 select-none outline-none',
               disabled ? 'pointer-events-none' : 'cursor-pointer',
             )}
           >
-            {/* Thicker track */}
-            <div className="pointer-events-none absolute left-0 right-0 top-1/2 -translate-y-1/2 h-3 rounded-sm bg-gray-800 border border-gray-700" />
+            {/* Track */}
+            <div className="pointer-events-none absolute left-0 right-0 top-1/2 -translate-y-1/2 h-3 rounded-sm bg-zinc-200 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700" />
 
             {/* Fill */}
             <div
@@ -489,24 +367,24 @@ export const SliderInput: React.FC<SliderInputProps> = props => {
             {/* Thumb */}
             <div
               onPointerDown={onPointerDown}
-              className={classNames(
+              className={clsx(
                 'absolute top-1/2 -translate-y-1/2 -ml-2',
-                'h-4 w-4 rounded-full bg-white shadow border border-gray-300 cursor-pointer',
-                'after:content-[""] after:absolute after:inset-[-6px] after:rounded-full after:bg-transparent', // expands hit area
+                'h-4 w-4 rounded-full bg-white shadow border border-zinc-300 cursor-pointer',
+                'after:content-[""] after:absolute after:inset-[-6px] after:rounded-full after:bg-transparent',
                 dragging ? 'ring-2 ring-blue-600' : '',
               )}
               style={{ left: `calc(${percent}% )` }}
             />
           </div>
 
-          <div className="flex justify-between text-xs text-gray-400 mt-0.5 select-none">
+          <div className="flex justify-between text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 select-none">
             <span>{min}</span>
             <span>{max}</span>
           </div>
         </div>
 
         {showValue && (
-          <div className="min-w-[3.5rem] text-right text-sm px-3 py-1 bg-gray-800 border border-gray-700 rounded-sm">
+          <div className="min-w-[3.5rem] text-right text-sm px-3 py-1 bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-sm text-zinc-900 dark:text-zinc-100">
             {Number.isFinite(value) ? value : ''}
           </div>
         )}

@@ -2,7 +2,9 @@
 
 import { useState, use, useEffect } from 'react';
 import { FaChevronLeft } from 'react-icons/fa';
-import { Button } from '@headlessui/react';
+import { Button } from '@/components/catalyst/button';
+import { Badge } from '@/components/catalyst/badge';
+import { Heading } from '@/components/catalyst/heading';
 import { TopBar, MainContent } from '@/components/layout';
 import useJob from '@/hooks/useJob';
 import SampleImages, { SampleImagesMenu } from '@/components/SampleImages';
@@ -79,15 +81,15 @@ export default function JobPage({ params }: { params: Promise<{ jobID: string }>
       {/* Fixed top bar */}
       <TopBar>
         <div>
-          <Button className="text-gray-300 px-3 mt-1" onClick={() => redirect('/jobs')}>
+          <Button plain onClick={() => redirect('/jobs')}>
             <FaChevronLeft />
           </Button>
         </div>
         <div className="flex items-center gap-2">
-          <h1 className="text-lg">Job: {job?.name}</h1>
-          {hostId && (
-            <span className="px-2 py-0.5 bg-blue-500/20 text-blue-400 text-xs rounded-full font-medium">Remote</span>
-          )}
+          <Heading level={1} className="text-lg">
+            Job: {job?.name}
+          </Heading>
+          {hostId && <Badge color="blue">Remote</Badge>}
         </div>
         <div className="flex-1"></div>
         {job && (
@@ -115,12 +117,13 @@ export default function JobPage({ params }: { params: Promise<{ jobID: string }>
           </>
         )}
       </MainContent>
-      <div className="bg-gray-800 absolute top-12 left-0 w-full h-10 flex items-center px-2 text-sm overflow-x-auto">
+      <div className="bg-zinc-100 dark:bg-zinc-800 absolute top-12 left-0 w-full h-10 flex items-center px-2 text-sm overflow-x-auto">
         {pages.map(page => (
           <Button
             key={page.value}
+            plain
             onClick={() => setPageKey(page.value)}
-            className={`px-4 py-2 h-10 whitespace-nowrap shrink-0 ${page.value === pageKey ? 'bg-gray-300 dark:bg-gray-700' : ''}`}
+            className={`px-4 py-2 h-10 whitespace-nowrap shrink-0 ${page.value === pageKey ? 'bg-zinc-200 dark:bg-zinc-700' : ''}`}
           >
             {page.name}
           </Button>

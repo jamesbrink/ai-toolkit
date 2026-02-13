@@ -14,6 +14,9 @@ import useSettings from '@/hooks/useSettings';
 import { openConfirm } from '@/components/ConfirmModal';
 import { apiClient } from '@/utils/api';
 import RunPodAccountWidget from '@/components/RunPodAccountWidget';
+import { Button } from '@/components/catalyst/button';
+import { Heading, Subheading } from '@/components/catalyst/heading';
+import { Text } from '@/components/catalyst/text';
 import { Plus, Network, Cloud, Settings } from 'lucide-react';
 
 export default function HostsPage() {
@@ -48,49 +51,47 @@ export default function HostsPage() {
     <>
       <TopBar>
         <div>
-          <h1 className="text-lg">Hosts</h1>
+          <Heading level={1} className="text-lg">
+            Hosts
+          </Heading>
         </div>
         <div className="flex-1"></div>
         <div className="flex items-center space-x-2">
           {hasRunPodKey && (
-            <button
-              onClick={() => setDeployOpen(true)}
-              className="flex items-center space-x-1 px-3 py-1.5 bg-blue-700 hover:bg-blue-600 rounded-lg transition-colors text-sm"
-            >
+            <Button color="blue" onClick={() => setDeployOpen(true)}>
               <Cloud className="w-4 h-4" />
-              <span>Deploy RunPod</span>
-            </button>
+              Deploy RunPod
+            </Button>
           )}
-          <button
-            onClick={handleAddHost}
-            className="flex items-center space-x-1 px-3 py-1.5 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors text-sm"
-          >
+          <Button outline onClick={handleAddHost}>
             <Plus className="w-4 h-4" />
-            <span>Add Host</span>
-          </button>
+            Add Host
+          </Button>
         </div>
       </TopBar>
       <MainContent>
         {/* Cloud Pods Section */}
         <div className="mb-8">
-          <h2 className="text-sm font-semibold text-gray-300 uppercase tracking-wide mb-4">Cloud Pods</h2>
+          <Subheading level={2} className="text-sm uppercase tracking-wide mb-4">
+            Cloud Pods
+          </Subheading>
           {account && <RunPodAccountWidget account={account} />}
           {!hasRunPodKey ? (
-            <div className="bg-gray-900 rounded-xl border border-gray-800 p-6 text-center">
-              <Cloud className="w-8 h-8 text-gray-600 mx-auto mb-3" />
-              <p className="text-gray-400 mb-3">Configure your RunPod API key to deploy cloud GPU pods.</p>
+            <div className="bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6 text-center">
+              <Cloud className="w-8 h-8 text-zinc-400 dark:text-zinc-600 mx-auto mb-3" />
+              <Text className="mb-3">Configure your RunPod API key to deploy cloud GPU pods.</Text>
               <Link
                 href="/settings"
-                className="inline-flex items-center space-x-1 text-blue-400 hover:text-blue-300 text-sm transition-colors"
+                className="inline-flex items-center space-x-1 text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 text-sm transition-colors"
               >
                 <Settings className="w-4 h-4" />
                 <span>Go to Settings</span>
               </Link>
             </div>
           ) : activePods.length === 0 ? (
-            <div className="bg-gray-900 rounded-xl border border-gray-800 p-6 text-center">
-              <Cloud className="w-8 h-8 text-gray-600 mx-auto mb-3" />
-              <p className="text-gray-400">No active cloud pods. Click &quot;Deploy RunPod&quot; to get started.</p>
+            <div className="bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6 text-center">
+              <Cloud className="w-8 h-8 text-zinc-400 dark:text-zinc-600 mx-auto mb-3" />
+              <Text>No active cloud pods. Click &quot;Deploy RunPod&quot; to get started.</Text>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -103,14 +104,16 @@ export default function HostsPage() {
 
         {/* Local Hosts Section */}
         <div>
-          <h2 className="text-sm font-semibold text-gray-300 uppercase tracking-wide mb-4">Local Hosts</h2>
+          <Subheading level={2} className="text-sm uppercase tracking-wide mb-4">
+            Local Hosts
+          </Subheading>
           {status === 'success' && hosts.filter(h => h.source !== 'runpod').length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <Network className="w-12 h-12 text-gray-600 mb-4" />
-              <p className="text-gray-400 max-w-md">
+              <Network className="w-12 h-12 text-zinc-400 dark:text-zinc-600 mb-4" />
+              <Text className="max-w-md">
                 No hosts discovered yet. Other AI Toolkit instances on your network will appear here automatically, or
                 add one manually.
-              </p>
+              </Text>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

@@ -120,12 +120,12 @@ export default function ChatPanel() {
 
   // Shared chat content rendered in both mobile and desktop
   const chatHeader = (
-    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-700 shrink-0">
-      <h2 className="text-sm font-medium text-gray-200">Claude Assistant</h2>
+    <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200 dark:border-zinc-700 shrink-0">
+      <h2 className="text-sm font-medium text-zinc-800 dark:text-zinc-200">Claude Assistant</h2>
       <div className="flex items-center gap-1">
         <button
           onClick={clearMessages}
-          className="p-1.5 text-gray-400 hover:text-gray-200 transition-colors"
+          className="p-1.5 text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 transition-colors"
           aria-label="Clear chat"
           title="Clear chat"
         >
@@ -133,7 +133,7 @@ export default function ChatPanel() {
         </button>
         <button
           onClick={closePanel}
-          className="p-1.5 text-gray-400 hover:text-gray-200 transition-colors"
+          className="p-1.5 text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 transition-colors"
           aria-label="Close panel"
         >
           <X className="w-4 h-4" />
@@ -149,7 +149,7 @@ export default function ChatPanel() {
       className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-3 chat-scrollbar"
     >
       {messages.length === 0 && (
-        <div className="text-center text-gray-400 text-sm mt-8">
+        <div className="text-center text-zinc-500 dark:text-zinc-400 text-sm mt-8">
           <p>Ask me about training config, troubleshooting, or anything about diffusion model training.</p>
         </div>
       )}
@@ -162,7 +162,7 @@ export default function ChatPanel() {
       ))}
       {isStreaming && activeToolName && (
         <div className="flex justify-start mb-3">
-          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-800 text-gray-400 text-xs">
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 text-xs">
             <Loader2 className="w-3.5 h-3.5 animate-spin" />
             {TOOL_LABELS[activeToolName] || `Running ${activeToolName}...`}
           </div>
@@ -187,7 +187,7 @@ export default function ChatPanel() {
         <div className="fixed inset-0 flex justify-end">
           <HeadlessDialogPanel
             transition
-            className="w-full max-w-md h-dvh bg-gray-900 flex flex-col shadow-2xl transition-transform duration-300 ease-in-out data-closed:translate-x-full"
+            className="w-full max-w-md h-dvh bg-white dark:bg-zinc-900 flex flex-col shadow-2xl transition-transform duration-300 ease-in-out data-closed:translate-x-full"
           >
             {chatHeader}
             {chatMessages}
@@ -203,7 +203,7 @@ export default function ChatPanel() {
         }`}
         style={{ width: isOpen ? width : 0 }}
       >
-        <div className="h-full flex bg-gray-900 shadow-2xl" style={{ width, minWidth: width }}>
+        <div className="h-full flex bg-white dark:bg-zinc-900 shadow-2xl" style={{ width, minWidth: width }}>
           {/* Resize handle — wider hit area around the visible border line */}
           <div
             onMouseDown={handleMouseDown}
@@ -211,7 +211,7 @@ export default function ChatPanel() {
           >
             <div
               className={`w-px transition-colors ${
-                isDragging ? 'bg-blue-500 w-1' : 'bg-gray-700 group-hover:bg-blue-400'
+                isDragging ? 'bg-blue-500 w-1' : 'bg-zinc-200 dark:bg-zinc-700 group-hover:bg-blue-400'
               }`}
             />
           </div>

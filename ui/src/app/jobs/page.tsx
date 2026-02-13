@@ -2,7 +2,9 @@
 
 import JobsTable from '@/components/JobsTable';
 import { TopBar, MainContent } from '@/components/layout';
-import Link from 'next/link';
+import { Heading } from '@/components/catalyst/heading';
+import { Text } from '@/components/catalyst/text';
+import { Button } from '@/components/catalyst/button';
 import useHostList from '@/hooks/useHostList';
 
 export default function Dashboard() {
@@ -13,18 +15,20 @@ export default function Dashboard() {
     <>
       <TopBar>
         <div>
-          <h1 className="text-lg">Jobs</h1>
+          <Heading level={1} className="text-lg">
+            Jobs
+          </Heading>
         </div>
         <div className="flex-1"></div>
         {onlineHosts.length > 0 && (
-          <span className="text-xs text-gray-400 mr-3">
+          <Text className="text-xs mr-3">
             {onlineHosts.length} remote host{onlineHosts.length !== 1 ? 's' : ''} connected
-          </span>
+          </Text>
         )}
         <div>
-          <Link href="/jobs/new" className="text-gray-200 bg-slate-600 px-3 py-1 rounded-md">
+          <Button color="blue" href="/jobs/new">
             New Training Job
-          </Link>
+          </Button>
         </div>
       </TopBar>
       <MainContent>

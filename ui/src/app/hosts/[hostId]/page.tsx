@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { TopBar, MainContent } from '@/components/layout';
 import { ArrowLeft, Server } from 'lucide-react';
-import classNames from 'classnames';
+import clsx from 'clsx';
 import { apiClient } from '@/utils/api';
 import { HostInfo } from '@/hooks/useHostList';
 
@@ -44,7 +44,7 @@ export default function HostDetailPage() {
         <div className="flex items-center space-x-2 ml-1">
           <h1 className="text-lg">{host?.name || 'Host'}</h1>
           {host && (
-            <span className={classNames('w-2.5 h-2.5 rounded-full', host.isOnline ? 'bg-green-500' : 'bg-red-500')} />
+            <span className={clsx('w-2.5 h-2.5 rounded-full', host.isOnline ? 'bg-green-500' : 'bg-red-500')} />
           )}
         </div>
         <div className="flex-1"></div>
@@ -94,7 +94,7 @@ function InfoRow({ label, value, valueClass }: { label: string; value: string; v
   return (
     <div className="flex items-start">
       <span className="text-sm text-gray-400 w-32 shrink-0">{label}</span>
-      <span className={classNames('text-sm text-gray-200 break-all', valueClass)}>{value}</span>
+      <span className={clsx('text-sm text-gray-200 break-all', valueClass)}>{value}</span>
     </div>
   );
 }

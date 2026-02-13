@@ -13,6 +13,7 @@ import { DeviceType, GpuInfo, GroupedSelectOption, JobConfig, SelectOption } fro
 import { objectCopy } from '@/utils/basic';
 import { TextInput, SelectInput, Checkbox, FormGroup, NumberInput, SliderInput } from '@/components/formInputs';
 import Card from '@/components/Card';
+import { Button } from '@/components/catalyst/button';
 import { X } from 'lucide-react';
 import AddSingleImageModal from '@/components/AddSingleImageModal';
 import SampleControlImage from '@/components/SampleControlImage';
@@ -746,20 +747,21 @@ export default function SimpleJob({
           <Card title="Datasets">
             <>
               {jobConfig.config.process[0].datasets.map((dataset, i) => (
-                <div key={i} className="p-4 rounded-lg bg-gray-800 relative">
-                  <button
+                <div key={i} className="p-4 rounded-lg bg-zinc-100 dark:bg-zinc-800 relative">
+                  <Button
+                    plain
                     type="button"
+                    className="!absolute top-2 right-2 !p-1 text-red-500 hover:text-red-400"
                     onClick={() =>
                       setJobConfig(
                         jobConfig.config.process[0].datasets.filter((_, index) => index !== i),
                         'config.process[0].datasets',
                       )
                     }
-                    className="absolute top-2 right-2 bg-red-800 hover:bg-red-700 rounded-full p-1 text-sm transition-colors"
                   >
-                    <X />
-                  </button>
-                  <h2 className="text-lg font-bold mb-4">Dataset {i + 1}</h2>
+                    <X className="w-4 h-4" />
+                  </Button>
+                  <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 mb-4">Dataset {i + 1}</h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     <div>
                       <SelectInput
@@ -983,8 +985,10 @@ export default function SimpleJob({
                   </div>
                 </div>
               ))}
-              <button
+              <Button
+                outline
                 type="button"
+                className="w-full"
                 onClick={() => {
                   const newDataset = objectCopy(defaultDatasetConfig);
                   // automaticallt add the controls for a new dataset
@@ -992,10 +996,9 @@ export default function SimpleJob({
                   newDataset.controls = controls;
                   setJobConfig([...jobConfig.config.process[0].datasets, newDataset], 'config.process[0].datasets');
                 }}
-                className="w-full px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
               >
                 Add Dataset
-              </button>
+              </Button>
             </>
           </Card>
         </div>
@@ -1156,7 +1159,7 @@ export default function SimpleJob({
               <div></div>
             </FormGroup>
             {jobConfig.config.process[0].sample.samples.map((sample, i) => (
-              <div key={i} className="rounded-lg pl-4 pr-1 mb-4 bg-gray-950">
+              <div key={i} className="rounded-lg pl-4 pr-1 mb-4 bg-zinc-100 dark:bg-zinc-900">
                 <div className="flex items-center space-x-2">
                   <div className="flex-1">
                     <div className="flex">
@@ -1318,34 +1321,36 @@ export default function SimpleJob({
                     <div className="pb-4"></div>
                   </div>
                   <div>
-                    <button
+                    <Button
+                      plain
                       type="button"
+                      className="!p-1 text-zinc-500 hover:text-red-500"
                       onClick={() =>
                         setJobConfig(
                           jobConfig.config.process[0].sample.samples.filter((_, index) => index !== i),
                           'config.process[0].sample.samples',
                         )
                       }
-                      className="rounded-full p-1 text-sm"
                     >
-                      <X />
-                    </button>
+                      <X className="w-4 h-4" />
+                    </Button>
                   </div>
                 </div>
               </div>
             ))}
-            <button
+            <Button
+              outline
               type="button"
+              className="w-full"
               onClick={() =>
                 setJobConfig(
                   [...jobConfig.config.process[0].sample.samples, { prompt: '' }],
                   'config.process[0].sample.samples',
                 )
               }
-              className="w-full px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
             >
               Add Prompt
-            </button>
+            </Button>
           </Card>
         </div>
 
