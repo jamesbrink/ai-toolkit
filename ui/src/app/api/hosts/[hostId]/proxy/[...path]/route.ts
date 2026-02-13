@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/server/prisma';
+import { buildHostBaseUrl } from '@/server/hostUrl';
 
 const BLOCKED_PATTERNS = ['.env', 'node_modules', '.git', '__pycache__', '.pyc'];
 
@@ -24,7 +25,7 @@ async function proxyRequest(request: NextRequest, context: RouteContext): Promis
   // Build the target URL, preserving query string
   const searchParams = request.nextUrl.searchParams.toString();
   const queryString = searchParams ? `?${searchParams}` : '';
-  const targetUrl = `http://${host.address}:${host.port}/api/${joinedPath}${queryString}`;
+  const targetUrl = `${buildHostBaseUrl(host.address, host.port)}/api/${joinedPath}${queryString}`;
 
   // Build headers
   const headers: Record<string, string> = {

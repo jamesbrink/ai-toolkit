@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
-import { Home, Settings, BrainCircuit, Images, Plus, X, Network } from 'lucide-react';
+import { Home, Settings, BrainCircuit, Images, Plus, X, Network, Info } from 'lucide-react';
 import { FaXTwitter, FaDiscord, FaYoutube } from 'react-icons/fa6';
 import { Dialog, DialogBackdrop, DialogPanel } from '@headlessui/react';
 import Image from 'next/image';
@@ -17,6 +17,7 @@ const navigation = [
   { name: 'Hosts', href: '/hosts', icon: Network },
   { name: 'Datasets', href: '/datasets', icon: Images },
   { name: 'Settings', href: '/settings', icon: Settings },
+  { name: 'About', href: '/about', icon: Info },
 ];
 
 const socialLinks = [
@@ -71,19 +72,22 @@ function NavContent({ collapsed, onNavClick }: { collapsed: boolean; onNavClick?
             style={{ width: 'auto' }}
           />
         ) : (
-          <h1 className="text-l">
-            <Image
-              src="/ostris_logo.png"
-              alt="Ostris AI Toolkit"
-              width={28}
-              height={28}
-              unoptimized
-              className="h-7 mr-3 inline"
-              style={{ width: 'auto' }}
-            />
-            <span className="font-bold uppercase">Ostris</span>
-            <span className="ml-2 uppercase text-gray-300">AI-Toolkit</span>
-          </h1>
+          <div>
+            <h1 className="text-l">
+              <Image
+                src="/ostris_logo.png"
+                alt="Ostris AI Toolkit"
+                width={28}
+                height={28}
+                unoptimized
+                className="h-7 mr-3 inline"
+                style={{ width: 'auto' }}
+              />
+              <span className="font-bold uppercase">Ostris</span>
+              <span className="ml-2 uppercase text-gray-300">AI-Toolkit</span>
+            </h1>
+            <p className="text-xs text-gray-500 uppercase tracking-widest mt-1 pl-10">Kiln Remix</p>
+          </div>
         )}
       </div>
 

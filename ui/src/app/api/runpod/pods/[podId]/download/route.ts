@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/server/prisma';
+import { buildHostBaseUrl } from '@/server/hostUrl';
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ podId: string }> }) {
   try {
@@ -26,7 +27,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       headers['Authorization'] = `Bearer ${host.authToken}`;
     }
 
-    const remoteRes = await fetch(`http://${host.address}:${host.port}/api/datasets/export`, {
+    const remoteRes = await fetch(`${buildHostBaseUrl(host.address, host.port)}/api/datasets/export`, {
       method: 'POST',
       headers,
       body: JSON.stringify({ path: remotePath }),

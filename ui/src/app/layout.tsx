@@ -13,7 +13,7 @@ import ChatPanel from '@/components/claude/ChatPanel';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Ostris - AI Toolkit',
+  title: 'Kiln — Ostris AI Toolkit',
   description: 'A toolkit for building AI things.',
 };
 
@@ -24,7 +24,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className="dark">
       <head>
-        <meta name="apple-mobile-web-app-title" content="AI-Toolkit" />
+        <meta name="apple-mobile-web-app-title" content="Kiln" />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
       </head>
       <body className="font-sans">

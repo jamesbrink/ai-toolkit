@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/server/prisma';
 import { randomUUID } from 'crypto';
+import { buildHostBaseUrl } from '@/server/hostUrl';
 
 export async function GET() {
   try {
@@ -41,7 +42,7 @@ export async function POST(request: Request) {
       if (authToken) {
         headers['Authorization'] = `Bearer ${authToken}`;
       }
-      const res = await fetch(`http://${address}:${port}/api/hosts/identify`, {
+      const res = await fetch(`${buildHostBaseUrl(address, port)}/api/hosts/identify`, {
         signal: controller.signal,
         headers,
       });

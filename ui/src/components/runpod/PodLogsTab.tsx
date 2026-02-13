@@ -75,6 +75,15 @@ function buildDeployEvents(pod: RunPodPodInfo, liveData: LivePodData | null, hos
     events.push({ time: '', message: `Public endpoint: ${pod.publicIp}:${pod.publicPort}`, type: 'success' });
   }
 
+  // Always show the RunPod proxy URL for running/deploying pods (useful when no public IP)
+  if (pod.currentStatus === 'running' || pod.currentStatus === 'deploying') {
+    events.push({
+      time: '',
+      message: `RunPod proxy: https://${pod.runpodId}-8675.proxy.runpod.net/`,
+      type: pod.publicIp ? 'info' : 'success',
+    });
+  }
+
   if (hostId) {
     events.push({ time: '', message: 'AI Toolkit instance connected', type: 'success' });
   } else if (liveData?.runtime?.ports && liveData.runtime.ports.length > 0) {

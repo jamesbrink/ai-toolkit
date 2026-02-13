@@ -3,6 +3,7 @@ import { readdir, readFile, stat } from 'fs/promises';
 import { join, extname } from 'path';
 import { getDatasetsRoot } from '@/server/settings';
 import prisma from '@/server/prisma';
+import { buildHostBaseUrl } from '@/server/hostUrl';
 
 const IMAGE_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif']);
 const CAPTION_EXTENSION = '.txt';
@@ -72,7 +73,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const remoteBaseUrl = `http://${host.address}:${host.port}`;
+    const remoteBaseUrl = buildHostBaseUrl(host.address, host.port);
     const authHeaders: Record<string, string> = {};
     if (host.authToken) {
       authHeaders['Authorization'] = `Bearer ${host.authToken}`;

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/server/prisma';
 import { GpuInfo } from '@/types';
+import { buildHostBaseUrl } from '@/server/hostUrl';
 
 interface AggregatedHost {
   id: string;
@@ -27,12 +28,13 @@ export async function GET() {
         }
 
         try {
+          const base = buildHostBaseUrl(host.address, host.port);
           const [gpuRes, jobsRes] = await Promise.allSettled([
-            fetch(`http://${host.address}:${host.port}/api/gpu`, {
+            fetch(`${base}/api/gpu`, {
               signal: controller.signal,
               headers,
             }),
-            fetch(`http://${host.address}:${host.port}/api/jobs`, {
+            fetch(`${base}/api/jobs`, {
               signal: controller.signal,
               headers,
             }),

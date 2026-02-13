@@ -277,7 +277,13 @@ export default function PodOverviewTab({ pod, liveData }: PodOverviewTabProps) {
             {liveData?.machine?.dataCenterId && !pod.dataCenterName && (
               <MetaRow label="Datacenter ID" value={liveData.machine.dataCenterId} />
             )}
-            {pod.publicIp && <MetaRow label="Endpoint" value={`${pod.publicIp}:${pod.publicPort}`} />}
+            {pod.publicIp ? (
+              <MetaRow label="Endpoint" value={`${pod.publicIp}:${pod.publicPort}`} />
+            ) : (
+              pod.currentStatus === 'running' && (
+                <MetaRow label="Endpoint" value={`${pod.runpodId}-8675.proxy.runpod.net (proxy)`} />
+              )
+            )}
             <MetaRow label="Created" value={new Date(pod.createdAt).toLocaleString()} />
             {pod.terminatedAt && <MetaRow label="Terminated" value={new Date(pod.terminatedAt).toLocaleString()} />}
           </tbody>
@@ -297,6 +303,17 @@ export default function PodOverviewTab({ pod, liveData }: PodOverviewTabProps) {
             <ExternalLink className="w-4 h-4" />
             Open in RunPod Console
           </a>
+          {pod.currentStatus === 'running' && (
+            <a
+              href={`https://${pod.runpodId}-8675.proxy.runpod.net/`}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300 transition-colors"
+            >
+              <ExternalLink className="w-4 h-4" />
+              Open AI Toolkit (RunPod Proxy)
+            </a>
+          )}
           {sshCommand && (
             <div className="space-y-1">
               <div className="flex items-center gap-2 text-sm text-gray-400">

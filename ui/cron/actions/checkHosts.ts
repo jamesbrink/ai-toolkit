@@ -1,4 +1,5 @@
 import prisma from '../prisma';
+import { buildHostBaseUrl } from '../../src/server/hostUrl';
 
 const HEALTH_CHECK_TIMEOUT = 5000;
 const FAILURE_THRESHOLD = 3;
@@ -12,7 +13,7 @@ export default async function checkHosts(): Promise<void> {
   });
 
   for (const host of hosts) {
-    const url = `http://${host.address}:${host.port}/api/hosts/identify`;
+    const url = `${buildHostBaseUrl(host.address, host.port)}/api/hosts/identify`;
     const headers: Record<string, string> = {};
     if (host.authToken) {
       headers['Authorization'] = `Bearer ${host.authToken}`;

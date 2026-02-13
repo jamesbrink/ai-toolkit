@@ -1,4 +1,5 @@
 import prisma from '../prisma';
+import { buildHostBaseUrl } from '../../src/server/hostUrl';
 
 const RUNPOD_API_URL = 'https://api.runpod.io/graphql';
 const HEALTH_CHECK_TIMEOUT = 10000;
@@ -53,16 +54,18 @@ async function fetchPodStatus(apiKey: string, runpodId: string): Promise<RunPodP
   }
 }
 
-async function probeInstance(
-  ip: string,
-  port: number,
-  authToken: string,
-): Promise<{ instanceId: string; deviceType?: string; gpuSummary?: string } | null> {
+interface ProbeIdentity {
+  instanceId: string;
+  deviceType?: string;
+  gpuSummary?: string;
+}
+
+async function probeInstance(baseUrl: string, authToken: string): Promise<ProbeIdentity | null> {
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), PROBE_TIMEOUT);
 
-    const response = await fetch(`http://${ip}:${port}/api/hosts/identify`, {
+    const response = await fetch(`${baseUrl}/api/hosts/identify`, {
       signal: controller.signal,
       headers: { Authorization: `Bearer ${authToken}` },
     });
@@ -73,6 +76,37 @@ async function probeInstance(
   } catch {
     return null;
   }
+}
+
+/**
+ * Try to reach a RunPod pod via direct public IP first, then fall back
+ * to the RunPod proxy URL (https://{podId}-8675.proxy.runpod.net/).
+ * Returns the identity plus the address/port that succeeded.
+ */
+async function probeRunPodInstance(
+  runpodId: string,
+  publicIp: string | null,
+  publicPort: number | null,
+  authToken: string,
+): Promise<{ identity: ProbeIdentity; address: string; port: number } | null> {
+  // Try direct IP first (faster, lower latency on same network)
+  if (publicIp && publicPort) {
+    const directUrl = buildHostBaseUrl(publicIp, publicPort);
+    const identity = await probeInstance(directUrl, authToken);
+    if (identity) {
+      return { identity, address: publicIp, port: publicPort };
+    }
+  }
+
+  // Fall back to RunPod proxy URL
+  const proxyHost = `${runpodId}-8675.proxy.runpod.net`;
+  const proxyUrl = `https://${proxyHost}`;
+  const identity = await probeInstance(proxyUrl, authToken);
+  if (identity) {
+    return { identity, address: proxyHost, port: 443 };
+  }
+
+  return null;
 }
 
 export default async function checkRunPodPods(): Promise<void> {
@@ -151,17 +185,19 @@ export default async function checkRunPodPods(): Promise<void> {
         },
       });
 
-      // Auto-register as Host if we have a public endpoint but no linked host
-      if (currentStatus === 'running' && publicIp && publicPort && !pod.hostId) {
-        const identity = await probeInstance(publicIp, publicPort, pod.authPassword);
-        if (identity?.instanceId) {
+      // Auto-register as Host when the pod is running but no linked host exists
+      if (currentStatus === 'running' && !pod.hostId) {
+        const probeResult = await probeRunPodInstance(pod.runpodId, publicIp, publicPort, pod.authPassword);
+        if (probeResult?.identity.instanceId) {
+          const { identity, address: probeAddr, port: probePort } = probeResult;
+
           // Check if host already exists with this instanceId
           const existing = await prisma.host.findFirst({
             where: { instanceId: identity.instanceId },
           });
 
           if (existing) {
-            // Link the existing host
+            // Link the existing host and update its address to whichever probe succeeded
             await prisma.runPodPod.update({
               where: { id: pod.id },
               data: { hostId: existing.id },
@@ -169,6 +205,8 @@ export default async function checkRunPodPods(): Promise<void> {
             await prisma.host.update({
               where: { id: existing.id },
               data: {
+                address: probeAddr,
+                port: probePort,
                 isOnline: true,
                 lastSeen: new Date(),
                 source: 'runpod',
@@ -180,8 +218,8 @@ export default async function checkRunPodPods(): Promise<void> {
             const host = await prisma.host.create({
               data: {
                 name: pod.name,
-                address: publicIp,
-                port: publicPort,
+                address: probeAddr,
+                port: probePort,
                 authToken: pod.authPassword,
                 instanceId: identity.instanceId,
                 source: 'runpod',
@@ -196,23 +234,25 @@ export default async function checkRunPodPods(): Promise<void> {
               data: { hostId: host.id },
             });
           }
-          console.log(`[RunPod] Auto-registered host for pod "${pod.name}" at ${publicIp}:${publicPort}`);
+          console.log(`[RunPod] Auto-registered host for pod "${pod.name}" at ${probeAddr}:${probePort}`);
         }
       }
 
       // Update Host record if IP/port changed on pod resume
-      if (currentStatus === 'running' && publicIp && publicPort && pod.hostId) {
+      if (currentStatus === 'running' && pod.hostId) {
         const existingHost = await prisma.host.findUnique({ where: { id: pod.hostId } });
         if (existingHost) {
-          const addressChanged = existingHost.address !== publicIp || existingHost.port !== publicPort;
-          if (addressChanged || !existingHost.isOnline) {
-            const identity = await probeInstance(publicIp, publicPort, pod.authPassword);
-            if (identity) {
+          // Re-probe to find the best reachable address (direct IP or RunPod proxy)
+          const probeResult = await probeRunPodInstance(pod.runpodId, publicIp, publicPort, pod.authPassword);
+          if (probeResult) {
+            const { identity, address: probeAddr, port: probePort } = probeResult;
+            const addressChanged = existingHost.address !== probeAddr || existingHost.port !== probePort;
+            if (addressChanged || !existingHost.isOnline) {
               await prisma.host.update({
                 where: { id: pod.hostId },
                 data: {
-                  address: publicIp,
-                  port: publicPort,
+                  address: probeAddr,
+                  port: probePort,
                   isOnline: true,
                   isHidden: false,
                   lastSeen: new Date(),
@@ -221,7 +261,7 @@ export default async function checkRunPodPods(): Promise<void> {
                 },
               });
               if (addressChanged) {
-                console.log(`[RunPod] Updated host address for pod "${pod.name}" to ${publicIp}:${publicPort}`);
+                console.log(`[RunPod] Updated host address for pod "${pod.name}" to ${probeAddr}:${probePort}`);
               }
             }
           }

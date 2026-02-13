@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/server/prisma';
+import { buildHostBaseUrl } from '@/server/hostUrl';
 import { terminatePod } from '@/server/runpod';
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ podId: string }> }) {
@@ -19,7 +20,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       try {
         const host = await prisma.host.findUnique({ where: { id: pod.hostId } });
         if (host?.isOnline) {
-          const jobsRes = await fetch(`http://${host.address}:${host.port}/api/jobs`, {
+          const jobsRes = await fetch(`${buildHostBaseUrl(host.address, host.port)}/api/jobs`, {
             headers: host.authToken ? { Authorization: `Bearer ${host.authToken}` } : {},
             signal: AbortSignal.timeout(5000),
           });

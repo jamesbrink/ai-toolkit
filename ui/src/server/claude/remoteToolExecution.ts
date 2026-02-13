@@ -1,4 +1,5 @@
 import prisma from '@/server/prisma';
+import { buildHostBaseUrl } from '@/server/hostUrl';
 import { executeServerTool } from './serverTools';
 
 /**
@@ -21,7 +22,7 @@ export async function executeToolMaybeRemote(
     return `Error: host "${hostId}" not found`;
   }
 
-  const targetUrl = `http://${host.address}:${host.port}/api/claude/tools/execute`;
+  const targetUrl = `${buildHostBaseUrl(host.address, host.port)}/api/claude/tools/execute`;
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (host.authToken) {
     headers['Authorization'] = `Bearer ${host.authToken}`;
@@ -67,7 +68,7 @@ export async function fetchRemoteImageBytes(
   const host = await prisma.host.findUnique({ where: { id: hostId } });
   if (!host) return null;
 
-  const targetUrl = `http://${host.address}:${host.port}/api/files/${encodeURIComponent(imagePath)}`;
+  const targetUrl = `${buildHostBaseUrl(host.address, host.port)}/api/files/${encodeURIComponent(imagePath)}`;
   const headers: Record<string, string> = {};
   if (host.authToken) {
     headers['Authorization'] = `Bearer ${host.authToken}`;
@@ -101,7 +102,7 @@ export async function fetchRemoteSettings(
   const host = await prisma.host.findUnique({ where: { id: hostId } });
   if (!host) return null;
 
-  const targetUrl = `http://${host.address}:${host.port}/api/settings`;
+  const targetUrl = `${buildHostBaseUrl(host.address, host.port)}/api/settings`;
   const headers: Record<string, string> = {};
   if (host.authToken) {
     headers['Authorization'] = `Bearer ${host.authToken}`;
