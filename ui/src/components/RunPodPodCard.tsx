@@ -161,7 +161,19 @@ export default function RunPodPodCard({ pod, onRefresh }: RunPodPodCardProps) {
           </p>
         )}
 
-        {pod.hostId && <p className="text-xs text-gray-400">Linked to host</p>}
+        {pod.hostId && (
+          <div className="flex items-center space-x-1.5">
+            <span
+              className={classNames(
+                'w-2 h-2 rounded-full shrink-0',
+                pod.currentStatus === 'running' ? 'bg-green-500' : 'bg-gray-500',
+              )}
+            />
+            <span className="text-xs text-gray-400">
+              {pod.currentStatus === 'running' ? 'Host connected' : 'Host linked (offline)'}
+            </span>
+          </div>
+        )}
 
         {pod.errorMessage && <p className="text-xs text-red-400 truncate">{pod.errorMessage}</p>}
       </div>

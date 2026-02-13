@@ -57,11 +57,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       },
     });
 
-    // Mark linked host offline
+    // Mark linked host offline and hidden
     if (pod.hostId) {
       await prisma.host.update({
         where: { id: pod.hostId },
-        data: { isOnline: false },
+        data: { isOnline: false, isHidden: true },
       });
     }
 

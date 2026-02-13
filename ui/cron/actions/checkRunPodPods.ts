@@ -200,11 +200,42 @@ export default async function checkRunPodPods(): Promise<void> {
         }
       }
 
-      // If pod went offline externally, mark linked host as offline
+      // Update Host record if IP/port changed on pod resume
+      if (currentStatus === 'running' && publicIp && publicPort && pod.hostId) {
+        const existingHost = await prisma.host.findUnique({ where: { id: pod.hostId } });
+        if (existingHost) {
+          const addressChanged = existingHost.address !== publicIp || existingHost.port !== publicPort;
+          if (addressChanged || !existingHost.isOnline) {
+            const identity = await probeInstance(publicIp, publicPort, pod.authPassword);
+            if (identity) {
+              await prisma.host.update({
+                where: { id: pod.hostId },
+                data: {
+                  address: publicIp,
+                  port: publicPort,
+                  isOnline: true,
+                  isHidden: false,
+                  lastSeen: new Date(),
+                  deviceType: identity.deviceType || existingHost.deviceType,
+                  gpuSummary: identity.gpuSummary || existingHost.gpuSummary,
+                },
+              });
+              if (addressChanged) {
+                console.log(`[RunPod] Updated host address for pod "${pod.name}" to ${publicIp}:${publicPort}`);
+              }
+            }
+          }
+        }
+      }
+
+      // If pod went offline externally, mark linked host as offline (and hidden if terminated)
       if ((currentStatus === 'stopped' || currentStatus === 'terminated') && pod.hostId) {
         await prisma.host.update({
           where: { id: pod.hostId },
-          data: { isOnline: false },
+          data: {
+            isOnline: false,
+            ...(currentStatus === 'terminated' && { isHidden: true }),
+          },
         });
       }
     } catch (error) {

@@ -104,7 +104,7 @@ export default function HostsPage() {
         {/* Local Hosts Section */}
         <div>
           <h2 className="text-sm font-semibold text-gray-300 uppercase tracking-wide mb-4">Local Hosts</h2>
-          {status === 'success' && hosts.length === 0 ? (
+          {status === 'success' && hosts.filter(h => h.source !== 'runpod').length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <Network className="w-12 h-12 text-gray-600 mb-4" />
               <p className="text-gray-400 max-w-md">
@@ -114,7 +114,7 @@ export default function HostsPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {hosts.map(host => (
+              {hosts.filter(h => h.source !== 'runpod').map(host => (
                 <HostCard key={host.id} host={host} onRefresh={refreshHosts} />
               ))}
             </div>

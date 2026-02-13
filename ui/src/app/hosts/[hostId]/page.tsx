@@ -62,7 +62,16 @@ export default function HostDetailPage() {
               <div className="p-4 space-y-3">
                 <InfoRow label="Address" value={host.address} />
                 <InfoRow label="Port" value={String(host.port)} />
-                <InfoRow label="Source" value={host.source === 'mdns' ? 'mDNS (auto-discovered)' : 'Manual'} />
+                <InfoRow
+                  label="Source"
+                  value={
+                    host.source === 'mdns'
+                      ? 'mDNS (auto-discovered)'
+                      : host.source === 'runpod'
+                        ? 'RunPod (cloud pod)'
+                        : 'Manual'
+                  }
+                />
                 <InfoRow label="Device Type" value={host.deviceType ? host.deviceType.toUpperCase() : 'Unknown'} />
                 <InfoRow label="GPU Summary" value={host.gpuSummary || 'N/A'} />
                 <InfoRow label="Instance ID" value={host.instanceId || 'N/A'} />

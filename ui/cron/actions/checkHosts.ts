@@ -8,7 +8,7 @@ const failureCounts = new Map<string, number>();
 
 export default async function checkHosts(): Promise<void> {
   const hosts = await prisma.host.findMany({
-    where: { isHidden: false },
+    where: { isHidden: false, source: { not: 'runpod' } },
   });
 
   for (const host of hosts) {

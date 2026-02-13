@@ -128,10 +128,14 @@ export default function HostCard({ host, onRefresh }: HostCardProps) {
           <span
             className={classNames(
               'px-2 py-0.5 rounded-full text-xs',
-              host.source === 'mdns' ? 'bg-blue-900 text-blue-300' : 'bg-gray-700 text-gray-300',
+              host.source === 'mdns'
+                ? 'bg-blue-900 text-blue-300'
+                : host.source === 'runpod'
+                  ? 'bg-purple-900 text-purple-300'
+                  : 'bg-gray-700 text-gray-300',
             )}
           >
-            {host.source === 'mdns' ? 'mDNS' : 'Manual'}
+            {host.source === 'mdns' ? 'mDNS' : host.source === 'runpod' ? 'RunPod' : 'Manual'}
           </span>
           {host.deviceType && (
             <span className="px-2 py-0.5 bg-gray-700 rounded-full text-xs text-gray-300">

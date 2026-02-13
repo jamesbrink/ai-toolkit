@@ -313,12 +313,24 @@ export default function PodOverviewTab({ pod, liveData }: PodOverviewTabProps) {
       {pod.hostId && (
         <div className="bg-gray-900 rounded-xl border border-gray-800 p-4">
           <h3 className="text-sm font-medium text-gray-300 mb-2">Linked Host</h3>
-          <button
-            onClick={() => router.push(`/hosts/${pod.hostId}`)}
-            className="text-blue-400 hover:text-blue-300 text-sm transition-colors"
-          >
-            View host details
-          </button>
+          <div className="flex items-center gap-2">
+            <span
+              className={classNames(
+                'w-2.5 h-2.5 rounded-full shrink-0',
+                pod.currentStatus === 'running' ? 'bg-green-500' : 'bg-gray-500',
+              )}
+            />
+            <span className={classNames('text-sm', pod.currentStatus === 'running' ? 'text-green-400' : 'text-gray-400')}>
+              {pod.currentStatus === 'running' ? 'Connected' : 'Offline'}
+            </span>
+            <span className="text-gray-600">·</span>
+            <button
+              onClick={() => router.push(`/hosts/${pod.hostId}`)}
+              className="text-blue-400 hover:text-blue-300 text-sm transition-colors"
+            >
+              View host details
+            </button>
+          </div>
         </div>
       )}
 
