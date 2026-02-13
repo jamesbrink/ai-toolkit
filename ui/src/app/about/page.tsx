@@ -109,7 +109,10 @@ export default function AboutPage() {
             </Subheading>
             <div className="space-y-3">
               {features.map(feature => (
-                <div key={feature.title} className="bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4">
+                <div
+                  key={feature.title}
+                  className="bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4"
+                >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       <h4 className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{feature.title}</h4>

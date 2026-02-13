@@ -63,9 +63,7 @@ function CopyableField({ value, mono = true }: { value: string; mono?: boolean }
 
   return (
     <div className="flex items-center gap-2">
-      <code
-        className={clsx('text-sm text-gray-100 bg-gray-800 px-3 py-1.5 rounded-lg flex-1', mono && 'font-mono')}
-      >
+      <code className={clsx('text-sm text-gray-100 bg-gray-800 px-3 py-1.5 rounded-lg flex-1', mono && 'font-mono')}>
         {value}
       </code>
       <button
@@ -129,10 +127,7 @@ function DeploymentStepper({ stage }: { stage: number }) {
               </div>
               {i < deploymentStages.length - 1 && (
                 <div
-                  className={clsx(
-                    'flex-1 h-0.5 mx-2 mt-[-1.25rem]',
-                    isCompleted ? 'bg-green-600' : 'bg-gray-700',
-                  )}
+                  className={clsx('flex-1 h-0.5 mx-2 mt-[-1.25rem]', isCompleted ? 'bg-green-600' : 'bg-gray-700')}
                 />
               )}
             </div>
@@ -337,9 +332,7 @@ export default function PodOverviewTab({ pod, liveData }: PodOverviewTabProps) {
                 pod.currentStatus === 'running' ? 'bg-green-500' : 'bg-gray-500',
               )}
             />
-            <span
-              className={clsx('text-sm', pod.currentStatus === 'running' ? 'text-green-400' : 'text-gray-400')}
-            >
+            <span className={clsx('text-sm', pod.currentStatus === 'running' ? 'text-green-400' : 'text-gray-400')}>
               {pod.currentStatus === 'running' ? 'Connected' : 'Offline'}
             </span>
             <span className="text-gray-600">·</span>

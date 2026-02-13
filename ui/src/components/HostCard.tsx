@@ -87,9 +87,7 @@ export default function HostCard({ host, onRefresh }: HostCardProps) {
         <div className="flex items-center space-x-2 min-w-0">
           <Server className="w-4 h-4 text-zinc-500 dark:text-zinc-400 shrink-0" />
           <h2 className="font-semibold text-zinc-900 dark:text-zinc-100 truncate">{host.name}</h2>
-          <span
-            className={clsx('w-2 h-2 rounded-full shrink-0', host.isOnline ? 'bg-green-500' : 'bg-red-500')}
-          />
+          <span className={clsx('w-2 h-2 rounded-full shrink-0', host.isOnline ? 'bg-green-500' : 'bg-red-500')} />
         </div>
         <div className="flex items-center space-x-1 shrink-0">
           <button
@@ -126,16 +124,10 @@ export default function HostCard({ host, onRefresh }: HostCardProps) {
         </div>
 
         <div className="flex items-center space-x-2">
-          <Badge
-            color={host.source === 'mdns' ? 'blue' : host.source === 'runpod' ? 'purple' : 'zinc'}
-          >
+          <Badge color={host.source === 'mdns' ? 'blue' : host.source === 'runpod' ? 'purple' : 'zinc'}>
             {host.source === 'mdns' ? 'mDNS' : host.source === 'runpod' ? 'RunPod' : 'Manual'}
           </Badge>
-          {host.deviceType && (
-            <Badge color="zinc">
-              {host.deviceType.toUpperCase()}
-            </Badge>
-          )}
+          {host.deviceType && <Badge color="zinc">{host.deviceType.toUpperCase()}</Badge>}
         </div>
 
         {host.gpuSummary && <p className="text-sm text-zinc-500 dark:text-zinc-400 truncate">{host.gpuSummary}</p>}

@@ -218,18 +218,14 @@ function MultiHostJobsTable({ onlyActive, hosts }: { onlyActive: boolean; hosts:
               <div
                 className={clsx(
                   'text-md flex flex-col sm:flex-row px-4 py-1 rounded-t-lg',
-                  queueRunning
-                    ? 'bg-emerald-50 dark:bg-green-900'
-                    : 'bg-red-50 dark:bg-red-900',
+                  queueRunning ? 'bg-emerald-50 dark:bg-green-900' : 'bg-red-50 dark:bg-red-900',
                 )}
               >
                 <div className="flex items-center space-x-2 flex-1 py-2">
                   <h2
                     className={clsx(
                       'font-semibold',
-                      queueRunning
-                        ? 'text-emerald-900 dark:text-gray-100'
-                        : 'text-red-900 dark:text-gray-100',
+                      queueRunning ? 'text-emerald-900 dark:text-gray-100' : 'text-red-900 dark:text-gray-100',
                     )}
                   >
                     {group.name}
@@ -253,9 +249,7 @@ function MultiHostJobsTable({ onlyActive, hosts }: { onlyActive: boolean; hosts:
                 <div
                   className={clsx(
                     'text-sm italic flex items-center',
-                    queueRunning
-                      ? 'text-emerald-700 dark:text-gray-300'
-                      : 'text-red-700 dark:text-gray-300',
+                    queueRunning ? 'text-emerald-700 dark:text-gray-300' : 'text-red-700 dark:text-gray-300',
                   )}
                 >
                   {queueRunning ? (
@@ -286,11 +280,7 @@ function MultiHostJobsTable({ onlyActive, hosts }: { onlyActive: boolean; hosts:
                 rows={group.jobs}
                 isLoading={isLoading}
                 onRefresh={refresh}
-                theadClassName={
-                  queueRunning
-                    ? 'bg-emerald-50 dark:bg-green-950'
-                    : 'bg-red-50 dark:bg-red-950'
-                }
+                theadClassName={queueRunning ? 'bg-emerald-50 dark:bg-green-950' : 'bg-red-50 dark:bg-red-950'}
               />
             </div>
           );
@@ -439,18 +429,14 @@ function LocalJobsTable({ onlyActive }: { onlyActive: boolean }) {
               <div
                 className={clsx(
                   'text-md flex flex-col sm:flex-row px-4 py-1 rounded-t-lg',
-                  queue?.is_running
-                    ? 'bg-emerald-50 dark:bg-green-900'
-                    : 'bg-red-50 dark:bg-red-900',
+                  queue?.is_running ? 'bg-emerald-50 dark:bg-green-900' : 'bg-red-50 dark:bg-red-900',
                 )}
               >
                 <div className="flex items-center space-x-2 flex-1 py-2">
                   <h2
                     className={clsx(
                       'font-semibold',
-                      queue?.is_running
-                        ? 'text-emerald-900 dark:text-gray-100'
-                        : 'text-red-900 dark:text-gray-100',
+                      queue?.is_running ? 'text-emerald-900 dark:text-gray-100' : 'text-red-900 dark:text-gray-100',
                     )}
                   >
                     {jobsDict[gpuKey].name}
@@ -469,9 +455,7 @@ function LocalJobsTable({ onlyActive }: { onlyActive: boolean }) {
                 <div
                   className={clsx(
                     'text-sm italic flex items-center',
-                    queue?.is_running
-                      ? 'text-emerald-700 dark:text-gray-300'
-                      : 'text-red-700 dark:text-gray-300',
+                    queue?.is_running ? 'text-emerald-700 dark:text-gray-300' : 'text-red-700 dark:text-gray-300',
                   )}
                 >
                   {queue?.is_running ? (
@@ -508,11 +492,7 @@ function LocalJobsTable({ onlyActive }: { onlyActive: boolean }) {
                 rows={jobsDict[gpuKey].jobs}
                 isLoading={isLoading}
                 onRefresh={refresh}
-                theadClassName={
-                  queue?.is_running
-                    ? 'bg-emerald-50 dark:bg-green-950'
-                    : 'bg-red-50 dark:bg-red-950'
-                }
+                theadClassName={queue?.is_running ? 'bg-emerald-50 dark:bg-green-950' : 'bg-red-50 dark:bg-red-950'}
               />
             </div>
           );

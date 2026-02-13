@@ -43,6 +43,9 @@ export async function GET() {
     }
     // Tell the client which secrets are set via env var (without leaking the actual value)
     const envFlags: Record<string, boolean> = {};
+    if (!settingsObject.HF_TOKEN && process.env.HF_TOKEN) {
+      envFlags.HF_TOKEN = true;
+    }
     if (!settingsObject.ANTHROPIC_API_KEY && process.env.ANTHROPIC_API_KEY) {
       envFlags.ANTHROPIC_API_KEY = true;
     }

@@ -23,10 +23,9 @@ const Card: React.FC<CardProps> = ({ title, children, collapsible, defaultOpen }
               <div className="flex-1">
                 {title && (
                   <h2
-                    className={clsx(
-                      'text-lg mb-2 font-semibold uppercase text-zinc-500 dark:text-zinc-400',
-                      { 'mb-0': !open },
-                    )}
+                    className={clsx('text-lg mb-2 font-semibold uppercase text-zinc-500 dark:text-zinc-400', {
+                      'mb-0': !open,
+                    })}
                   >
                     {title}
                   </h2>

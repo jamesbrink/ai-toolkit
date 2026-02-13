@@ -138,7 +138,10 @@ export default function DatasetAnalysisPanel({
             <DialogTitle className="text-lg font-medium text-zinc-900 dark:text-zinc-100">
               Dataset Quality Analysis — {datasetName}
             </DialogTitle>
-            <button onClick={onClose} className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200">
+            <button
+              onClick={onClose}
+              className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200"
+            >
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -316,7 +319,11 @@ export default function DatasetAnalysisPanel({
                               </div>
                             ) : (
                               <div className="flex items-center gap-2">
-                                <Button color="amber" className="text-xs" onClick={() => setBulkAction('confirm-keep-first')}>
+                                <Button
+                                  color="amber"
+                                  className="text-xs"
+                                  onClick={() => setBulkAction('confirm-keep-first')}
+                                >
                                   Keep First in All
                                 </Button>
                                 <Button outline className="text-xs" onClick={dismissAllGroups}>
@@ -409,7 +416,9 @@ export default function DatasetAnalysisPanel({
                               <div
                                 key={imgPath}
                                 className={`relative rounded-lg border-2 cursor-pointer transition-colors ${
-                                  isSelected ? 'border-red-500 bg-red-50 dark:bg-red-950/20' : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-600'
+                                  isSelected
+                                    ? 'border-red-500 bg-red-50 dark:bg-red-950/20'
+                                    : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-600'
                                 }`}
                                 onClick={() => toggleQualitySelect(imgPath)}
                               >
@@ -549,7 +558,9 @@ export default function DatasetAnalysisPanel({
 
             {cropStatus === 'error' && (
               <div className="space-y-3">
-                <p className="text-sm text-red-600 dark:text-red-400">Face cropping failed. Check the console for details.</p>
+                <p className="text-sm text-red-600 dark:text-red-400">
+                  Face cropping failed. Check the console for details.
+                </p>
                 <div className="flex justify-end">
                   <Button plain onClick={() => setCropStatus('idle')}>
                     Try Again

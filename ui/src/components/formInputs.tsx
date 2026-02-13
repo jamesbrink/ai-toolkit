@@ -13,10 +13,7 @@ import { ConfigDoc, GroupedSelectOption, SelectOption } from '@/types';
 
 function DocIcon({ doc }: { doc: ConfigDoc }) {
   return (
-    <span
-      className="inline-flex ml-1 text-zinc-500 dark:text-zinc-400 cursor-pointer"
-      onClick={() => openDoc(doc)}
-    >
+    <span className="inline-flex ml-1 text-zinc-500 dark:text-zinc-400 cursor-pointer" onClick={() => openDoc(doc)}>
       <CircleHelp className="inline-block w-4 h-4" />
     </span>
   );
@@ -145,20 +142,13 @@ export const SelectInput = (props: SelectInputProps) => {
     doc = getDoc(docKey);
   }
   return (
-    <Field
-      className={clsx(props.className)}
-      disabled={props.disabled}
-    >
+    <Field className={clsx(props.className)} disabled={props.disabled}>
       {label && (
         <Label className="text-xs mb-1.5 mt-3">
           {label} {doc && <DocIcon doc={doc} />}
         </Label>
       )}
-      <Select
-        value={value}
-        disabled={props.disabled}
-        onChange={e => onChange(e.target.value)}
-      >
+      <Select value={value} disabled={props.disabled} onChange={e => onChange(e.target.value)}>
         {options.map(opt =>
           'options' in opt ? (
             <optgroup key={opt.label} label={opt.label}>
@@ -199,20 +189,13 @@ export const Checkbox = (props: CheckboxProps) => {
 
   return (
     <div className={clsx('flex items-center gap-3', props.className)}>
-      <Switch
-        color="blue"
-        checked={checked}
-        onChange={onChange}
-        disabled={disabled}
-      />
+      <Switch color="blue" checked={checked} onChange={onChange} disabled={disabled} />
       {label && (
         <>
           <span
             className={clsx(
               'text-sm font-medium cursor-pointer select-none',
-              disabled
-                ? 'text-zinc-500 dark:text-zinc-400'
-                : 'text-zinc-700 dark:text-zinc-300',
+              disabled ? 'text-zinc-500 dark:text-zinc-400' : 'text-zinc-700 dark:text-zinc-300',
             )}
             onClick={() => !disabled && onChange(!checked)}
           >

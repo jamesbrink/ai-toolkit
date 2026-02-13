@@ -127,10 +127,7 @@ export default function UniversalTable<T>({
               </thead>
               <tbody>
                 {sortedRows?.map((row, index) => {
-                  const rowClass =
-                    index % 2 === 0
-                      ? 'bg-white dark:bg-zinc-900'
-                      : 'bg-zinc-50 dark:bg-zinc-800';
+                  const rowClass = index % 2 === 0 ? 'bg-white dark:bg-zinc-900' : 'bg-zinc-50 dark:bg-zinc-800';
 
                   return (
                     <tr

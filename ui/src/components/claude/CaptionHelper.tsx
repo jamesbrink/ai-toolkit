@@ -164,8 +164,13 @@ export default function CaptionHelper({
       <div className="fixed inset-0 flex items-center justify-center p-4">
         <DialogPanel className="w-full max-w-4xl max-h-[85vh] bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-700 flex flex-col">
           <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-200 dark:border-zinc-700 shrink-0">
-            <DialogTitle className="text-lg font-medium text-zinc-900 dark:text-zinc-100">Caption with Claude — {datasetName}</DialogTitle>
-            <button onClick={onClose} className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200">
+            <DialogTitle className="text-lg font-medium text-zinc-900 dark:text-zinc-100">
+              Caption with Claude — {datasetName}
+            </DialogTitle>
+            <button
+              onClick={onClose}
+              className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200"
+            >
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -205,11 +210,7 @@ export default function CaptionHelper({
                 <p className="text-xs text-zinc-500 dark:text-zinc-400">
                   {imagePaths.length} image{imagePaths.length !== 1 ? 's' : ''} selected
                 </p>
-                <Button
-                  color="blue"
-                  onClick={startBatchCaption}
-                  disabled={style === 'trigger' && !triggerWord.trim()}
-                >
+                <Button color="blue" onClick={startBatchCaption} disabled={style === 'trigger' && !triggerWord.trim()}>
                   Generate Captions
                 </Button>
               </div>
@@ -228,7 +229,10 @@ export default function CaptionHelper({
               <div className="space-y-3">
                 {!isProcessing && (
                   <div className="flex items-center gap-3">
-                    <button onClick={acceptAll} className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300">
+                    <button
+                      onClick={acceptAll}
+                      className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300"
+                    >
                       Accept all
                     </button>
                     <span className="text-xs text-zinc-500 dark:text-zinc-400">
@@ -240,7 +244,9 @@ export default function CaptionHelper({
                   <div
                     key={i}
                     className={`rounded-lg border p-3 text-sm ${
-                      result.accepted ? 'border-green-600 dark:border-green-700 bg-green-50 dark:bg-green-950/20' : 'border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800'
+                      result.accepted
+                        ? 'border-green-600 dark:border-green-700 bg-green-50 dark:bg-green-950/20'
+                        : 'border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800'
                     }`}
                   >
                     <div className="flex items-start gap-3">
@@ -258,7 +264,9 @@ export default function CaptionHelper({
                             {result.oldCaption && (
                               <div>
                                 <span className="text-xs text-zinc-500 dark:text-zinc-400">Old: </span>
-                                <span className="text-xs text-zinc-500 dark:text-zinc-400 line-through">{result.oldCaption}</span>
+                                <span className="text-xs text-zinc-500 dark:text-zinc-400 line-through">
+                                  {result.oldCaption}
+                                </span>
                               </div>
                             )}
                             <div>
@@ -272,7 +280,9 @@ export default function CaptionHelper({
                         <button
                           onClick={() => toggleAccept(i)}
                           className={`p-1.5 rounded shrink-0 transition-colors ${
-                            result.accepted ? 'bg-green-600 dark:bg-green-700 text-white' : 'text-zinc-500 dark:text-zinc-400 hover:text-green-600 dark:hover:text-green-400'
+                            result.accepted
+                              ? 'bg-green-600 dark:bg-green-700 text-white'
+                              : 'text-zinc-500 dark:text-zinc-400 hover:text-green-600 dark:hover:text-green-400'
                           }`}
                         >
                           <Check className="w-4 h-4" />

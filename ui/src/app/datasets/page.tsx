@@ -74,7 +74,10 @@ export default function Datasets() {
             ? `/datasets/${row.name}?hostId=${row.source.hostId}`
             : `/datasets/${row.name}`;
         return (
-          <Link href={href} className="text-zinc-800 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white font-medium">
+          <Link
+            href={href}
+            className="text-zinc-800 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white font-medium"
+          >
             {row.name}
           </Link>
         );
@@ -89,7 +92,11 @@ export default function Datasets() {
             sortable: true,
             className: 'w-28',
             render: (row: SourcedDatasetInfo) => (
-              <span className={row.source.type === 'local' ? 'text-zinc-500 dark:text-zinc-400' : 'text-blue-600 dark:text-blue-300'}>
+              <span
+                className={
+                  row.source.type === 'local' ? 'text-zinc-500 dark:text-zinc-400' : 'text-blue-600 dark:text-blue-300'
+                }
+              >
                 {row.source.type === 'local' ? 'Local' : row.source.hostName}
               </span>
             ),
@@ -101,7 +108,9 @@ export default function Datasets() {
       key: 'imageCount',
       sortable: true,
       className: 'w-24 text-right tabular-nums',
-      render: (row: SourcedDatasetInfo) => <span className="text-zinc-700 dark:text-zinc-300">{row.imageCount.toLocaleString()}</span>,
+      render: (row: SourcedDatasetInfo) => (
+        <span className="text-zinc-700 dark:text-zinc-300">{row.imageCount.toLocaleString()}</span>
+      ),
     },
     {
       title: 'Captioned',
@@ -111,7 +120,12 @@ export default function Datasets() {
       render: (row: SourcedDatasetInfo) => {
         if (row.imageCount === 0) return <span className="text-zinc-400 dark:text-zinc-500">-</span>;
         const pct = Math.round((row.captionCount / row.imageCount) * 100);
-        const color = pct === 100 ? 'text-green-600 dark:text-green-400' : pct > 0 ? 'text-yellow-600 dark:text-yellow-400' : 'text-zinc-400 dark:text-zinc-500';
+        const color =
+          pct === 100
+            ? 'text-green-600 dark:text-green-400'
+            : pct > 0
+              ? 'text-yellow-600 dark:text-yellow-400'
+              : 'text-zinc-400 dark:text-zinc-500';
         return (
           <span className={`tabular-nums ${color}`}>
             {row.captionCount}/{row.imageCount}
@@ -124,7 +138,9 @@ export default function Datasets() {
       key: 'totalSizeBytes',
       sortable: true,
       className: 'w-24 text-right tabular-nums',
-      render: (row: SourcedDatasetInfo) => <span className="text-zinc-500 dark:text-zinc-400">{formatBytes(row.totalSizeBytes)}</span>,
+      render: (row: SourcedDatasetInfo) => (
+        <span className="text-zinc-500 dark:text-zinc-400">{formatBytes(row.totalSizeBytes)}</span>
+      ),
     },
     {
       title: 'Modified',

@@ -43,9 +43,7 @@ export default function HostDetailPage() {
         </button>
         <div className="flex items-center space-x-2 ml-1">
           <h1 className="text-lg">{host?.name || 'Host'}</h1>
-          {host && (
-            <span className={clsx('w-2.5 h-2.5 rounded-full', host.isOnline ? 'bg-green-500' : 'bg-red-500')} />
-          )}
+          {host && <span className={clsx('w-2.5 h-2.5 rounded-full', host.isOnline ? 'bg-green-500' : 'bg-red-500')} />}
         </div>
         <div className="flex-1"></div>
       </TopBar>
