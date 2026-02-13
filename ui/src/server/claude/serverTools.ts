@@ -7,6 +7,7 @@ import { getDatasetsRoot, getTrainingFolder, getAnthropicAuth } from '@/server/s
 import { createAnthropicClient, getClaudeCaptionModel } from '@/server/claude/client';
 import { analyzeDataset, getStoredAnalysis, deleteAnalyzedImages } from '@/server/datasetAnalysis';
 import { runPythonAnalysis } from '@/server/pythonAnalysis';
+import { recordUsage } from '@/server/claude/usageTracker';
 
 // Tool definitions sent to the Claude API
 export const serverToolDefinitions = [
@@ -434,6 +435,7 @@ export async function executeServerTool(name: string, input: Record<string, unkn
           },
         ],
       });
+      void recordUsage('view_image', model, response);
 
       return response.content
         .filter(b => b.type === 'text')
@@ -697,6 +699,7 @@ export async function executeViewImageRemote(
         },
       ],
     });
+    void recordUsage('view_image', model, response);
 
     return response.content
       .filter(b => b.type === 'text')

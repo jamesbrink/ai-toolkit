@@ -86,12 +86,26 @@ export const getAnthropicAuth = async (): Promise<AnthropicAuth> => {
     return { apiKey };
   }
 
-  // 2. Fallback to ANTHROPIC_API_KEY env var
+  // 2. Check for OAuth token in DB settings
+  const oauthKey = 'CLAUDE_CODE_OAUTH_TOKEN';
+  let dbOauthToken = myCache.get(oauthKey) as string;
+  if (!dbOauthToken) {
+    const row = await prisma.settings.findFirst({
+      where: { key: oauthKey },
+    });
+    dbOauthToken = row?.value && row.value !== '' ? row.value : '';
+    myCache.set(oauthKey, dbOauthToken);
+  }
+  if (dbOauthToken) {
+    return { oauthToken: dbOauthToken };
+  }
+
+  // 3. Fallback to ANTHROPIC_API_KEY env var
   if (process.env.ANTHROPIC_API_KEY) {
     return { apiKey: process.env.ANTHROPIC_API_KEY };
   }
 
-  // 3. Fallback to CLAUDE_CODE_OAUTH_TOKEN env var
+  // 4. Fallback to CLAUDE_CODE_OAUTH_TOKEN env var
   if (process.env.CLAUDE_CODE_OAUTH_TOKEN) {
     return { oauthToken: process.env.CLAUDE_CODE_OAUTH_TOKEN };
   }

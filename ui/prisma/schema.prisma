@@ -103,6 +103,21 @@ model Host {
   @@index([isOnline])
 }
 
+model ClaudeUsage {
+  id                       Int      @id @default(autoincrement())
+  routeType                String   // "chat" | "caption" | "caption_batch" | "view_image"
+  model                    String
+  inputTokens              Int      @default(0)
+  outputTokens             Int      @default(0)
+  cacheCreationInputTokens Int      @default(0)
+  cacheReadInputTokens     Int      @default(0)
+  createdAt                DateTime @default(now())
+
+  @@index([routeType])
+  @@index([model])
+  @@index([createdAt])
+}
+
 model RunPodPod {
   id                  String    @id @default(uuid())
   runpodId            String    @unique         // RunPod's pod ID

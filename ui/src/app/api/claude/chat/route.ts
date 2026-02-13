@@ -6,6 +6,7 @@ import { createAnthropicClient, getClaudeChatModel } from '@/server/claude/clien
 import { buildSystemPrompt } from '@/server/claude/systemPrompt';
 import { serverToolDefinitions, SERVER_TOOL_NAMES, executeViewImageRemote } from '@/server/claude/serverTools';
 import { executeToolMaybeRemote, fetchRemoteImageBytes } from '@/server/claude/remoteToolExecution';
+import { recordUsage } from '@/server/claude/usageTracker';
 
 type MessageParam = Anthropic.MessageParam;
 
@@ -83,6 +84,7 @@ export async function POST(req: NextRequest) {
             messages: loopMessages,
             ...(allTools.length > 0 ? { tools: allTools } : {}),
           });
+          void recordUsage('chat', chatModel, response);
 
           // Check if any content blocks are server-side tool uses
           const serverToolUses = response.content.filter(b => b.type === 'tool_use' && SERVER_TOOL_NAMES.has(b.name));

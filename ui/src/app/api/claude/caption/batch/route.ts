@@ -3,6 +3,7 @@ import { getAnthropicAuth } from '@/server/settings';
 import { createAnthropicClient, getClaudeCaptionModel } from '@/server/claude/client';
 import { captionPrompts, captionSystemPrompt, fallbackCaptionPrompt, isRefusal } from '@/server/claude/captionPrompts';
 import { fetchRemoteImageBytes } from '@/server/claude/remoteToolExecution';
+import { recordUsage } from '@/server/claude/usageTracker';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -109,6 +110,7 @@ export async function POST(req: NextRequest) {
               },
             ],
           });
+          void recordUsage('caption_batch', model, response);
 
           let caption = extractText(response);
 
@@ -128,6 +130,7 @@ export async function POST(req: NextRequest) {
                 },
               ],
             });
+            void recordUsage('caption_batch', model, retry);
             caption = extractText(retry);
           }
 

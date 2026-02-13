@@ -2,12 +2,34 @@
 
 import { useState } from 'react';
 import useSettings from '@/hooks/useSettings';
+import useClaudeUsage from '@/hooks/useClaudeUsage';
 import { TopBar, MainContent } from '@/components/layout';
 import { apiClient } from '@/utils/api';
 
+const ROUTE_LABELS: Record<string, string> = {
+  chat: 'Chat',
+  caption: 'Caption',
+  caption_batch: 'Batch Caption',
+  view_image: 'View Image',
+};
+
+function formatModel(model: string): string {
+  if (model.includes('haiku')) return 'Haiku 4.5';
+  if (model.includes('sonnet')) return 'Sonnet 4.5';
+  if (model.includes('opus')) return 'Opus 4.6';
+  return model;
+}
+
+const ENV_MASK = '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022';
+
 export default function Settings() {
-  const { settings, setSettings } = useSettings();
+  const { settings, setSettings, envFlags } = useSettings();
+  const { data: usage, isLoading: usageLoading } = useClaudeUsage(30);
   const [status, setStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
+  // Track which env-sourced fields the user has started editing (overriding)
+  const [envOverrides, setEnvOverrides] = useState<Record<string, boolean>>({});
+
+  const isEnvSourced = (key: string) => envFlags[key] && !settings[key as keyof typeof settings] && !envOverrides[key];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,6 +52,12 @@ export default function Settings() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setSettings(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSecretFocus = (key: string) => {
+    if (isEnvSourced(key)) {
+      setEnvOverrides(prev => ({ ...prev, [key]: true }));
+    }
   };
 
   return (
@@ -122,14 +150,42 @@ export default function Settings() {
                     </div>
                   </label>
                   <input
-                    type="password"
+                    type={isEnvSourced('ANTHROPIC_API_KEY') ? 'text' : 'password'}
                     id="ANTHROPIC_API_KEY"
                     name="ANTHROPIC_API_KEY"
-                    value={settings.ANTHROPIC_API_KEY}
+                    value={isEnvSourced('ANTHROPIC_API_KEY') ? ENV_MASK : settings.ANTHROPIC_API_KEY}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent"
+                    onFocus={() => handleSecretFocus('ANTHROPIC_API_KEY')}
+                    readOnly={isEnvSourced('ANTHROPIC_API_KEY')}
+                    className={`w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent ${isEnvSourced('ANTHROPIC_API_KEY') ? 'text-gray-400' : ''}`}
                     placeholder="Enter your Anthropic API key"
                   />
+                  {isEnvSourced('ANTHROPIC_API_KEY') && (
+                    <p className="text-xs text-gray-400 mt-1">Set via ANTHROPIC_API_KEY environment variable</p>
+                  )}
+                </div>
+
+                <div>
+                  <label htmlFor="CLAUDE_CODE_OAUTH_TOKEN" className="block text-sm font-medium mb-2">
+                    Claude Code OAuth Token
+                    <div className="text-gray-400 text-sm ml-1">
+                      Alternative to an API key. Only one is needed — if both are set, the API key takes priority.
+                    </div>
+                  </label>
+                  <input
+                    type={isEnvSourced('CLAUDE_CODE_OAUTH_TOKEN') ? 'text' : 'password'}
+                    id="CLAUDE_CODE_OAUTH_TOKEN"
+                    name="CLAUDE_CODE_OAUTH_TOKEN"
+                    value={isEnvSourced('CLAUDE_CODE_OAUTH_TOKEN') ? ENV_MASK : settings.CLAUDE_CODE_OAUTH_TOKEN}
+                    onChange={handleChange}
+                    onFocus={() => handleSecretFocus('CLAUDE_CODE_OAUTH_TOKEN')}
+                    readOnly={isEnvSourced('CLAUDE_CODE_OAUTH_TOKEN')}
+                    className={`w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent ${isEnvSourced('CLAUDE_CODE_OAUTH_TOKEN') ? 'text-gray-400' : ''}`}
+                    placeholder="Enter your Claude Code OAuth token"
+                  />
+                  {isEnvSourced('CLAUDE_CODE_OAUTH_TOKEN') && (
+                    <p className="text-xs text-gray-400 mt-1">Set via CLAUDE_CODE_OAUTH_TOKEN environment variable</p>
+                  )}
                 </div>
 
                 <div>
@@ -173,6 +229,102 @@ export default function Settings() {
                     <option value="claude-sonnet-4-5-20250929">Sonnet 4.5 (balanced)</option>
                     <option value="claude-opus-4-6">Opus 4.6 (most capable)</option>
                   </select>
+                </div>
+
+                {/* Claude Usage Section */}
+                <div className="pt-4 border-t border-gray-700">
+                  <h2 className="text-sm font-semibold text-gray-300 uppercase tracking-wide mb-4">Claude Usage</h2>
+                  {usageLoading ? (
+                    <p className="text-gray-400 text-sm">Loading usage data...</p>
+                  ) : usage ? (
+                    <div className="space-y-4">
+                      {/* All-time stats */}
+                      <div className="grid grid-cols-3 gap-3">
+                        <div className="bg-gray-800 rounded-lg p-3">
+                          <div className="text-gray-400 text-xs mb-1">API Calls</div>
+                          <div className="text-lg font-semibold">{usage.allTime.calls.toLocaleString()}</div>
+                        </div>
+                        <div className="bg-gray-800 rounded-lg p-3">
+                          <div className="text-gray-400 text-xs mb-1">Input Tokens</div>
+                          <div className="text-lg font-semibold">{usage.allTime.inputTokens.toLocaleString()}</div>
+                        </div>
+                        <div className="bg-gray-800 rounded-lg p-3">
+                          <div className="text-gray-400 text-xs mb-1">Output Tokens</div>
+                          <div className="text-lg font-semibold">{usage.allTime.outputTokens.toLocaleString()}</div>
+                        </div>
+                      </div>
+
+                      {/* By model (last 30 days) */}
+                      {usage.byModel.length > 0 && (
+                        <div>
+                          <h3 className="text-xs font-medium text-gray-400 mb-2">Last 30 days by model</h3>
+                          <div className="bg-gray-800 rounded-lg overflow-hidden">
+                            <table className="w-full text-sm">
+                              <thead>
+                                <tr className="text-gray-400 text-xs border-b border-gray-700">
+                                  <th className="text-left px-3 py-2">Model</th>
+                                  <th className="text-right px-3 py-2">Calls</th>
+                                  <th className="text-right px-3 py-2">Input</th>
+                                  <th className="text-right px-3 py-2">Output</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {usage.byModel.map(m => (
+                                  <tr key={m.model} className="border-b border-gray-700/50 last:border-0">
+                                    <td className="px-3 py-2">{formatModel(m.model)}</td>
+                                    <td className="text-right px-3 py-2 text-gray-400">{m.calls.toLocaleString()}</td>
+                                    <td className="text-right px-3 py-2 text-gray-400">
+                                      {m.inputTokens.toLocaleString()}
+                                    </td>
+                                    <td className="text-right px-3 py-2 text-gray-400">
+                                      {m.outputTokens.toLocaleString()}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* By route (last 30 days) */}
+                      {usage.byRoute.length > 0 && (
+                        <div>
+                          <h3 className="text-xs font-medium text-gray-400 mb-2">Last 30 days by route</h3>
+                          <div className="bg-gray-800 rounded-lg overflow-hidden">
+                            <table className="w-full text-sm">
+                              <thead>
+                                <tr className="text-gray-400 text-xs border-b border-gray-700">
+                                  <th className="text-left px-3 py-2">Route</th>
+                                  <th className="text-right px-3 py-2">Calls</th>
+                                  <th className="text-right px-3 py-2">Input</th>
+                                  <th className="text-right px-3 py-2">Output</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {usage.byRoute.map(r => (
+                                  <tr key={r.routeType} className="border-b border-gray-700/50 last:border-0">
+                                    <td className="px-3 py-2">{ROUTE_LABELS[r.routeType] || r.routeType}</td>
+                                    <td className="text-right px-3 py-2 text-gray-400">{r.calls.toLocaleString()}</td>
+                                    <td className="text-right px-3 py-2 text-gray-400">
+                                      {r.inputTokens.toLocaleString()}
+                                    </td>
+                                    <td className="text-right px-3 py-2 text-gray-400">
+                                      {r.outputTokens.toLocaleString()}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      )}
+
+                      {usage.allTime.calls === 0 && <p className="text-gray-400 text-sm">No usage recorded yet.</p>}
+                    </div>
+                  ) : (
+                    <p className="text-gray-400 text-sm">Could not load usage data.</p>
+                  )}
                 </div>
 
                 {/* Network Section */}

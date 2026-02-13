@@ -41,7 +41,16 @@ export async function GET() {
     if (!settingsObject.RUNPOD_SSH_PUBLIC_KEY) {
       settingsObject.RUNPOD_SSH_PUBLIC_KEY = await getDefaultSshPublicKey();
     }
-    return NextResponse.json(settingsObject);
+    // Tell the client which secrets are set via env var (without leaking the actual value)
+    const envFlags: Record<string, boolean> = {};
+    if (!settingsObject.ANTHROPIC_API_KEY && process.env.ANTHROPIC_API_KEY) {
+      envFlags.ANTHROPIC_API_KEY = true;
+    }
+    if (!settingsObject.CLAUDE_CODE_OAUTH_TOKEN && process.env.CLAUDE_CODE_OAUTH_TOKEN) {
+      envFlags.CLAUDE_CODE_OAUTH_TOKEN = true;
+    }
+
+    return NextResponse.json({ ...settingsObject, _envSet: envFlags });
   } catch {
     return NextResponse.json({ error: 'Failed to fetch settings' }, { status: 500 });
   }
@@ -55,6 +64,7 @@ export async function POST(request: Request) {
       TRAINING_FOLDER,
       DATASETS_FOLDER,
       ANTHROPIC_API_KEY,
+      CLAUDE_CODE_OAUTH_TOKEN,
       CLAUDE_CHAT_MODEL,
       CLAUDE_CAPTION_MODEL,
       MDNS_ENABLED,
@@ -76,6 +86,7 @@ export async function POST(request: Request) {
       upsert('TRAINING_FOLDER', TRAINING_FOLDER),
       upsert('DATASETS_FOLDER', DATASETS_FOLDER),
       upsert('ANTHROPIC_API_KEY', ANTHROPIC_API_KEY),
+      upsert('CLAUDE_CODE_OAUTH_TOKEN', CLAUDE_CODE_OAUTH_TOKEN),
       upsert('CLAUDE_CHAT_MODEL', CLAUDE_CHAT_MODEL),
       upsert('CLAUDE_CAPTION_MODEL', CLAUDE_CAPTION_MODEL),
       upsert('MDNS_ENABLED', MDNS_ENABLED),
