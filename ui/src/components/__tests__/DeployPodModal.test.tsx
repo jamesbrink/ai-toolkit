@@ -51,8 +51,16 @@ describe('sortGpus', () => {
 
   it('sorts by price within same stock status (community)', () => {
     const gpus = [
-      makeGpu({ id: 'expensive', communityPrice: 2.0, lowestPrice: { stockStatus: 'High', rentedCount: 0, totalCount: 10 } }),
-      makeGpu({ id: 'cheap', communityPrice: 0.5, lowestPrice: { stockStatus: 'High', rentedCount: 0, totalCount: 10 } }),
+      makeGpu({
+        id: 'expensive',
+        communityPrice: 2.0,
+        lowestPrice: { stockStatus: 'High', rentedCount: 0, totalCount: 10 },
+      }),
+      makeGpu({
+        id: 'cheap',
+        communityPrice: 0.5,
+        lowestPrice: { stockStatus: 'High', rentedCount: 0, totalCount: 10 },
+      }),
       makeGpu({ id: 'mid', communityPrice: 1.0, lowestPrice: { stockStatus: 'High', rentedCount: 0, totalCount: 10 } }),
     ];
 
@@ -62,8 +70,18 @@ describe('sortGpus', () => {
 
   it('sorts by secure price when cloudType is SECURE', () => {
     const gpus = [
-      makeGpu({ id: 'a', securePrice: 3.0, communityPrice: 0.1, lowestPrice: { stockStatus: 'High', rentedCount: 0, totalCount: 10 } }),
-      makeGpu({ id: 'b', securePrice: 1.0, communityPrice: 5.0, lowestPrice: { stockStatus: 'High', rentedCount: 0, totalCount: 10 } }),
+      makeGpu({
+        id: 'a',
+        securePrice: 3.0,
+        communityPrice: 0.1,
+        lowestPrice: { stockStatus: 'High', rentedCount: 0, totalCount: 10 },
+      }),
+      makeGpu({
+        id: 'b',
+        securePrice: 1.0,
+        communityPrice: 5.0,
+        lowestPrice: { stockStatus: 'High', rentedCount: 0, totalCount: 10 },
+      }),
     ];
 
     const sorted = sortGpus(gpus, 'SECURE');
@@ -72,8 +90,16 @@ describe('sortGpus', () => {
 
   it('handles null prices by treating them as Infinity', () => {
     const gpus = [
-      makeGpu({ id: 'no-price', communityPrice: null, lowestPrice: { stockStatus: 'High', rentedCount: 0, totalCount: 10 } }),
-      makeGpu({ id: 'has-price', communityPrice: 1.0, lowestPrice: { stockStatus: 'High', rentedCount: 0, totalCount: 10 } }),
+      makeGpu({
+        id: 'no-price',
+        communityPrice: null,
+        lowestPrice: { stockStatus: 'High', rentedCount: 0, totalCount: 10 },
+      }),
+      makeGpu({
+        id: 'has-price',
+        communityPrice: 1.0,
+        lowestPrice: { stockStatus: 'High', rentedCount: 0, totalCount: 10 },
+      }),
     ];
 
     const sorted = sortGpus(gpus, 'COMMUNITY');
@@ -81,10 +107,7 @@ describe('sortGpus', () => {
   });
 
   it('does not mutate the original array', () => {
-    const gpus = [
-      makeGpu({ id: 'b', communityPrice: 2.0 }),
-      makeGpu({ id: 'a', communityPrice: 1.0 }),
-    ];
+    const gpus = [makeGpu({ id: 'b', communityPrice: 2.0 }), makeGpu({ id: 'a', communityPrice: 1.0 })];
 
     sortGpus(gpus, 'COMMUNITY');
     expect(gpus[0].id).toBe('b');

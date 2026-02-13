@@ -114,9 +114,11 @@ export default function HostsPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {hosts.filter(h => h.source !== 'runpod').map(host => (
-                <HostCard key={host.id} host={host} onRefresh={refreshHosts} />
-              ))}
+              {hosts
+                .filter(h => h.source !== 'runpod')
+                .map(host => (
+                  <HostCard key={host.id} host={host} onRefresh={refreshHosts} />
+                ))}
             </div>
           )}
         </div>

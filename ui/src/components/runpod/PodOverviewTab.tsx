@@ -320,7 +320,9 @@ export default function PodOverviewTab({ pod, liveData }: PodOverviewTabProps) {
                 pod.currentStatus === 'running' ? 'bg-green-500' : 'bg-gray-500',
               )}
             />
-            <span className={classNames('text-sm', pod.currentStatus === 'running' ? 'text-green-400' : 'text-gray-400')}>
+            <span
+              className={classNames('text-sm', pod.currentStatus === 'running' ? 'text-green-400' : 'text-gray-400')}
+            >
               {pod.currentStatus === 'running' ? 'Connected' : 'Offline'}
             </span>
             <span className="text-gray-600">·</span>

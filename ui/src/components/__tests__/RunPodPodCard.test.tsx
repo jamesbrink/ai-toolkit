@@ -65,6 +65,44 @@ describe('formatCost', () => {
   });
 });
 
+describe('host connection indicator', () => {
+  function getHostIndicator(currentStatus: string, hostId: string | null) {
+    if (!hostId) return null;
+    return {
+      connected: currentStatus === 'running',
+      label: currentStatus === 'running' ? 'Host connected' : 'Host linked (offline)',
+    };
+  }
+
+  it('returns null when no hostId', () => {
+    expect(getHostIndicator('running', null)).toBeNull();
+  });
+
+  it('shows connected when running', () => {
+    const result = getHostIndicator('running', 'host-123');
+    expect(result?.connected).toBe(true);
+    expect(result?.label).toBe('Host connected');
+  });
+
+  it('shows offline when stopped', () => {
+    const result = getHostIndicator('stopped', 'host-123');
+    expect(result?.connected).toBe(false);
+    expect(result?.label).toBe('Host linked (offline)');
+  });
+
+  it('shows offline when deploying', () => {
+    const result = getHostIndicator('deploying', 'host-123');
+    expect(result?.connected).toBe(false);
+    expect(result?.label).toBe('Host linked (offline)');
+  });
+
+  it('shows offline when terminated', () => {
+    const result = getHostIndicator('terminated', 'host-123');
+    expect(result?.connected).toBe(false);
+    expect(result?.label).toBe('Host linked (offline)');
+  });
+});
+
 describe('statusConfig', () => {
   const statusConfig: Record<string, { color: string; label: string }> = {
     deploying: { color: 'bg-yellow-900 text-yellow-300', label: 'Deploying' },

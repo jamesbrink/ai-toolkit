@@ -81,6 +81,8 @@ RUN npm run build && \
     npm run update_db
 
 EXPOSE 8675
+EXPOSE 22
+EXPOSE 5353/udp
 
 WORKDIR /
 

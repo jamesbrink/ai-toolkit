@@ -534,9 +534,7 @@ export default function DeployPodModal({
                           </span>
                         )}
                       </span>
-                      {instanceType === 'SPOT' && (
-                        <span className="ml-2 text-xs text-green-400">Spot pricing</span>
-                      )}
+                      {instanceType === 'SPOT' && <span className="ml-2 text-xs text-green-400">Spot pricing</span>}
                     </p>
                   </div>
                 )}

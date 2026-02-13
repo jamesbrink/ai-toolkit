@@ -1,7 +1,26 @@
 import { NextResponse } from 'next/server';
+import { readFile } from 'fs/promises';
+import { homedir } from 'os';
+import { join } from 'path';
 import prisma from '@/server/prisma';
 import { defaultTrainFolder, defaultDatasetsFolder } from '@/paths';
 import { flushCache } from '@/server/settings';
+
+const SSH_KEY_CANDIDATES = ['id_ed25519.pub', 'id_rsa.pub', 'id_ecdsa.pub'];
+
+async function getDefaultSshPublicKey(): Promise<string> {
+  const sshDir = join(homedir(), '.ssh');
+  for (const filename of SSH_KEY_CANDIDATES) {
+    try {
+      const content = await readFile(join(sshDir, filename), 'utf-8');
+      const trimmed = content.trim();
+      if (trimmed) return trimmed;
+    } catch {
+      // File doesn't exist or isn't readable, try next
+    }
+  }
+  return '';
+}
 
 export async function GET() {
   try {
@@ -17,6 +36,10 @@ export async function GET() {
     // if DATASETS_FOLDER is not set, use default
     if (!settingsObject.DATASETS_FOLDER || settingsObject.DATASETS_FOLDER === '') {
       settingsObject.DATASETS_FOLDER = defaultDatasetsFolder;
+    }
+    // If SSH key is not set, fall back to user's local key (not persisted)
+    if (!settingsObject.RUNPOD_SSH_PUBLIC_KEY) {
+      settingsObject.RUNPOD_SSH_PUBLIC_KEY = await getDefaultSshPublicKey();
     }
     return NextResponse.json(settingsObject);
   } catch {
