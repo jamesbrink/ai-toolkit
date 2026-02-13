@@ -19,19 +19,21 @@ export default function FilesWidget({ jobID, hostId }: { jobID: string; hostId?:
   };
 
   return (
-    <div className="col-span-2 bg-gray-900 rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 border border-gray-800">
-      <div className="bg-gray-800 px-4 py-3 flex items-center justify-between">
+    <div className="col-span-2 bg-white dark:bg-zinc-900 rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 border border-zinc-200 dark:border-zinc-800">
+      <div className="bg-zinc-50 dark:bg-zinc-800 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <Brain className="w-5 h-5 text-purple-400" />
-          <h2 className="font-semibold text-gray-100">Checkpoints</h2>
-          <span className="px-2 py-0.5 bg-gray-700 rounded-full text-xs text-gray-300">{files.length}</span>
+          <h2 className="font-semibold text-zinc-900 dark:text-gray-100">Checkpoints</h2>
+          <span className="px-2 py-0.5 bg-zinc-200 dark:bg-gray-700 rounded-full text-xs text-zinc-600 dark:text-gray-300">
+            {files.length}
+          </span>
         </div>
       </div>
 
       <div className="p-2">
         {status === 'loading' && (
           <div className="flex items-center justify-center py-4">
-            <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />
+            <Loader2 className="w-5 h-5 text-zinc-400 dark:text-gray-400 animate-spin" />
           </div>
         )}
 
@@ -53,21 +55,21 @@ export default function FilesWidget({ jobID, hostId }: { jobID: string; hostId?:
                   target="_blank"
                   rel="noreferrer"
                   href={`${fileBaseUrl}${encodeURIComponent(file.path)}`}
-                  className="group flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-gray-800 transition-all duration-200"
+                  className="group flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all duration-200"
                 >
                   <div className="flex items-center space-x-2 min-w-0">
                     <Box className="w-4 h-4 text-purple-400 flex-shrink-0" />
                     <div className="flex flex-col min-w-0">
-                      <div className="flex text-sm text-gray-200">
+                      <div className="flex text-sm text-zinc-700 dark:text-gray-200">
                         <span className="overflow-hidden text-ellipsis direction-rtl whitespace-nowrap">
                           {nameWithoutExt}
                         </span>
                       </div>
-                      <span className="text-xs text-gray-400">.safetensors</span>
+                      <span className="text-xs text-zinc-500 dark:text-gray-400">.safetensors</span>
                     </div>
                   </div>
                   <div className="flex items-center space-x-3 flex-shrink-0">
-                    <span className="text-xs text-gray-400">{cleanSize(file.size)}</span>
+                    <span className="text-xs text-zinc-500 dark:text-gray-400">{cleanSize(file.size)}</span>
                     <div className="bg-purple-500 bg-opacity-0 group-hover:bg-opacity-10 rounded-full p-1 transition-all">
                       <Download className="w-3 h-3 text-purple-400" />
                     </div>
@@ -79,7 +81,7 @@ export default function FilesWidget({ jobID, hostId }: { jobID: string; hostId?:
         )}
 
         {['success', 'refreshing'].includes(status) && files.length === 0 && (
-          <div className="text-center py-4 text-gray-400 text-sm">No checkpoints available</div>
+          <div className="text-center py-4 text-zinc-500 dark:text-gray-400 text-sm">No checkpoints available</div>
         )}
       </div>
     </div>

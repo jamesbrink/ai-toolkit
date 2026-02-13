@@ -52,7 +52,7 @@ function MultiHostJobsTable({ onlyActive, hosts }: { onlyActive: boolean; hosts:
           ) : null}
           <span className="font-medium whitespace-nowrap">{row.name}</span>
           {row.source.type === 'remote' && (
-            <span className="px-1.5 py-0.5 bg-blue-900/50 rounded text-[10px] text-blue-300 flex-shrink-0">
+            <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 rounded text-[10px] flex-shrink-0">
               {row.source.hostName}
             </span>
           )}
@@ -67,10 +67,10 @@ function MultiHostJobsTable({ onlyActive, hosts }: { onlyActive: boolean; hosts:
         const totalSteps = jobConfig.config.process[0].train.steps;
         return (
           <div>
-            <div className="text-xs text-gray-400">
+            <div className="text-xs text-zinc-500 dark:text-gray-400">
               {row.step} / {totalSteps}
             </div>
-            <div className="bg-gray-700 rounded-full h-1.5">
+            <div className="bg-zinc-200 dark:bg-gray-700 rounded-full h-1.5">
               <div
                 className="bg-blue-500 h-1.5 rounded-full"
                 style={{ width: `${(row.step / totalSteps) * 100}%` }}
@@ -88,10 +88,10 @@ function MultiHostJobsTable({ onlyActive, hosts }: { onlyActive: boolean; hosts:
       title: 'Status',
       key: 'status',
       render: (row: UnifiedJob) => {
-        let statusClass = 'text-gray-400';
-        if (row.status === 'completed') statusClass = 'text-green-400';
-        if (row.status === 'failed') statusClass = 'text-red-400';
-        if (row.status === 'running') statusClass = 'text-blue-400';
+        let statusClass = 'text-zinc-500 dark:text-gray-400';
+        if (row.status === 'completed') statusClass = 'text-green-600 dark:text-green-400';
+        if (row.status === 'failed') statusClass = 'text-red-600 dark:text-red-400';
+        if (row.status === 'running') statusClass = 'text-blue-600 dark:text-blue-400';
         return <span className={statusClass}>{row.status}</span>;
       },
     },
@@ -218,38 +218,62 @@ function MultiHostJobsTable({ onlyActive, hosts }: { onlyActive: boolean; hosts:
               <div
                 className={clsx(
                   'text-md flex flex-col sm:flex-row px-4 py-1 rounded-t-lg',
-                  { 'bg-green-900': queueRunning },
-                  { 'bg-red-900': !queueRunning },
+                  queueRunning
+                    ? 'bg-emerald-50 dark:bg-green-900'
+                    : 'bg-red-50 dark:bg-red-900',
                 )}
               >
                 <div className="flex items-center space-x-2 flex-1 py-2">
-                  <h2 className="font-semibold text-gray-100">{group.name}</h2>
-                  <span className="px-2 py-0.5 bg-gray-700 rounded-full text-xs text-gray-300">
+                  <h2
+                    className={clsx(
+                      'font-semibold',
+                      queueRunning
+                        ? 'text-emerald-900 dark:text-gray-100'
+                        : 'text-red-900 dark:text-gray-100',
+                    )}
+                  >
+                    {group.name}
+                  </h2>
+                  <span
+                    className={clsx(
+                      'px-2 py-0.5 rounded-full text-xs',
+                      queueRunning
+                        ? 'bg-emerald-200 text-emerald-800 dark:bg-gray-700 dark:text-gray-300'
+                        : 'bg-red-200 text-red-800 dark:bg-gray-700 dark:text-gray-300',
+                    )}
+                  >
                     {gpuKey === 'mps' ? 'MPS' : `# ${gpuKey}`}
                   </span>
                   {group.source.type === 'remote' && (
-                    <span className="px-2 py-0.5 bg-blue-900/50 rounded-full text-xs text-blue-300">
+                    <span className="px-2 py-0.5 bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300 rounded-full text-xs">
                       {group.source.hostName}
                     </span>
                   )}
                 </div>
-                <div className="text-sm text-gray-300 italic flex items-center">
+                <div
+                  className={clsx(
+                    'text-sm italic flex items-center',
+                    queueRunning
+                      ? 'text-emerald-700 dark:text-gray-300'
+                      : 'text-red-700 dark:text-gray-300',
+                  )}
+                >
                   {queueRunning ? (
                     <>
-                      <span className="text-green-400 mr-2">Queue Running</span>
+                      <span className="text-emerald-600 dark:text-green-400 mr-2">Queue Running</span>
                       <button
                         onClick={handleStopQueue}
-                        className="ml-4 text-xs bg-red-900 hover:bg-red-800 px-2 py-1 rounded"
+                        className="ml-4 text-xs bg-red-600 hover:bg-red-700 dark:bg-red-900 dark:hover:bg-red-800 text-white px-2 py-1 rounded"
                       >
                         STOP
                       </button>
                     </>
                   ) : (
                     <>
-                      <span className="text-red-400 mr-2">Queue Stopped</span>
+                      <span className="text-red-600 dark:text-red-400 mr-2">Queue Stopped</span>
                       <button
                         onClick={handleStartQueue}
-                        className="ml-4 text-xs bg-green-700 hover:bg-green-600 px-2 py-1 rounded"
+                        className="ml-4 text-xs bg-emerald-600 hover:bg-emerald-700 dark:bg-green-700 dark:hover:bg-green-600 text-white px-2 py-1 rounded"
                       >
                         START
                       </button>
@@ -262,16 +286,20 @@ function MultiHostJobsTable({ onlyActive, hosts }: { onlyActive: boolean; hosts:
                 rows={group.jobs}
                 isLoading={isLoading}
                 onRefresh={refresh}
-                theadClassName={queueRunning ? 'bg-green-950' : 'bg-red-950'}
+                theadClassName={
+                  queueRunning
+                    ? 'bg-emerald-50 dark:bg-green-950'
+                    : 'bg-red-50 dark:bg-red-950'
+                }
               />
             </div>
           );
         })}
       {!onlyActive && Object.keys(jobsDict).includes('Idle') && jobsDict['Idle'].jobs.length > 0 && (
         <div className="mb-6 opacity-50">
-          <div className="text-md flex px-4 py-1 rounded-t-lg bg-slate-600">
+          <div className="text-md flex px-4 py-1 rounded-t-lg bg-zinc-200 dark:bg-slate-600">
             <div className="flex items-center space-x-2 flex-1 py-2">
-              <h2 className="font-semibold text-gray-100">Idle</h2>
+              <h2 className="font-semibold text-zinc-700 dark:text-gray-100">Idle</h2>
             </div>
           </div>
           <UniversalTable columns={columns} rows={jobsDict['Idle'].jobs} isLoading={isLoading} onRefresh={refresh} />
@@ -315,10 +343,10 @@ function LocalJobsTable({ onlyActive }: { onlyActive: boolean }) {
 
         return (
           <div>
-            <div className="text-xs text-gray-400">
+            <div className="text-xs text-zinc-500 dark:text-gray-400">
               {row.step} / {totalSteps}
             </div>
-            <div className="bg-gray-700 rounded-full h-1.5">
+            <div className="bg-zinc-200 dark:bg-gray-700 rounded-full h-1.5">
               <div
                 className="bg-blue-500 h-1.5 rounded-full"
                 style={{ width: `${(row.step / totalSteps) * 100}%` }}
@@ -336,10 +364,10 @@ function LocalJobsTable({ onlyActive }: { onlyActive: boolean }) {
       title: 'Status',
       key: 'status',
       render: row => {
-        let statusClass = 'text-gray-400';
-        if (row.status === 'completed') statusClass = 'text-green-400';
-        if (row.status === 'failed') statusClass = 'text-red-400';
-        if (row.status === 'running') statusClass = 'text-blue-400';
+        let statusClass = 'text-zinc-500 dark:text-gray-400';
+        if (row.status === 'completed') statusClass = 'text-green-600 dark:text-green-400';
+        if (row.status === 'failed') statusClass = 'text-red-600 dark:text-red-400';
+        if (row.status === 'running') statusClass = 'text-blue-600 dark:text-blue-400';
 
         return <span className={statusClass}>{row.status}</span>;
       },
@@ -411,39 +439,63 @@ function LocalJobsTable({ onlyActive }: { onlyActive: boolean }) {
               <div
                 className={clsx(
                   'text-md flex flex-col sm:flex-row px-4 py-1 rounded-t-lg',
-                  { 'bg-green-900': queue?.is_running },
-                  { 'bg-red-900': !queue?.is_running },
+                  queue?.is_running
+                    ? 'bg-emerald-50 dark:bg-green-900'
+                    : 'bg-red-50 dark:bg-red-900',
                 )}
               >
                 <div className="flex items-center space-x-2 flex-1 py-2">
-                  <h2 className="font-semibold text-gray-100">{jobsDict[gpuKey].name}</h2>
-                  <span className="px-2 py-0.5 bg-gray-700 rounded-full text-xs text-gray-300">
+                  <h2
+                    className={clsx(
+                      'font-semibold',
+                      queue?.is_running
+                        ? 'text-emerald-900 dark:text-gray-100'
+                        : 'text-red-900 dark:text-gray-100',
+                    )}
+                  >
+                    {jobsDict[gpuKey].name}
+                  </h2>
+                  <span
+                    className={clsx(
+                      'px-2 py-0.5 rounded-full text-xs',
+                      queue?.is_running
+                        ? 'bg-emerald-200 text-emerald-800 dark:bg-gray-700 dark:text-gray-300'
+                        : 'bg-red-200 text-red-800 dark:bg-gray-700 dark:text-gray-300',
+                    )}
+                  >
                     {queue?.gpu_ids === 'mps' ? 'MPS' : `# ${queue?.gpu_ids}`}
                   </span>
                 </div>
-                <div className="text-sm text-gray-300 italic flex items-center">
+                <div
+                  className={clsx(
+                    'text-sm italic flex items-center',
+                    queue?.is_running
+                      ? 'text-emerald-700 dark:text-gray-300'
+                      : 'text-red-700 dark:text-gray-300',
+                  )}
+                >
                   {queue?.is_running ? (
                     <>
-                      <span className="text-green-400 mr-2">Queue Running</span>
+                      <span className="text-emerald-600 dark:text-green-400 mr-2">Queue Running</span>
                       <button
                         onClick={async () => {
                           await stopQueue(queue.gpu_ids as string);
                           refresh();
                         }}
-                        className="ml-4 text-xs bg-red-900 hover:bg-red-800 px-2 py-1 rounded"
+                        className="ml-4 text-xs bg-red-600 hover:bg-red-700 dark:bg-red-900 dark:hover:bg-red-800 text-white px-2 py-1 rounded"
                       >
                         STOP
                       </button>
                     </>
                   ) : (
                     <>
-                      <span className="text-red-400 mr-2">Queue Stopped</span>
+                      <span className="text-red-600 dark:text-red-400 mr-2">Queue Stopped</span>
                       <button
                         onClick={async () => {
                           await startQueue(gpuKey);
                           refresh();
                         }}
-                        className="ml-4 text-xs bg-green-700 hover:bg-green-600 px-2 py-1 rounded"
+                        className="ml-4 text-xs bg-emerald-600 hover:bg-emerald-700 dark:bg-green-700 dark:hover:bg-green-600 text-white px-2 py-1 rounded"
                       >
                         START
                       </button>
@@ -456,16 +508,20 @@ function LocalJobsTable({ onlyActive }: { onlyActive: boolean }) {
                 rows={jobsDict[gpuKey].jobs}
                 isLoading={isLoading}
                 onRefresh={refresh}
-                theadClassName={queue?.is_running ? 'bg-green-950' : 'bg-red-950'}
+                theadClassName={
+                  queue?.is_running
+                    ? 'bg-emerald-50 dark:bg-green-950'
+                    : 'bg-red-50 dark:bg-red-950'
+                }
               />
             </div>
           );
         })}
       {!onlyActive && Object.keys(jobsDict).includes('Idle') && (
         <div className="mb-6 opacity-50">
-          <div className="text-md flex px-4 py-1 rounded-t-lg bg-slate-600">
+          <div className="text-md flex px-4 py-1 rounded-t-lg bg-zinc-200 dark:bg-slate-600">
             <div className="flex items-center space-x-2 flex-1 py-2">
-              <h2 className="font-semibold text-gray-100">Idle</h2>
+              <h2 className="font-semibold text-zinc-700 dark:text-gray-100">Idle</h2>
             </div>
           </div>
           <UniversalTable columns={columns} rows={jobsDict['Idle'].jobs} isLoading={isLoading} onRefresh={refresh} />

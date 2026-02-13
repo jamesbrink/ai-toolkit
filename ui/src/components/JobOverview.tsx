@@ -128,10 +128,10 @@ export default function JobOverview({ job, hostId }: JobOverviewProps) {
   return (
     <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
       {/* Job Information Panel */}
-      <div className="md:col-span-2 bg-gray-900 rounded-xl shadow-lg overflow-hidden border border-gray-800 flex flex-col">
-        <div className="bg-gray-800 px-4 py-3 flex items-center justify-between">
-          <h2 className="text-gray-100">
-            <Info className="w-5 h-5 mr-2 -mt-1 text-amber-400 inline-block" /> {job.info}
+      <div className="md:col-span-2 bg-white dark:bg-zinc-900 rounded-xl shadow-lg overflow-hidden border border-zinc-200 dark:border-zinc-800 flex flex-col">
+        <div className="bg-zinc-50 dark:bg-zinc-800 px-4 py-3 flex items-center justify-between">
+          <h2 className="text-zinc-900 dark:text-gray-100">
+            <Info className="w-5 h-5 mr-2 -mt-1 text-amber-500 dark:text-amber-400 inline-block" /> {job.info}
           </h2>
           <span className={`px-3 py-1 rounded-full text-sm ${getStatusColor(displayStatus)}`}>{displayStatus}</span>
         </div>
@@ -140,12 +140,12 @@ export default function JobOverview({ job, hostId }: JobOverviewProps) {
           {/* Progress Bar */}
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-400">Progress</span>
-              <span className="text-gray-200">
+              <span className="text-zinc-500 dark:text-gray-400">Progress</span>
+              <span className="text-zinc-700 dark:text-gray-200">
                 Step {job.step} of {totalSteps}
               </span>
             </div>
-            <div className="w-full bg-gray-800 rounded-full h-2">
+            <div className="w-full bg-zinc-200 dark:bg-gray-800 rounded-full h-2">
               <div className="h-2 rounded-full bg-blue-500 transition-all" style={{ width: `${progress}%` }} />
             </div>
           </div>
@@ -155,16 +155,16 @@ export default function JobOverview({ job, hostId }: JobOverviewProps) {
             <div className="flex items-center space-x-4">
               <HardDrive className="w-5 h-5 text-blue-400" />
               <div>
-                <p className="text-xs text-gray-400">Job Name</p>
-                <p className="text-sm font-medium text-gray-200">{job.name}</p>
+                <p className="text-xs text-zinc-500 dark:text-gray-400">Job Name</p>
+                <p className="text-sm font-medium text-zinc-700 dark:text-gray-200">{job.name}</p>
               </div>
             </div>
 
             <div className="flex items-center space-x-4">
               <Cpu className="w-5 h-5 text-purple-400" />
               <div>
-                <p className="text-xs text-gray-400">{isMpsJob ? 'Device' : 'Assigned GPUs'}</p>
-                <p className="text-sm font-medium text-gray-200">
+                <p className="text-xs text-zinc-500 dark:text-gray-400">{isMpsJob ? 'Device' : 'Assigned GPUs'}</p>
+                <p className="text-sm font-medium text-zinc-700 dark:text-gray-200">
                   {isMpsJob ? 'Apple Silicon (MPS)' : `GPUs: ${job.gpu_ids}`}
                 </p>
               </div>
@@ -173,18 +173,20 @@ export default function JobOverview({ job, hostId }: JobOverviewProps) {
             <div className="flex items-center space-x-4">
               <Gauge className="w-5 h-5 text-green-400" />
               <div>
-                <p className="text-xs text-gray-400">Speed</p>
-                <p className="text-sm font-medium text-gray-200">{job.speed_string == '' ? '?' : job.speed_string}</p>
+                <p className="text-xs text-zinc-500 dark:text-gray-400">Speed</p>
+                <p className="text-sm font-medium text-zinc-700 dark:text-gray-200">
+                  {job.speed_string == '' ? '?' : job.speed_string}
+                </p>
               </div>
             </div>
           </div>
 
           {/* Log - Now using flex-grow to fill remaining space */}
-          <div className="bg-gray-950 rounded-lg p-4 relative flex-grow min-h-60">
+          <div className="bg-zinc-100 dark:bg-gray-950 rounded-lg p-4 relative flex-grow min-h-60">
             {isConfigured && (
               <button
                 onClick={handleAnalyze}
-                className="absolute top-2 right-2 z-10 flex items-center gap-1.5 px-2.5 py-1 text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-gray-100 rounded-md transition-colors border border-gray-700"
+                className="absolute top-2 right-2 z-10 flex items-center gap-1.5 px-2.5 py-1 text-xs bg-white dark:bg-gray-800 hover:bg-zinc-50 dark:hover:bg-gray-700 text-zinc-600 dark:text-gray-300 hover:text-zinc-900 dark:hover:text-gray-100 rounded-md transition-colors border border-zinc-300 dark:border-gray-700"
                 title="Analyze logs with Claude"
               >
                 <Bot className="w-3.5 h-3.5" />
@@ -193,7 +195,7 @@ export default function JobOverview({ job, hostId }: JobOverviewProps) {
             )}
             <div
               ref={logRef}
-              className="text-xs text-gray-300 absolute inset-0 p-4 overflow-y-auto"
+              className="text-xs text-zinc-600 dark:text-gray-300 absolute inset-0 p-4 overflow-y-auto"
               onScroll={handleScroll}
             >
               {statusLog === 'loading' && 'Loading log...'}

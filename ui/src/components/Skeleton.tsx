@@ -27,7 +27,7 @@ export function Skeleton({ className, variant = 'rect', width, height }: Skeleto
 
 export function GPUWidgetSkeleton() {
   return (
-    <div className="bg-gray-900 rounded-xl border border-gray-800 p-4 space-y-3">
+    <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4 space-y-3">
       <div className="flex items-center gap-3">
         <Skeleton variant="circle" className="w-8 h-8" />
         <Skeleton variant="text" className="w-32" />
@@ -48,13 +48,13 @@ export function GPUWidgetSkeleton() {
 
 export function TableSkeleton({ rows = 5, cols = 4 }: { rows?: number; cols?: number }) {
   return (
-    <div className="w-full bg-gray-900 rounded-md shadow-md">
-      <div className="bg-gray-800 px-3 py-2 flex gap-4">
+    <div className="w-full bg-white dark:bg-zinc-900 rounded-md shadow-md">
+      <div className="bg-zinc-50 dark:bg-zinc-800 px-3 py-2 flex gap-4">
         {Array.from({ length: cols }).map((_, i) => (
           <Skeleton key={i} variant="text" className="flex-1 h-3" />
         ))}
       </div>
-      <div className="divide-y divide-gray-700">
+      <div className="divide-y divide-zinc-200 dark:divide-zinc-700">
         {Array.from({ length: rows }).map((_, i) => (
           <div key={i} className="px-3 py-3 flex gap-4">
             {Array.from({ length: cols }).map((_, j) => (
@@ -70,7 +70,7 @@ export function TableSkeleton({ rows = 5, cols = 4 }: { rows?: number; cols?: nu
 export function JobOverviewSkeleton() {
   return (
     <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-      <div className="md:col-span-2 bg-gray-900 rounded-xl border border-gray-800 p-4 space-y-4">
+      <div className="md:col-span-2 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4 space-y-4">
         <div className="flex items-center justify-between">
           <Skeleton variant="text" className="w-48 h-5" />
           <Skeleton variant="rect" className="w-20 h-6 rounded-full" />
