@@ -193,17 +193,17 @@ export default function DatasetAnalysisPanel({
                     >
                       {tab}
                       {tab === 'Duplicates' && result.summary.duplicateGroupCount > 0 && (
-                        <span className="ml-1.5 px-1.5 py-0.5 text-[10px] rounded-full bg-amber-900/50 text-amber-300">
+                        <span className="ml-1.5 px-1.5 py-0.5 text-[10px] rounded-full bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300">
                           {result.summary.duplicateGroupCount}
                         </span>
                       )}
                       {tab === 'Faces' && result.summary.facesCount > 0 && (
-                        <span className="ml-1.5 px-1.5 py-0.5 text-[10px] rounded-full bg-purple-900/50 text-purple-300">
+                        <span className="ml-1.5 px-1.5 py-0.5 text-[10px] rounded-full bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300">
                           {result.summary.facesCount}
                         </span>
                       )}
                       {tab === 'Quality Issues' && allIssueImages.length > 0 && (
-                        <span className="ml-1.5 px-1.5 py-0.5 text-[10px] rounded-full bg-red-900/50 text-red-300">
+                        <span className="ml-1.5 px-1.5 py-0.5 text-[10px] rounded-full bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300">
                           {allIssueImages.length}
                         </span>
                       )}
@@ -434,10 +434,10 @@ export default function DatasetAnalysisPanel({
                                       key={issue}
                                       className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
                                         issue === 'blurry'
-                                          ? 'bg-red-900/80 text-red-300'
+                                          ? 'bg-red-100 dark:bg-red-900/80 text-red-700 dark:text-red-300'
                                           : issue === 'dark' || issue === 'bright'
-                                            ? 'bg-yellow-900/80 text-yellow-300'
-                                            : 'bg-orange-900/80 text-orange-300'
+                                            ? 'bg-yellow-100 dark:bg-yellow-900/80 text-yellow-700 dark:text-yellow-300'
+                                            : 'bg-orange-100 dark:bg-orange-900/80 text-orange-700 dark:text-orange-300'
                                       }`}
                                     >
                                       {issue}
@@ -587,12 +587,15 @@ function SummaryCard({
   color?: 'green' | 'red' | 'yellow' | 'amber' | 'orange' | 'purple' | 'gray';
 }) {
   const colorMap = {
-    green: 'border-green-800 bg-green-950/20 text-green-400',
-    red: 'border-red-800 bg-red-950/20 text-red-400',
-    yellow: 'border-yellow-800 bg-yellow-950/20 text-yellow-400',
-    amber: 'border-amber-800 bg-amber-950/20 text-amber-400',
-    orange: 'border-orange-800 bg-orange-950/20 text-orange-400',
-    purple: 'border-purple-800 bg-purple-950/20 text-purple-400',
+    green: 'border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/20 text-green-700 dark:text-green-400',
+    red: 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-400',
+    yellow:
+      'border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-950/20 text-yellow-700 dark:text-yellow-400',
+    amber: 'border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400',
+    orange:
+      'border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-950/20 text-orange-700 dark:text-orange-400',
+    purple:
+      'border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/20 text-purple-700 dark:text-purple-400',
     gray: 'border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300',
   };
 

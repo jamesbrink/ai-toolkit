@@ -24,37 +24,45 @@ function formatTimeRemaining(balance: number | null | undefined, spendPerHr: num
 
 export default function RunPodAccountWidget({ account }: RunPodAccountWidgetProps) {
   return (
-    <div className="bg-gray-900 rounded-xl border border-gray-800 p-4 mb-4">
+    <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 mb-4 dark:border-zinc-800 dark:bg-zinc-900">
       {account.underBalance && (
-        <div className="flex items-center space-x-2 mb-3 px-3 py-2 bg-yellow-900/40 border border-yellow-800 rounded-lg">
-          <AlertTriangle className="w-4 h-4 text-yellow-400 shrink-0" />
-          <span className="text-sm text-yellow-300">Low balance warning — add credits to avoid pod interruption.</span>
+        <div className="flex items-center space-x-2 mb-3 px-3 py-2 bg-yellow-50 border border-yellow-300 rounded-lg dark:bg-yellow-900/40 dark:border-yellow-800">
+          <AlertTriangle className="w-4 h-4 text-yellow-600 dark:text-yellow-400 shrink-0" />
+          <span className="text-sm text-yellow-700 dark:text-yellow-300">
+            Low balance warning — add credits to avoid pod interruption.
+          </span>
         </div>
       )}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center space-x-2">
-          <DollarSign className="w-4 h-4 text-green-400" />
+          <DollarSign className="w-4 h-4 text-green-600 dark:text-green-400" />
           <div>
-            <p className="text-sm text-gray-400">Balance</p>
-            <p className="text-lg font-semibold text-gray-100">{formatDollars(account.clientBalance)}</p>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">Balance</p>
+            <p className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+              {formatDollars(account.clientBalance)}
+            </p>
           </div>
         </div>
         <div className="flex items-center space-x-2">
-          <TrendingDown className="w-4 h-4 text-gray-400" />
+          <TrendingDown className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
           <div>
-            <p className="text-sm text-gray-400">Burn Rate</p>
-            <p className="text-lg font-semibold text-gray-100">{formatDollars(account.currentSpendPerHr)}/hr</p>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">Burn Rate</p>
+            <p className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+              {formatDollars(account.currentSpendPerHr)}/hr
+            </p>
           </div>
         </div>
         <div>
-          <p className="text-sm text-gray-400">Time Remaining</p>
-          <p className="text-sm font-medium text-gray-300">
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">Time Remaining</p>
+          <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
             {formatTimeRemaining(account.clientBalance, account.currentSpendPerHr)}
           </p>
         </div>
         <div>
-          <p className="text-sm text-gray-400">Lifetime Spend</p>
-          <p className="text-sm font-medium text-gray-300">{formatDollars(account.clientLifetimeSpend)}</p>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">Lifetime Spend</p>
+          <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            {formatDollars(account.clientLifetimeSpend)}
+          </p>
         </div>
       </div>
     </div>

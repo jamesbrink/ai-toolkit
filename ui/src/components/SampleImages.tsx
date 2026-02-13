@@ -112,7 +112,7 @@ export default function SampleImages({ job, hostId }: SampleImagesProps) {
       showIt = true;
       bgColor = 'bg-gray-50 dark:bg-gray-800/50';
       textColor = 'text-gray-900 dark:text-gray-100';
-      iconColor = 'text-gray-400';
+      iconColor = 'text-gray-500 dark:text-gray-400';
     }
     if (status == 'error') {
       icon = <LuBan className="w-8 h-8" />;
@@ -130,14 +130,14 @@ export default function SampleImages({ job, hostId }: SampleImagesProps) {
       showIt = true;
       bgColor = 'bg-gray-50 dark:bg-gray-800/50';
       textColor = 'text-gray-900 dark:text-gray-100';
-      iconColor = 'text-gray-400';
+      iconColor = 'text-gray-500 dark:text-gray-400';
     }
 
     if (!showIt) return null;
 
     return (
       <div
-        className={`mt-10 flex flex-col items-center justify-center py-16 px-8 rounded-xl border-2 border-gray-700 border-dashed ${bgColor} ${textColor} mx-auto max-w-md text-center`}
+        className={`mt-10 flex flex-col items-center justify-center py-16 px-8 rounded-xl border-2 border-zinc-300 dark:border-gray-700 border-dashed ${bgColor} ${textColor} mx-auto max-w-md text-center`}
       >
         <div className={`${iconColor} mb-4`}>{icon}</div>
         <h3 className="text-lg font-semibold mb-2">{text}</h3>
@@ -237,19 +237,19 @@ export default function SampleImages({ job, hostId }: SampleImagesProps) {
       />
       <button
         type="button"
-        className="fixed top-20 mt-4 right-6 w-10 h-10 rounded-full bg-gray-900 shadow-lg flex items-center justify-center text-white opacity-80 hover:opacity-100 cursor-pointer"
+        className="fixed top-20 mt-4 right-6 w-10 h-10 rounded-full bg-white dark:bg-gray-900 shadow-lg flex items-center justify-center text-zinc-700 dark:text-white opacity-80 hover:opacity-100 cursor-pointer border border-zinc-200 dark:border-transparent"
         onClick={scrollToTop}
         aria-label="Scroll to top"
       >
-        <FaCaretUp className="text-gray-400" />
+        <FaCaretUp className="text-zinc-500 dark:text-gray-400" />
       </button>
       <button
         type="button"
-        className="fixed bottom-5 right-6 w-10 h-10 rounded-full bg-gray-900 shadow-lg flex items-center justify-center text-white opacity-80 hover:opacity-100 cursor-pointer"
+        className="fixed bottom-5 right-6 w-10 h-10 rounded-full bg-white dark:bg-gray-900 shadow-lg flex items-center justify-center text-zinc-700 dark:text-white opacity-80 hover:opacity-100 cursor-pointer border border-zinc-200 dark:border-transparent"
         onClick={scrollToBottom}
         aria-label="Scroll to bottom"
       >
-        <FaCaretDown className="text-gray-400" />
+        <FaCaretDown className="text-zinc-500 dark:text-gray-400" />
       </button>
     </div>
   );

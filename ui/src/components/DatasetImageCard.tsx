@@ -202,15 +202,15 @@ const DatasetImageCard: React.FC<DatasetImageCardProps> = ({
             </>
           )}
           {!isVisible && (
-            <div className="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 rounded-t-lg">
-              <span className="text-white text-lg"></span>
+            <div className="absolute inset-0 flex items-center justify-center bg-zinc-200/75 dark:bg-gray-800/75 rounded-t-lg">
+              <span className="text-zinc-900 dark:text-white text-lg"></span>
             </div>
           )}
           {children && <div className="absolute inset-0 flex items-center justify-center">{children}</div>}
           <div className="absolute top-1 right-1 flex space-x-2 z-10">
             {showAiCaption && isItImage && !isRemote && (
               <button
-                className="bg-gray-800 rounded-full p-2 text-purple-400 hover:text-purple-300 transition-colors"
+                className="bg-white/80 dark:bg-gray-800 rounded-full p-2 text-purple-600 dark:text-purple-400 hover:text-purple-500 dark:hover:text-purple-300 transition-colors shadow-sm"
                 onClick={generateAiCaption}
                 disabled={isGeneratingAiCaption}
                 title="Generate caption with Claude"
@@ -225,7 +225,7 @@ const DatasetImageCard: React.FC<DatasetImageCardProps> = ({
             )}
             {!isRemote && onDelete && (
               <button
-                className="bg-gray-800 rounded-full p-2"
+                className="bg-white/80 dark:bg-gray-800 rounded-full p-2 text-zinc-700 dark:text-zinc-200 shadow-sm"
                 aria-label={`Delete ${isItAVideo ? 'video' : 'image'}`}
                 onClick={() => {
                   openConfirm({
@@ -252,16 +252,19 @@ const DatasetImageCard: React.FC<DatasetImageCardProps> = ({
           </div>
         </div>
         {inViewport && isVisible && !isItAudio && (
-          <div className="text-xs text-gray-100 bg-gray-950 mt-1 absolute bottom-0 left-0 p-1 opacity-25 hover:opacity-90 transition-opacity duration-300 w-full">
+          <div className="text-xs text-white bg-black/70 dark:bg-gray-950/80 mt-1 absolute bottom-0 left-0 p-1 opacity-60 hover:opacity-100 transition-opacity duration-300 w-full">
             {imageUrl}
           </div>
         )}
       </div>
       <div
-        className={clsx('w-full p-2 bg-gray-800 text-white text-sm rounded-b-lg h-[75px]', {
-          'border-blue-500 border-2': !isCaptionCurrent,
-          'border-transparent border-2': isCaptionCurrent,
-        })}
+        className={clsx(
+          'w-full p-2 bg-zinc-100 dark:bg-gray-800 text-zinc-900 dark:text-white text-sm rounded-b-lg h-[75px]',
+          {
+            'border-blue-500 border-2': !isCaptionCurrent,
+            'border-zinc-200 dark:border-transparent border-2': isCaptionCurrent,
+          },
+        )}
       >
         {inViewport && isVisible && isCaptionLoaded && !isRemote && (
           <form
@@ -281,17 +284,19 @@ const DatasetImageCard: React.FC<DatasetImageCardProps> = ({
           </form>
         )}
         {inViewport && isVisible && isCaptionLoaded && isRemote && (
-          <div className="w-full text-gray-300 text-xs overflow-y-auto h-full">
-            {caption || <span className="text-gray-500 italic">No caption</span>}
+          <div className="w-full text-zinc-600 dark:text-gray-300 text-xs overflow-y-auto h-full">
+            {caption || <span className="text-zinc-500 dark:text-gray-400 italic">No caption</span>}
           </div>
         )}
         {(!inViewport || !isVisible) && isCaptionLoaded && (
-          <div className="w-full h-full flex items-center justify-center text-gray-400">
+          <div className="w-full h-full flex items-center justify-center text-zinc-400 dark:text-gray-400">
             {isVisible ? 'Scroll into view to edit caption' : 'Show content to edit caption'}
           </div>
         )}
         {!isCaptionLoaded && (
-          <div className="w-full h-full flex items-center justify-center text-gray-400">Loading caption...</div>
+          <div className="w-full h-full flex items-center justify-center text-zinc-400 dark:text-gray-400">
+            Loading caption...
+          </div>
         )}
       </div>
     </div>
