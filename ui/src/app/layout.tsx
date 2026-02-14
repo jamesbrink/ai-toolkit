@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
 import { ThemeProvider } from 'next-themes';
 import './globals.css';
 import Sidebar from '@/components/Sidebar';
@@ -10,8 +9,6 @@ import AuthWrapper from '@/components/AuthWrapper';
 import DocModal from '@/components/DocModal';
 import { ClaudeChatProvider } from '@/components/claude/ClaudeChatContext';
 import ChatPanel from '@/components/claude/ChatPanel';
-
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
 export const dynamic = 'force-dynamic';
 
@@ -25,7 +22,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const authRequired = process.env.AI_TOOLKIT_AUTH ? true : false;
 
   return (
-    <html lang="en" className={inter.variable} suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <head>
         <meta name="apple-mobile-web-app-title" content="Kiln" />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
