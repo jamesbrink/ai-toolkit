@@ -108,7 +108,9 @@ export default function SampleControlImage({
         'group relative flex items-center justify-center rounded-xl cursor-pointer ring-1 ring-inset',
         'transition-all duration-200 select-none overflow-hidden text-center',
         'h-20 w-20',
-        backgroundUrl ? 'bg-zinc-100 dark:bg-zinc-800 ring-zinc-300 dark:ring-zinc-700' : 'bg-linear-to-b from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900 ring-zinc-300 dark:ring-zinc-700',
+        backgroundUrl
+          ? 'bg-zinc-100 dark:bg-zinc-800 ring-zinc-300 dark:ring-zinc-700'
+          : 'bg-linear-to-b from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900 ring-zinc-300 dark:ring-zinc-700',
         isDragActive ? 'outline outline-2 outline-blue-500' : 'hover:ring-zinc-400 dark:hover:ring-zinc-600',
         className,
       )}

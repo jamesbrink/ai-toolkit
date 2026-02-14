@@ -387,7 +387,9 @@ export default function JobLossGraph({ job, hostId }: Props) {
           <div className="bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-3 md:col-span-2">
             <div className="flex items-center justify-between mb-1">
               <label className="block text-xs text-zinc-600 dark:text-zinc-400">Window (last N points)</label>
-              <span className="text-xs text-zinc-700 dark:text-zinc-300">{windowSize === 0 ? 'all' : windowSize.toLocaleString()}</span>
+              <span className="text-xs text-zinc-700 dark:text-zinc-300">
+                {windowSize === 0 ? 'all' : windowSize.toLocaleString()}
+              </span>
             </div>
             <input
               type="range"

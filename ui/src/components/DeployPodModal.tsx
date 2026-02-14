@@ -243,7 +243,9 @@ export default function DeployPodModal({
 
                 {/* Instance Type */}
                 <div>
-                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Instance Type</label>
+                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                    Instance Type
+                  </label>
                   <div className="flex space-x-4">
                     <label className="flex items-center space-x-2 cursor-pointer">
                       <input
@@ -329,7 +331,10 @@ export default function DeployPodModal({
                 {/* GPU Count */}
                 {selectedGpu && maxGpuCount > 1 && (
                   <div>
-                    <label htmlFor="gpu-count" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                    <label
+                      htmlFor="gpu-count"
+                      className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1"
+                    >
                       GPU Count
                     </label>
                     <select
@@ -350,7 +355,9 @@ export default function DeployPodModal({
                 {/* Datacenter */}
                 {selectedGpu && selectedGpu.nodeGroupDatacenters.length > 0 && (
                   <div>
-                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Datacenter</label>
+                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                      Datacenter
+                    </label>
                     <Listbox value={dataCenterId} onChange={setDataCenterId}>
                       <ListboxButton className="w-full px-3 py-2 bg-white dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 rounded-lg text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-left flex items-center justify-between">
                         <span>
@@ -402,7 +409,10 @@ export default function DeployPodModal({
                 {/* Spot Bid Price */}
                 {instanceType === 'SPOT' && selectedGpu && (
                   <div>
-                    <label htmlFor="bid-price" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                    <label
+                      htmlFor="bid-price"
+                      className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1"
+                    >
                       Max Bid Price ($/hr per GPU)
                     </label>
                     <input
@@ -427,7 +437,10 @@ export default function DeployPodModal({
                 {/* Volume / Disk */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="volume-size" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                    <label
+                      htmlFor="volume-size"
+                      className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1"
+                    >
                       Volume (GB)
                     </label>
                     <input
@@ -440,7 +453,10 @@ export default function DeployPodModal({
                     />
                   </div>
                   <div>
-                    <label htmlFor="disk-size" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                    <label
+                      htmlFor="disk-size"
+                      className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1"
+                    >
                       Container Disk (GB)
                     </label>
                     <input
@@ -467,7 +483,10 @@ export default function DeployPodModal({
                     <div className="mt-3 space-y-4 border-t border-zinc-200 dark:border-zinc-700 pt-3">
                       {/* SSH Public Key */}
                       <div>
-                        <label htmlFor="ssh-key" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                        <label
+                          htmlFor="ssh-key"
+                          className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1"
+                        >
                           SSH Public Key
                         </label>
                         <textarea
@@ -483,7 +502,9 @@ export default function DeployPodModal({
                       {/* Environment Variables */}
                       <div>
                         <div className="flex items-center justify-between mb-1">
-                          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">Environment Variables</label>
+                          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                            Environment Variables
+                          </label>
                           <button
                             type="button"
                             onClick={handleAddEnvVar}

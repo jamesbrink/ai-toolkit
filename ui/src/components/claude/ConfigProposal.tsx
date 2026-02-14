@@ -67,7 +67,9 @@ export default function ConfigProposal({ toolUseId, changes }: ConfigProposalPro
                 <button
                   onClick={() => handleDecision(i, 'accepted')}
                   className={`p-1 rounded transition-colors ${
-                    decisions[i] === 'accepted' ? 'bg-green-700 text-white' : 'text-zinc-500 dark:text-zinc-400 hover:text-green-400'
+                    decisions[i] === 'accepted'
+                      ? 'bg-green-700 text-white'
+                      : 'text-zinc-500 dark:text-zinc-400 hover:text-green-400'
                   }`}
                   title="Accept"
                 >
@@ -76,7 +78,9 @@ export default function ConfigProposal({ toolUseId, changes }: ConfigProposalPro
                 <button
                   onClick={() => handleDecision(i, 'rejected')}
                   className={`p-1 rounded transition-colors ${
-                    decisions[i] === 'rejected' ? 'bg-red-700 text-white' : 'text-zinc-500 dark:text-zinc-400 hover:text-red-400'
+                    decisions[i] === 'rejected'
+                      ? 'bg-red-700 text-white'
+                      : 'text-zinc-500 dark:text-zinc-400 hover:text-red-400'
                   }`}
                   title="Reject"
                 >

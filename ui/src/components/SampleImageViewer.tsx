@@ -273,7 +273,9 @@ export default function SampleImageViewer({
                   <div className="absolute inset-0 grid place-items-center overflow-auto mr-4">
                     <div className="w-full">
                       <span className="text-zinc-600 dark:text-zinc-300 mr-1 font-medium">Prompt:</span>
-                      <span className="text-zinc-900 dark:text-zinc-100 whitespace-pre-wrap break-words">{sampleItem.prompt}</span>
+                      <span className="text-zinc-900 dark:text-zinc-100 whitespace-pre-wrap break-words">
+                        {sampleItem.prompt}
+                      </span>
                     </div>
                   </div>
                 )}
@@ -294,10 +296,12 @@ export default function SampleImageViewer({
 
               <div className="text-xs text-zinc-900 dark:text-zinc-100">
                 <div>
-                  <span className="text-zinc-600 dark:text-zinc-300 font-medium">Step:</span> {imgInfo.step.toLocaleString()}
+                  <span className="text-zinc-600 dark:text-zinc-300 font-medium">Step:</span>{' '}
+                  {imgInfo.step.toLocaleString()}
                 </div>
                 <div>
-                  <span className="text-zinc-600 dark:text-zinc-300 font-medium">Sample #:</span> {imgInfo.promptIdx + 1}
+                  <span className="text-zinc-600 dark:text-zinc-300 font-medium">Sample #:</span>{' '}
+                  {imgInfo.promptIdx + 1}
                 </div>
                 <div>
                   <span className="text-zinc-600 dark:text-zinc-300 font-medium">Seed:</span> {seed}

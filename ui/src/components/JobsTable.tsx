@@ -280,7 +280,11 @@ function MultiHostJobsTable({ onlyActive, hosts }: { onlyActive: boolean; hosts:
                 rows={group.jobs}
                 isLoading={isLoading}
                 onRefresh={refresh}
-                theadClassName={queueRunning ? 'text-zinc-600 dark:text-zinc-400 bg-emerald-50 dark:bg-green-950' : 'text-zinc-600 dark:text-zinc-400 bg-red-50 dark:bg-red-950'}
+                theadClassName={
+                  queueRunning
+                    ? 'text-zinc-600 dark:text-zinc-400 bg-emerald-50 dark:bg-green-950'
+                    : 'text-zinc-600 dark:text-zinc-400 bg-red-50 dark:bg-red-950'
+                }
               />
             </div>
           );

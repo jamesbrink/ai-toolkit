@@ -684,7 +684,10 @@ export default function AudioPlayer({
             {effectiveTitle}
           </div>
           {effectiveSubtitle ? (
-            <div className="mt-1 truncate text-zinc-600 dark:text-zinc-400" style={{ fontSize: subSize, lineHeight: 1.15 }}>
+            <div
+              className="mt-1 truncate text-zinc-600 dark:text-zinc-400"
+              style={{ fontSize: subSize, lineHeight: 1.15 }}
+            >
               {effectiveSubtitle}
             </div>
           ) : null}
@@ -747,7 +750,9 @@ export default function AudioPlayer({
                 )}
 
                 {isBuffering ? (
-                  <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 text-xs text-zinc-700 dark:text-zinc-300">Buffering…</div>
+                  <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 text-xs text-zinc-700 dark:text-zinc-300">
+                    Buffering…
+                  </div>
                 ) : null}
               </button>
             </div>

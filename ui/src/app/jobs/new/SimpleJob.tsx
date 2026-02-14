@@ -1354,8 +1354,12 @@ export default function SimpleJob({
           </Card>
         </div>
 
-        {status === 'success' && <p className="text-green-700 dark:text-green-400 text-center">Training saved successfully!</p>}
-        {status === 'error' && <p className="text-red-700 dark:text-red-400 text-center">Error saving training. Please try again.</p>}
+        {status === 'success' && (
+          <p className="text-green-700 dark:text-green-400 text-center">Training saved successfully!</p>
+        )}
+        {status === 'error' && (
+          <p className="text-red-700 dark:text-red-400 text-center">Error saving training. Please try again.</p>
+        )}
       </form>
       <AddSingleImageModal />
     </>
