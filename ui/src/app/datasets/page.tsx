@@ -14,6 +14,7 @@ import { Text } from '@/components/catalyst/text';
 import { FaRegTrashAlt, FaPen, FaCopy } from 'react-icons/fa';
 import { Download, Upload } from 'lucide-react';
 import DatasetPushModal from '@/components/DatasetPushModal';
+import DatasetPullModal from '@/components/DatasetPullModal';
 import { openConfirm } from '@/components/ConfirmModal';
 import { TopBar, MainContent } from '@/components/layout';
 import UniversalTable, { TableColumn } from '@/components/UniversalTable';
@@ -62,6 +63,10 @@ export default function Datasets() {
   const [isNewDatasetModalOpen, setIsNewDatasetModalOpen] = useState(false);
   const [exportingDataset, setExportingDataset] = useState<string | null>(null);
   const [pushDataset, setPushDataset] = useState<string | null>(null);
+  const [pullDataset, setPullDataset] = useState<{ name: string; hostId: string; hostName: string } | null>(null);
+  const [selectedDatasets, setSelectedDatasets] = useState<Set<string>>(new Set());
+
+  const datasetKey = (row: SourcedDatasetInfo) => `${row.source.type}:${row.source.hostId ?? 'local'}:${row.name}`;
 
   const columns: TableColumn<SourcedDatasetInfo>[] = [
     {
@@ -160,6 +165,19 @@ export default function Datasets() {
         if (isRemote) {
           return (
             <div className="flex items-center justify-end gap-1">
+              <button
+                className="text-zinc-500 dark:text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 p-2 rounded-full transition-colors"
+                onClick={() =>
+                  setPullDataset({
+                    name: row.name,
+                    hostId: row.source.hostId!,
+                    hostName: row.source.hostName || 'Remote',
+                  })
+                }
+                title="Clone Locally"
+              >
+                <Download className="w-4 h-4" />
+              </button>
               <Link
                 href={`/datasets/${row.name}?hostId=${row.source.hostId}`}
                 className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 p-2 rounded-full transition-colors text-xs"
@@ -341,6 +359,41 @@ export default function Datasets() {
     });
   };
 
+  const getSelectedLocalDatasets = () => {
+    return datasets.filter(d => d.source.type === 'local' && selectedDatasets.has(datasetKey(d)));
+  };
+
+  const handleBulkDelete = () => {
+    const localSelected = getSelectedLocalDatasets();
+    if (localSelected.length === 0) {
+      alert('Only local datasets can be deleted.');
+      return;
+    }
+    openConfirm({
+      title: 'Delete Selected Datasets',
+      message: `Are you sure you want to delete ${localSelected.length} dataset(s)? This cannot be undone.`,
+      type: 'warning',
+      confirmText: 'Delete All',
+      onConfirm: async () => {
+        await Promise.allSettled(localSelected.map(d => apiClient.post('/api/datasets/delete', { name: d.name })));
+        setSelectedDatasets(new Set());
+        refreshDatasets();
+      },
+    });
+  };
+
+  const handleBulkExport = async () => {
+    const localSelected = getSelectedLocalDatasets();
+    if (localSelected.length === 0) {
+      alert('Only local datasets can be exported.');
+      return;
+    }
+    for (const dataset of localSelected) {
+      await handleExportDataset(dataset.name);
+    }
+    setSelectedDatasets(new Set());
+  };
+
   const onlineHosts = hosts.filter(h => h.isOnline);
 
   return (
@@ -372,6 +425,26 @@ export default function Datasets() {
           defaultSortKey="name"
           defaultSortDir="asc"
           onRefresh={refreshDatasets}
+          selectable
+          selectedKeys={selectedDatasets}
+          onSelectionChange={setSelectedDatasets}
+          rowKey={datasetKey}
+          bulkActions={
+            <>
+              <button
+                onClick={handleBulkDelete}
+                className="text-xs px-3 py-1 bg-red-600 hover:bg-red-500 text-white rounded"
+              >
+                Delete Selected
+              </button>
+              <button
+                onClick={handleBulkExport}
+                className="text-xs px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded"
+              >
+                Export Selected
+              </button>
+            </>
+          }
         />
       </MainContent>
 
@@ -380,6 +453,17 @@ export default function Datasets() {
         onClose={() => setPushDataset(null)}
         datasetName={pushDataset || ''}
         hosts={onlineHosts}
+      />
+
+      <DatasetPullModal
+        isOpen={!!pullDataset}
+        onClose={() => {
+          setPullDataset(null);
+          refreshDatasets();
+        }}
+        datasetName={pullDataset?.name || ''}
+        hostId={pullDataset?.hostId || ''}
+        hostName={pullDataset?.hostName || ''}
       />
 
       <Modal

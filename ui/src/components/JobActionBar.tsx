@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Eye, Trash2, Pen, Play, Pause, Cog, X } from 'lucide-react';
+import { Trash2, Pen, Play, Pause, Cog, X } from 'lucide-react';
 import { Button } from '@/components/catalyst/button';
 import { openConfirm } from '@/components/ConfirmModal';
 import { Job } from '@/server/prismaTypes';
@@ -31,7 +31,7 @@ export default function JobActionBar({
   onRefresh,
   afterDelete,
   className,
-  hideView,
+  hideView: _hideView,
   autoStartQueue = false,
 }: JobActionBarProps) {
   const { canStart, canStop, canEdit, canRemoveFromQueue } = getAvaliableJobActions(job);
@@ -129,16 +129,6 @@ export default function JobActionBar({
           className="ml-1"
         >
           <Pause className="w-5 h-5" />
-        </Button>
-      )}
-      {!hideView && !isRemote && (
-        <Button plain href={`/jobs/${job.id}`} className="ml-1">
-          <Eye className="w-5 h-5" />
-        </Button>
-      )}
-      {!hideView && isRemote && source?.hostId && (
-        <Button plain href={`/jobs/${job.id}?hostId=${source.hostId}`} className="ml-1">
-          <Eye className="w-5 h-5" />
         </Button>
       )}
       {canEdit && !isRemote && (

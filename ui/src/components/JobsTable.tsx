@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import useJobsList from '@/hooks/useJobsList';
 import useAllJobs from '@/hooks/useAllJobs';
 import useAllQueues from '@/hooks/useAllQueues';
@@ -11,7 +11,9 @@ import { Job, Queue } from '@/server/prismaTypes';
 import useQueueList from '@/hooks/useQueueList';
 import clsx from 'clsx';
 import { startQueue, stopQueue } from '@/utils/queue';
-import { startQueueOnHost, stopQueueOnHost } from '@/utils/remoteActions';
+import { startQueueOnHost, stopQueueOnHost, startJobOnHost, deleteJobOnHost } from '@/utils/remoteActions';
+import { startJob, deleteJob } from '@/utils/jobs';
+import { openConfirm } from '@/components/ConfirmModal';
 import { CgSpinner } from 'react-icons/cg';
 import useGPUInfo from '@/hooks/useGPUInfo';
 import { HostInfo } from '@/hooks/useHostList';
@@ -41,27 +43,73 @@ function MultiHostJobsTable({ onlyActive, hosts }: { onlyActive: boolean; hosts:
     refreshAllQueues();
   };
 
+  const [selectedJobs, setSelectedJobs] = useState<Set<string>>(new Set());
+
+  const handleBulkQueue = async () => {
+    const jobs = allJobs.filter(j => selectedJobs.has(j.id));
+    await Promise.allSettled(
+      jobs.map(j => {
+        if (j.source.type === 'remote' && j.source.hostId) {
+          return startJobOnHost(j.source, j.id);
+        }
+        return startJob(j.id);
+      }),
+    );
+    setSelectedJobs(new Set());
+    refresh();
+  };
+
+  const handleBulkDelete = () => {
+    openConfirm({
+      title: 'Delete Selected Jobs',
+      message: `Are you sure you want to delete ${selectedJobs.size} job(s)? This cannot be undone.`,
+      type: 'warning',
+      confirmText: 'Delete All',
+      onConfirm: async () => {
+        const jobs = allJobs.filter(j => selectedJobs.has(j.id));
+        await Promise.allSettled(
+          jobs.map(j => {
+            if (j.source.type === 'remote' && j.source.hostId) {
+              return deleteJobOnHost(j.source, j.id);
+            }
+            return deleteJob(j.id);
+          }),
+        );
+        setSelectedJobs(new Set());
+        refresh();
+      },
+    });
+  };
+
   const columns: TableColumn<UnifiedJob>[] = [
     {
       title: 'Name',
       key: 'name',
-      render: (row: UnifiedJob) => (
-        <div className="flex items-center gap-2">
-          {['running', 'stopping'].includes(row.status) ? (
-            <CgSpinner className="inline animate-spin text-blue-400 flex-shrink-0" />
-          ) : null}
-          <span className="font-medium whitespace-nowrap">{row.name}</span>
-          {row.source.type === 'remote' && (
-            <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 rounded text-[10px] flex-shrink-0">
-              {row.source.hostName}
-            </span>
-          )}
-        </div>
-      ),
+      sortable: true,
+      render: (row: UnifiedJob) => {
+        const href =
+          row.source.type === 'remote' && row.source.hostId
+            ? `/jobs/${row.id}?hostId=${row.source.hostId}`
+            : `/jobs/${row.id}`;
+        return (
+          <Link href={href} className="flex items-center gap-2 hover:text-zinc-950 dark:hover:text-white">
+            {['running', 'stopping'].includes(row.status) ? (
+              <CgSpinner className="inline animate-spin text-blue-400 flex-shrink-0" />
+            ) : null}
+            <span className="font-medium whitespace-nowrap">{row.name}</span>
+            {row.source.type === 'remote' && (
+              <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 rounded text-[10px] flex-shrink-0">
+                {row.source.hostName}
+              </span>
+            )}
+          </Link>
+        );
+      },
     },
     {
       title: 'Steps',
-      key: 'steps',
+      key: 'step',
+      sortable: true,
       render: (row: UnifiedJob) => {
         const jobConfig: JobConfig = JSON.parse(row.job_config);
         const totalSteps = jobConfig.config.process[0].train.steps;
@@ -83,10 +131,12 @@ function MultiHostJobsTable({ onlyActive, hosts }: { onlyActive: boolean; hosts:
     {
       title: 'GPU',
       key: 'gpu_ids',
+      sortable: true,
     },
     {
       title: 'Status',
       key: 'status',
+      sortable: true,
       render: (row: UnifiedJob) => {
         let statusClass = 'text-zinc-600 dark:text-gray-400';
         if (row.status === 'completed') statusClass = 'text-green-600 dark:text-green-400';
@@ -103,7 +153,7 @@ function MultiHostJobsTable({ onlyActive, hosts }: { onlyActive: boolean; hosts:
     {
       title: 'Actions',
       key: 'actions',
-      className: 'text-right',
+      className: 'w-48 text-right',
       render: (row: UnifiedJob) => {
         return <JobActionBar job={row} source={row.source} onRefresh={refresh} autoStartQueue={false} />;
       },
@@ -183,6 +233,17 @@ function MultiHostJobsTable({ onlyActive, hosts }: { onlyActive: boolean; hosts:
 
   let isLoading = jobsLoading || queuesLoading || (gpusLoading && allGpus.length === 0);
   if (Object.keys(jobsDict).length > 0) isLoading = false;
+
+  const jobBulkActions = (
+    <>
+      <button onClick={handleBulkQueue} className="text-xs px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded">
+        Queue Selected
+      </button>
+      <button onClick={handleBulkDelete} className="text-xs px-3 py-1 bg-red-600 hover:bg-red-500 text-white rounded">
+        Delete Selected
+      </button>
+    </>
+  );
 
   return (
     <div>
@@ -280,11 +341,18 @@ function MultiHostJobsTable({ onlyActive, hosts }: { onlyActive: boolean; hosts:
                 rows={group.jobs}
                 isLoading={isLoading}
                 onRefresh={refresh}
+                defaultSortKey="name"
+                defaultSortDir="asc"
                 theadClassName={
                   queueRunning
                     ? 'text-zinc-600 dark:text-zinc-400 bg-emerald-50 dark:bg-green-950'
                     : 'text-zinc-600 dark:text-zinc-400 bg-red-50 dark:bg-red-950'
                 }
+                selectable
+                selectedKeys={selectedJobs}
+                onSelectionChange={setSelectedJobs}
+                rowKey={(row: UnifiedJob) => row.id}
+                bulkActions={jobBulkActions}
               />
             </div>
           );
@@ -296,7 +364,19 @@ function MultiHostJobsTable({ onlyActive, hosts }: { onlyActive: boolean; hosts:
               <h2 className="font-semibold text-zinc-700 dark:text-gray-100">Idle</h2>
             </div>
           </div>
-          <UniversalTable columns={columns} rows={jobsDict['Idle'].jobs} isLoading={isLoading} onRefresh={refresh} />
+          <UniversalTable
+            columns={columns}
+            rows={jobsDict['Idle'].jobs}
+            isLoading={isLoading}
+            onRefresh={refresh}
+            defaultSortKey="name"
+            defaultSortDir="asc"
+            selectable
+            selectedKeys={selectedJobs}
+            onSelectionChange={setSelectedJobs}
+            rowKey={(row: UnifiedJob) => row.id}
+            bulkActions={jobBulkActions}
+          />
         </div>
       )}
     </div>
@@ -315,12 +395,40 @@ function LocalJobsTable({ onlyActive }: { onlyActive: boolean }) {
     refreshQueues();
   };
 
+  const [selectedJobs, setSelectedJobs] = useState<Set<string>>(new Set());
+
+  const handleBulkQueue = async () => {
+    const selected = jobs.filter(j => selectedJobs.has(j.id));
+    await Promise.allSettled(selected.map(j => startJob(j.id)));
+    setSelectedJobs(new Set());
+    refresh();
+  };
+
+  const handleBulkDelete = () => {
+    openConfirm({
+      title: 'Delete Selected Jobs',
+      message: `Are you sure you want to delete ${selectedJobs.size} job(s)? This cannot be undone.`,
+      type: 'warning',
+      confirmText: 'Delete All',
+      onConfirm: async () => {
+        const selected = jobs.filter(j => selectedJobs.has(j.id));
+        await Promise.allSettled(selected.map(j => deleteJob(j.id)));
+        setSelectedJobs(new Set());
+        refresh();
+      },
+    });
+  };
+
   const columns: TableColumn<Job>[] = [
     {
       title: 'Name',
       key: 'name',
+      sortable: true,
       render: row => (
-        <Link href={`/jobs/${row.id}`} className="font-medium whitespace-nowrap">
+        <Link
+          href={`/jobs/${row.id}`}
+          className="font-medium whitespace-nowrap hover:text-zinc-950 dark:hover:text-white"
+        >
           {['running', 'stopping'].includes(row.status) ? (
             <CgSpinner className="inline animate-spin mr-2 text-blue-400" />
           ) : null}
@@ -330,7 +438,8 @@ function LocalJobsTable({ onlyActive }: { onlyActive: boolean }) {
     },
     {
       title: 'Steps',
-      key: 'steps',
+      key: 'step',
+      sortable: true,
       render: row => {
         const jobConfig: JobConfig = JSON.parse(row.job_config);
         const totalSteps = jobConfig.config.process[0].train.steps;
@@ -353,10 +462,12 @@ function LocalJobsTable({ onlyActive }: { onlyActive: boolean }) {
     {
       title: 'GPU',
       key: 'gpu_ids',
+      sortable: true,
     },
     {
       title: 'Status',
       key: 'status',
+      sortable: true,
       render: row => {
         let statusClass = 'text-zinc-600 dark:text-gray-400';
         if (row.status === 'completed') statusClass = 'text-green-600 dark:text-green-400';
@@ -374,7 +485,7 @@ function LocalJobsTable({ onlyActive }: { onlyActive: boolean }) {
     {
       title: 'Actions',
       key: 'actions',
-      className: 'text-right',
+      className: 'w-48 text-right',
       render: row => {
         return <JobActionBar job={row} onRefresh={refreshJobs} autoStartQueue={false} />;
       },
@@ -420,6 +531,17 @@ function LocalJobsTable({ onlyActive }: { onlyActive: boolean }) {
 
   // if job dict is populated, we are always loaded
   if (Object.keys(jobsDict).length > 0) isLoading = false;
+
+  const jobBulkActions = (
+    <>
+      <button onClick={handleBulkQueue} className="text-xs px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded">
+        Queue Selected
+      </button>
+      <button onClick={handleBulkDelete} className="text-xs px-3 py-1 bg-red-600 hover:bg-red-500 text-white rounded">
+        Delete Selected
+      </button>
+    </>
+  );
 
   return (
     <div>
@@ -496,7 +618,14 @@ function LocalJobsTable({ onlyActive }: { onlyActive: boolean }) {
                 rows={jobsDict[gpuKey].jobs}
                 isLoading={isLoading}
                 onRefresh={refresh}
+                defaultSortKey="name"
+                defaultSortDir="asc"
                 theadClassName={queue?.is_running ? 'bg-emerald-50 dark:bg-green-950' : 'bg-red-50 dark:bg-red-950'}
+                selectable
+                selectedKeys={selectedJobs}
+                onSelectionChange={setSelectedJobs}
+                rowKey={(row: Job) => row.id}
+                bulkActions={jobBulkActions}
               />
             </div>
           );
@@ -508,7 +637,19 @@ function LocalJobsTable({ onlyActive }: { onlyActive: boolean }) {
               <h2 className="font-semibold text-zinc-700 dark:text-gray-100">Idle</h2>
             </div>
           </div>
-          <UniversalTable columns={columns} rows={jobsDict['Idle'].jobs} isLoading={isLoading} onRefresh={refresh} />
+          <UniversalTable
+            columns={columns}
+            rows={jobsDict['Idle'].jobs}
+            isLoading={isLoading}
+            onRefresh={refresh}
+            defaultSortKey="name"
+            defaultSortDir="asc"
+            selectable
+            selectedKeys={selectedJobs}
+            onSelectionChange={setSelectedJobs}
+            rowKey={(row: Job) => row.id}
+            bulkActions={jobBulkActions}
+          />
         </div>
       )}
     </div>

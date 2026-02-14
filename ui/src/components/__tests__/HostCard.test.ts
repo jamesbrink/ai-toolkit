@@ -1,4 +1,20 @@
 import { describe, it, expect } from 'vitest';
+import { getDeviceBadgeColor } from '@/utils/deviceBadge';
+
+describe('device type badge color', () => {
+  it('nvidia gets green badge', () => {
+    expect(getDeviceBadgeColor('nvidia')).toBe('green');
+  });
+
+  it('mps gets blue badge', () => {
+    expect(getDeviceBadgeColor('mps')).toBe('blue');
+  });
+
+  it('unknown device gets zinc badge', () => {
+    expect(getDeviceBadgeColor('cpu')).toBe('zinc');
+    expect(getDeviceBadgeColor('')).toBe('zinc');
+  });
+});
 
 describe('host source badge', () => {
   function getSourceBadge(source: string) {

@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { Server, Cpu, Monitor } from 'lucide-react';
 import clsx from 'clsx';
+import { Badge } from '@/components/catalyst/badge';
+import { getDeviceBadgeColor } from '@/utils/deviceBadge';
 
 interface HostSummaryCardProps {
   id: string;
@@ -10,9 +12,17 @@ interface HostSummaryCardProps {
   isOnline: boolean;
   deviceType: string;
   activeJobs: number;
+  gpuSummary?: string;
 }
 
-export default function HostSummaryCard({ id, name, isOnline, deviceType, activeJobs }: HostSummaryCardProps) {
+export default function HostSummaryCard({
+  id,
+  name,
+  isOnline,
+  deviceType,
+  activeJobs,
+  gpuSummary,
+}: HostSummaryCardProps) {
   const DeviceIcon = deviceType === 'mps' ? Monitor : deviceType === 'nvidia' ? Cpu : Server;
 
   return (
@@ -28,7 +38,8 @@ export default function HostSummaryCard({ id, name, isOnline, deviceType, active
             <span className={clsx('w-2 h-2 rounded-full shrink-0', isOnline ? 'bg-green-500' : 'bg-red-500')} />
           </div>
           <div className="flex items-center space-x-2 mt-0.5">
-            <span className="text-xs text-zinc-600 dark:text-zinc-400">{deviceType.toUpperCase()}</span>
+            <Badge color={getDeviceBadgeColor(deviceType)}>{deviceType.toUpperCase()}</Badge>
+            {gpuSummary && <span className="text-xs text-zinc-500 dark:text-zinc-400 truncate">{gpuSummary}</span>}
             {activeJobs > 0 && (
               <span className="text-xs text-blue-600 dark:text-blue-400">
                 {activeJobs} active job{activeJobs !== 1 ? 's' : ''}

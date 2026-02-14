@@ -7,6 +7,7 @@ import { Badge } from '@/components/catalyst/badge';
 import { HostInfo } from '@/hooks/useHostList';
 import { openConfirm } from '@/components/ConfirmModal';
 import { apiClient } from '@/utils/api';
+import { getDeviceBadgeColor } from '@/utils/deviceBadge';
 
 interface HostCardProps {
   host: HostInfo;
@@ -127,7 +128,9 @@ export default function HostCard({ host, onRefresh }: HostCardProps) {
           <Badge color={host.source === 'mdns' ? 'blue' : host.source === 'runpod' ? 'purple' : 'zinc'}>
             {host.source === 'mdns' ? 'mDNS' : host.source === 'runpod' ? 'RunPod' : 'Manual'}
           </Badge>
-          {host.deviceType && <Badge color="zinc">{host.deviceType.toUpperCase()}</Badge>}
+          {host.deviceType && (
+            <Badge color={getDeviceBadgeColor(host.deviceType)}>{host.deviceType.toUpperCase()}</Badge>
+          )}
         </div>
 
         {host.gpuSummary && <p className="text-sm text-zinc-500 dark:text-zinc-400 truncate">{host.gpuSummary}</p>}

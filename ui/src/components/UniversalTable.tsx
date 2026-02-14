@@ -18,6 +18,11 @@ interface TableProps<T = Record<string, unknown>> {
   defaultSortKey?: string;
   defaultSortDir?: 'asc' | 'desc';
   onRefresh: () => void;
+  selectable?: boolean;
+  selectedKeys?: Set<string>;
+  onSelectionChange?: (keys: Set<string>) => void;
+  rowKey?: (row: T) => string;
+  bulkActions?: React.ReactNode;
 }
 
 export default function UniversalTable<T>({
@@ -28,6 +33,11 @@ export default function UniversalTable<T>({
   defaultSortKey,
   defaultSortDir = 'asc',
   onRefresh = () => {},
+  selectable = false,
+  selectedKeys,
+  onSelectionChange,
+  rowKey,
+  bulkActions,
 }: TableProps<T>) {
   const [sortKey, setSortKey] = useState<string | null>(defaultSortKey ?? null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>(defaultSortDir);
@@ -64,6 +74,34 @@ export default function UniversalTable<T>({
     return <span className="ml-1">{sortDir === 'asc' ? '\u2191' : '\u2193'}</span>;
   };
 
+  const allKeys = useMemo(() => {
+    if (!selectable || !rowKey) return new Set<string>();
+    return new Set(sortedRows.map(r => rowKey(r)));
+  }, [selectable, rowKey, sortedRows]);
+
+  const allSelected = selectable && selectedKeys ? selectedKeys.size > 0 && selectedKeys.size >= allKeys.size : false;
+  const someSelected = selectable && selectedKeys ? selectedKeys.size > 0 && !allSelected : false;
+
+  const toggleAll = () => {
+    if (!onSelectionChange) return;
+    if (allSelected) {
+      onSelectionChange(new Set());
+    } else {
+      onSelectionChange(new Set(allKeys));
+    }
+  };
+
+  const toggleRow = (key: string) => {
+    if (!onSelectionChange || !selectedKeys) return;
+    const next = new Set(selectedKeys);
+    if (next.has(key)) {
+      next.delete(key);
+    } else {
+      next.add(key);
+    }
+    onSelectionChange(next);
+  };
+
   const getCellValue = (row: T, key: string): React.ReactNode => {
     const val = (row as Record<string, unknown>)[key];
     if (val == null) return '';
@@ -87,26 +125,68 @@ export default function UniversalTable<T>({
         </div>
       ) : (
         <>
+          {/* Bulk actions bar */}
+          {selectable && selectedKeys && selectedKeys.size > 0 && bulkActions && (
+            <div className="flex items-center gap-3 border-b border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 px-4 py-2">
+              <span className="text-sm font-medium text-blue-700 dark:text-blue-300">{selectedKeys.size} selected</span>
+              {bulkActions}
+              <button
+                onClick={() => onSelectionChange?.(new Set())}
+                className="text-xs px-3 py-1 bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-300 dark:hover:bg-zinc-600 rounded"
+              >
+                Clear
+              </button>
+            </div>
+          )}
           {/* Mobile card view */}
           <div className="sm:hidden divide-y divide-zinc-200 dark:divide-zinc-700">
-            {sortedRows?.map((row, index) => (
-              <div key={index} className="p-3 space-y-2">
-                {columns.map(column => (
-                  <div key={column.key} className="flex justify-between items-start gap-2">
-                    <span className="text-xs text-zinc-600 dark:text-zinc-400 uppercase shrink-0">{column.title}</span>
-                    <span className={clsx('text-sm text-right', column.className)}>
-                      {column.render ? column.render(row) : getCellValue(row, column.key)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            ))}
+            {sortedRows?.map((row, index) => {
+              const key = selectable && rowKey ? rowKey(row) : String(index);
+              const isSelected = selectable && selectedKeys?.has(key);
+              return (
+                <div key={key} className="p-3 space-y-2 relative">
+                  {selectable && rowKey && (
+                    <div className="absolute top-3 right-3">
+                      <input
+                        type="checkbox"
+                        checked={!!isSelected}
+                        onChange={() => toggleRow(key)}
+                        className="accent-blue-500 rounded w-4 h-4"
+                      />
+                    </div>
+                  )}
+                  {columns.map(column => (
+                    <div key={column.key} className="flex justify-between items-start gap-2">
+                      <span className="text-xs text-zinc-600 dark:text-zinc-400 uppercase shrink-0">
+                        {column.title}
+                      </span>
+                      <span className={clsx('text-sm text-right', column.className)}>
+                        {column.render ? column.render(row) : getCellValue(row, column.key)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
           </div>
           {/* Desktop table view */}
           <div className="hidden sm:block overflow-x-auto">
             <table className="w-full text-sm text-left text-zinc-700 dark:text-zinc-300">
               <thead className={clsx('text-xs uppercase bg-zinc-50 dark:bg-zinc-800', theadClassName)}>
                 <tr>
+                  {selectable && rowKey && (
+                    <th className="px-3 py-2 w-10">
+                      <input
+                        type="checkbox"
+                        checked={allSelected}
+                        ref={el => {
+                          if (el) el.indeterminate = someSelected;
+                        }}
+                        onChange={toggleAll}
+                        className="accent-blue-500 rounded w-4 h-4"
+                      />
+                    </th>
+                  )}
                   {columns.map(column => (
                     <th key={column.key} className={clsx('px-3 py-2', column.className)}>
                       {column.sortable ? (
@@ -127,13 +207,28 @@ export default function UniversalTable<T>({
               </thead>
               <tbody>
                 {sortedRows?.map((row, index) => {
+                  const key = selectable && rowKey ? rowKey(row) : String(index);
+                  const isSelected = selectable && selectedKeys?.has(key);
                   const rowClass = index % 2 === 0 ? 'bg-white dark:bg-zinc-900' : 'bg-zinc-50 dark:bg-zinc-800';
 
                   return (
                     <tr
-                      key={index}
-                      className={`${rowClass} border-b border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700`}
+                      key={key}
+                      className={clsx(
+                        `${rowClass} border-b border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700`,
+                        isSelected && 'bg-blue-50 dark:bg-blue-900/20',
+                      )}
                     >
+                      {selectable && rowKey && (
+                        <td className="px-3 py-2 w-10">
+                          <input
+                            type="checkbox"
+                            checked={!!isSelected}
+                            onChange={() => toggleRow(key)}
+                            className="accent-blue-500 rounded w-4 h-4"
+                          />
+                        </td>
+                      )}
                       {columns.map(column => (
                         <td key={column.key} className={clsx('px-3 py-2', column.className)}>
                           {column.render ? column.render(row) : getCellValue(row, column.key)}
