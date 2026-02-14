@@ -71,6 +71,56 @@ async function checkNvidiaSmi(isWindows: boolean): Promise<boolean> {
   }
 }
 
+interface MacmonMetrics {
+  temperature: number;
+  gpuFrequencyMHz: number;
+  gpuUtilization: number;
+  gpuPower: number;
+  totalPower: number;
+}
+
+// Cache macmon results so the API responds instantly.
+// macmon takes ~1s per sample, but the dashboard polls every few seconds.
+const MACMON_CACHE_MAX_AGE_MS = 3000;
+let macmonCache: MacmonMetrics | null = null;
+let macmonCacheTime = 0;
+let macmonRefreshInFlight = false;
+let macmonAvailable: boolean | null = null; // null = untested
+
+function refreshMacmonCache(): void {
+  if (macmonRefreshInFlight) return;
+  macmonRefreshInFlight = true;
+  execAsync('macmon pipe --samples 1 --interval 1000', { timeout: 5000 })
+    .then(({ stdout }) => {
+      const data = JSON.parse(stdout.trim());
+      macmonCache = {
+        temperature: Math.round(data.temp.gpu_temp_avg),
+        gpuFrequencyMHz: Math.round(data.gpu_usage[0]),
+        gpuUtilization: Math.round(data.gpu_usage[1] * 100),
+        gpuPower: Math.round(data.gpu_power * 10) / 10,
+        totalPower: Math.round(data.all_power * 10) / 10,
+      };
+      macmonCacheTime = Date.now();
+      macmonAvailable = true;
+    })
+    .catch(() => {
+      macmonAvailable = false;
+    })
+    .finally(() => {
+      macmonRefreshInFlight = false;
+    });
+}
+
+function getMacmonMetrics(): MacmonMetrics | null {
+  // First call: kick off a background refresh, return null (falls back to ioreg)
+  // Subsequent calls: return cached data, refresh in background if stale
+  if (macmonAvailable === false) return null;
+  if (Date.now() - macmonCacheTime > MACMON_CACHE_MAX_AGE_MS) {
+    refreshMacmonCache();
+  }
+  return macmonCache;
+}
+
 async function detectMps() {
   try {
     const graphics = await si.graphics();
@@ -81,19 +131,29 @@ async function detectMps() {
     if (appleGpu) {
       const totalMB = Math.round(mem.total / (1024 * 1024));
       const usedMB = Math.round((mem.total - mem.available) / (1024 * 1024));
-      const gpuUtil = await getAppleGpuUtilization();
+
+      // Use cached macmon metrics (non-blocking), fall back to ioreg for basic utilization
+      const macmon = getMacmonMetrics();
+      const gpuUtil = macmon?.gpuUtilization ?? (await getAppleGpuUtilization());
+
+      const gpuInfo: Record<string, unknown> = {
+        index: 0,
+        name: appleGpu.model || 'Apple Silicon GPU',
+        utilization: { gpu: gpuUtil, memory: Math.round((usedMB / totalMB) * 100) },
+        memory: { total: totalMB, free: totalMB - usedMB, used: usedMB },
+        isMps: true,
+      };
+
+      if (macmon) {
+        gpuInfo.temperature = macmon.temperature;
+        gpuInfo.clocks = { graphics: macmon.gpuFrequencyMHz, memory: 0 };
+        gpuInfo.power = { draw: macmon.gpuPower, limit: macmon.totalPower };
+      }
+
       return {
         hasNvidiaSmi: false,
         deviceType: 'mps',
-        gpus: [
-          {
-            index: 0,
-            name: appleGpu.model || 'Apple Silicon GPU',
-            utilization: { gpu: gpuUtil, memory: Math.round((usedMB / totalMB) * 100) },
-            memory: { total: totalMB, free: totalMB - usedMB, used: usedMB },
-            isMps: true,
-          },
-        ],
+        gpus: [gpuInfo],
       };
     }
   } catch (error) {

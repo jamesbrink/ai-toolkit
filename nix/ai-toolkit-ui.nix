@@ -3,6 +3,7 @@
 # Run with:   nix run .#ui
 {
   lib,
+  stdenv,
   buildNpmPackage,
   nodejs_22,
   makeWrapper,
@@ -11,6 +12,7 @@
   sqlite,
   prisma-engines_7,
   ai-toolkit,
+  macmon,
 }:
 
 buildNpmPackage {
@@ -113,7 +115,7 @@ buildNpmPackage {
     chmod +x $out/bin/ai-toolkit-ui
 
     wrapProgram $out/bin/ai-toolkit-ui \
-      --prefix PATH : ${lib.makeBinPath [ nodejs_22 ]} \
+      --prefix PATH : ${lib.makeBinPath ([ nodejs_22 ] ++ lib.optionals stdenv.isDarwin [ macmon ])} \
       --set NODE_ENV "production"
 
     runHook postInstall
