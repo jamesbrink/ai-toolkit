@@ -23,7 +23,12 @@ const markdownComponents: Components = {
   strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
   em: ({ children }) => <em>{children}</em>,
   a: ({ href, children }) => (
-    <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 underline hover:text-blue-500 dark:hover:text-blue-300">
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-blue-600 dark:text-blue-400 underline hover:text-blue-500 dark:hover:text-blue-300"
+    >
       {children}
     </a>
   ),
@@ -40,7 +45,9 @@ const markdownComponents: Components = {
   },
   pre: ({ children }) => <>{children}</>,
   blockquote: ({ children }) => (
-    <blockquote className="border-l-2 border-zinc-300 dark:border-zinc-600 pl-3 my-2 text-zinc-600 dark:text-zinc-300">{children}</blockquote>
+    <blockquote className="border-l-2 border-zinc-300 dark:border-zinc-600 pl-3 my-2 text-zinc-600 dark:text-zinc-300">
+      {children}
+    </blockquote>
   ),
   hr: () => <hr className="border-zinc-200 dark:border-zinc-700 my-3" />,
   table: ({ children }) => (
@@ -48,7 +55,9 @@ const markdownComponents: Components = {
       <table className="text-xs border-collapse min-w-full">{children}</table>
     </div>
   ),
-  th: ({ children }) => <th className="border border-zinc-200 dark:border-zinc-700 px-2 py-1 text-left font-semibold">{children}</th>,
+  th: ({ children }) => (
+    <th className="border border-zinc-200 dark:border-zinc-700 px-2 py-1 text-left font-semibold">{children}</th>
+  ),
   td: ({ children }) => <td className="border border-zinc-200 dark:border-zinc-700 px-2 py-1">{children}</td>,
 };
 
@@ -108,7 +117,9 @@ export default function MessageBubble({ message, isStreaming }: MessageBubblePro
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-3`}>
       <div
         className={`max-w-[85%] min-w-0 px-3 py-2 rounded-lg text-sm overflow-x-auto overflow-y-hidden break-words chat-scrollbar ${
-          isUser ? 'bg-zinc-200 dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100'
+          isUser
+            ? 'bg-zinc-200 dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100'
+            : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100'
         }`}
       >
         {content}

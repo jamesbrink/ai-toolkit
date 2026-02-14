@@ -84,7 +84,9 @@ export default function DeleteProposal({ toolUseId, imagePaths, reason }: Delete
                 <button
                   onClick={() => handleDecision(i, 'accepted')}
                   className={`p-1 rounded transition-colors ${
-                    decisions[i] === 'accepted' ? 'bg-red-700 text-white' : 'text-zinc-500 dark:text-zinc-400 hover:text-red-400'
+                    decisions[i] === 'accepted'
+                      ? 'bg-red-700 text-white'
+                      : 'text-zinc-500 dark:text-zinc-400 hover:text-red-400'
                   }`}
                   title="Delete"
                 >
@@ -93,7 +95,9 @@ export default function DeleteProposal({ toolUseId, imagePaths, reason }: Delete
                 <button
                   onClick={() => handleDecision(i, 'rejected')}
                   className={`p-1 rounded transition-colors ${
-                    decisions[i] === 'rejected' ? 'bg-green-700 text-white' : 'text-zinc-500 dark:text-zinc-400 hover:text-green-400'
+                    decisions[i] === 'rejected'
+                      ? 'bg-green-700 text-white'
+                      : 'text-zinc-500 dark:text-zinc-400 hover:text-green-400'
                   }`}
                   title="Keep"
                 >
