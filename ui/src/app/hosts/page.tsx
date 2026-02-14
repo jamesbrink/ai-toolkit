@@ -14,6 +14,7 @@ import useSettings from '@/hooks/useSettings';
 import { openConfirm } from '@/components/ConfirmModal';
 import { apiClient } from '@/utils/api';
 import RunPodAccountWidget from '@/components/RunPodAccountWidget';
+import LocalHostCard from '@/components/LocalHostCard';
 import { Button } from '@/components/catalyst/button';
 import { Heading, Subheading } from '@/components/catalyst/heading';
 import { Text } from '@/components/catalyst/text';
@@ -70,6 +71,16 @@ export default function HostsPage() {
         </div>
       </TopBar>
       <MainContent>
+        {/* This Machine Section */}
+        <div className="mb-8">
+          <Subheading level={2} className="text-sm uppercase tracking-wide mb-4">
+            This Machine
+          </Subheading>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <LocalHostCard />
+          </div>
+        </div>
+
         {/* Cloud Pods Section */}
         <div className="mb-8">
           <Subheading level={2} className="text-sm uppercase tracking-wide mb-4">
@@ -102,10 +113,10 @@ export default function HostsPage() {
           )}
         </div>
 
-        {/* Local Hosts Section */}
+        {/* Network Hosts Section */}
         <div>
           <Subheading level={2} className="text-sm uppercase tracking-wide mb-4">
-            Local Hosts
+            Network Hosts
           </Subheading>
           {status === 'success' && hosts.filter(h => h.source !== 'runpod').length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
