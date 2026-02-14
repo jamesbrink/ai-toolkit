@@ -101,7 +101,11 @@ export default function Settings() {
                       >
                         Hugging Face
                       </a>{' '}
-                      if you need to access gated/private models.
+                      if you need to access gated/private models. Can also be set via the{' '}
+                      <code className="rounded border border-zinc-950/10 bg-zinc-950/2.5 px-1 py-0.5 text-xs font-medium text-zinc-950 dark:border-white/20 dark:bg-white/5 dark:text-white">
+                        HF_TOKEN
+                      </code>{' '}
+                      environment variable.
                     </Description>
                     <Input
                       type={isEnvSourced('HF_TOKEN') ? 'text' : 'password'}
@@ -182,7 +186,11 @@ export default function Settings() {
                       >
                         console.anthropic.com
                       </a>
-                      .
+                      . Can also be set via the{' '}
+                      <code className="rounded border border-zinc-950/10 bg-zinc-950/2.5 px-1 py-0.5 text-xs font-medium text-zinc-950 dark:border-white/20 dark:bg-white/5 dark:text-white">
+                        ANTHROPIC_API_KEY
+                      </code>{' '}
+                      environment variable.
                     </Description>
                     <Input
                       type={isEnvSourced('ANTHROPIC_API_KEY') ? 'text' : 'password'}
@@ -217,7 +225,11 @@ export default function Settings() {
                       <code className="rounded border border-zinc-950/10 bg-zinc-950/2.5 px-1 py-0.5 text-xs font-medium text-zinc-950 dark:border-white/20 dark:bg-white/5 dark:text-white">
                         claude setup-token
                       </code>
-                      .
+                      . Can also be set via the{' '}
+                      <code className="rounded border border-zinc-950/10 bg-zinc-950/2.5 px-1 py-0.5 text-xs font-medium text-zinc-950 dark:border-white/20 dark:bg-white/5 dark:text-white">
+                        CLAUDE_CODE_OAUTH_TOKEN
+                      </code>{' '}
+                      environment variable.
                     </Description>
                     <Input
                       type={isEnvSourced('CLAUDE_CODE_OAUTH_TOKEN') ? 'text' : 'password'}
@@ -238,12 +250,16 @@ export default function Settings() {
                   <Field>
                     <Label>Claude Chat Model</Label>
                     <Description>
-                      Model used for the AI chat assistant. More capable models give better advice but cost more. Falls
-                      back to the{' '}
+                      Model used for the AI chat assistant. More capable models give better advice but cost more. Can
+                      also be set via the{' '}
+                      <code className="rounded border border-zinc-950/10 bg-zinc-950/2.5 px-1 py-0.5 text-xs font-medium text-zinc-950 dark:border-white/20 dark:bg-white/5 dark:text-white">
+                        CLAUDE_CHAT_MODEL
+                      </code>{' '}
+                      environment variable, with{' '}
                       <code className="rounded border border-zinc-950/10 bg-zinc-950/2.5 px-1 py-0.5 text-xs font-medium text-zinc-950 dark:border-white/20 dark:bg-white/5 dark:text-white">
                         CLAUDE_MODEL
                       </code>{' '}
-                      environment variable if not set here.
+                      as a fallback.
                     </Description>
                     <Select name="CLAUDE_CHAT_MODEL" value={settings.CLAUDE_CHAT_MODEL} onChange={handleChange}>
                       <option value="">Sonnet 4.5 (default)</option>
@@ -257,11 +273,15 @@ export default function Settings() {
                     <Label>Claude Caption Model</Label>
                     <Description>
                       Model used for generating image captions. Haiku is recommended for speed and cost when captioning
-                      many images. Falls back to the{' '}
+                      many images. Can also be set via the{' '}
+                      <code className="rounded border border-zinc-950/10 bg-zinc-950/2.5 px-1 py-0.5 text-xs font-medium text-zinc-950 dark:border-white/20 dark:bg-white/5 dark:text-white">
+                        CLAUDE_CAPTION_MODEL
+                      </code>{' '}
+                      environment variable, with{' '}
                       <code className="rounded border border-zinc-950/10 bg-zinc-950/2.5 px-1 py-0.5 text-xs font-medium text-zinc-950 dark:border-white/20 dark:bg-white/5 dark:text-white">
                         CLAUDE_MODEL
                       </code>{' '}
-                      environment variable if not set here.
+                      as a fallback.
                     </Description>
                     <Select name="CLAUDE_CAPTION_MODEL" value={settings.CLAUDE_CAPTION_MODEL} onChange={handleChange}>
                       <option value="">Haiku 4.5 (default)</option>
@@ -286,7 +306,14 @@ export default function Settings() {
               <div className="flex-1 px-6 py-5">
                 <SwitchField>
                   <Label>mDNS Discovery</Label>
-                  <Description>Automatically discover other AI Toolkit instances on your local network.</Description>
+                  <Description>
+                    Automatically discover other AI Toolkit instances on your local network. Can also be disabled via
+                    the{' '}
+                    <code className="rounded border border-zinc-950/10 bg-zinc-950/2.5 px-1 py-0.5 text-xs font-medium text-zinc-950 dark:border-white/20 dark:bg-white/5 dark:text-white">
+                      AI_TOOLKIT_MDNS
+                    </code>{' '}
+                    environment variable.
+                  </Description>
                   <Switch
                     color="blue"
                     checked={settings.MDNS_ENABLED === 'true'}
