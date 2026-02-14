@@ -212,7 +212,7 @@ export default function RunPodPodDetailPage() {
           {isActive && (
             <button
               onClick={handleStop}
-              className="flex items-center space-x-1 px-3 py-1.5 bg-yellow-700 hover:bg-yellow-600 rounded-lg transition-colors text-sm"
+              className="flex items-center space-x-1 px-3 py-1.5 bg-yellow-600 hover:bg-yellow-700 dark:bg-yellow-700 dark:hover:bg-yellow-600 text-white rounded-lg transition-colors text-sm"
             >
               <Square className="w-4 h-4" />
               <span>Stop</span>
@@ -221,7 +221,7 @@ export default function RunPodPodDetailPage() {
           {isStopped && (
             <button
               onClick={handleResume}
-              className="flex items-center space-x-1 px-3 py-1.5 bg-green-700 hover:bg-green-600 rounded-lg transition-colors text-sm"
+              className="flex items-center space-x-1 px-3 py-1.5 bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600 text-white rounded-lg transition-colors text-sm"
             >
               <Play className="w-4 h-4" />
               <span>Resume</span>
@@ -239,7 +239,7 @@ export default function RunPodPodDetailPage() {
           {!isTerminated && (
             <button
               onClick={handleTerminate}
-              className="flex items-center space-x-1 px-3 py-1.5 bg-red-700 hover:bg-red-600 rounded-lg transition-colors text-sm"
+              className="flex items-center space-x-1 px-3 py-1.5 bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600 text-white rounded-lg transition-colors text-sm"
             >
               <Trash2 className="w-4 h-4" />
               <span>Terminate</span>

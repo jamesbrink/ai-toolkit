@@ -368,12 +368,12 @@ export default function Settings() {
                     <Description>
                       Deploy and manage cloud GPU pods directly from AI Toolkit. Get a key from{' '}
                       <a
-                        href="https://www.runpod.io/console/user/settings"
+                        href="https://console.runpod.io/user/settings"
                         target="_blank"
                         rel="noreferrer"
                         className="text-zinc-950 underline decoration-zinc-950/50 hover:decoration-zinc-950 dark:text-white dark:decoration-white/50 dark:hover:decoration-white"
                       >
-                        runpod.io/console/user/settings
+                        console.runpod.io/user/settings
                       </a>
                       .
                     </Description>

@@ -50,12 +50,30 @@ export_env_vars() {
   echo 'source /etc/rp_environment' >> /root/.bashrc
 }
 
+# Detect NVIDIA driver libraries injected by the container runtime and ensure
+# they are on LD_LIBRARY_PATH so the Nix-built PyTorch can find libcuda.so.
+setup_nvidia_libs() {
+  local nvidia_dirs=""
+  for dir in /usr/lib/x86_64-linux-gnu /usr/lib64 /usr/local/nvidia/lib64; do
+    if [[ -f "${dir}/libcuda.so" ]]; then
+      nvidia_dirs="${nvidia_dirs:+${nvidia_dirs}:}${dir}"
+    fi
+  done
+  if [[ -n "$nvidia_dirs" ]]; then
+    export LD_LIBRARY_PATH="${nvidia_dirs}${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
+    echo "NVIDIA driver libraries found: ${nvidia_dirs}"
+  else
+    echo "Warning: libcuda.so not found — GPU acceleration may not be available"
+  fi
+}
+
 # ---------------------------------------------------------------------------- #
 #                               Main Program                                   #
 # ---------------------------------------------------------------------------- #
 
 echo "Pod Started"
 
+setup_nvidia_libs
 setup_ssh
 export_env_vars
 

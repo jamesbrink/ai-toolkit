@@ -82,12 +82,17 @@ function CopyableField({ value, mono = true }: { value: string; mono?: boolean }
   );
 }
 
-// Infer deployment stage from available data
+// Infer deployment stage from available data.
+// RunPod's API doesn't expose a granular "pulling image" status — we infer stages:
+// - liveData is null → Initializing (first poll hasn't returned, or pod not yet visible)
+// - liveData exists but runtime is null → Pulling Image (pod allocated, container not started)
+// - runtime exists but host not linked → Starting (container booted, AI Toolkit not yet responding)
+// - hostId linked → Ready (AI Toolkit probe succeeded)
 function getDeploymentStage(pod: RunPodPodInfo, liveData: LivePodData | null): number {
   if (pod.hostId) return 4; // Ready — host linked
-  if (liveData?.runtime?.ports && liveData.runtime.ports.length > 0) return 3; // Starting container
-  if (liveData?.runtime) return 2; // Pulling image
-  return 1; // Initializing
+  if (liveData?.runtime) return 3; // Starting — container is up
+  if (liveData) return 2; // Pulling Image — pod exists on RunPod, no runtime yet
+  return 1; // Initializing — waiting for first API response
 }
 
 const deploymentStages = [
@@ -151,6 +156,7 @@ export default function PodOverviewTab({ pod, liveData }: PodOverviewTabProps) {
   const [showPassword, setShowPassword] = useState(false);
   const gpus = liveData?.runtime?.gpus;
   const isDeploying = pod.currentStatus === 'deploying';
+
   const deployStage = getDeploymentStage(pod, liveData);
 
   // Find SSH port from runtime ports
@@ -293,20 +299,20 @@ export default function PodOverviewTab({ pod, liveData }: PodOverviewTabProps) {
         </table>
       </div>
 
-      {/* External Links */}
-      <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4 space-y-3">
-        <h3 className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Quick Links</h3>
-        <div className="flex flex-col gap-2">
-          <a
-            href={`https://www.runpod.io/console/pods/${pod.runpodId}`}
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300 transition-colors"
-          >
-            <ExternalLink className="w-4 h-4" />
-            Open in RunPod Console
-          </a>
-          {pod.currentStatus === 'running' && (
+      {/* External Links — only show when pod is live */}
+      {pod.currentStatus === 'running' && (
+        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4 space-y-3">
+          <h3 className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Quick Links</h3>
+          <div className="flex flex-col gap-2">
+            <a
+              href={`https://console.runpod.io/pods/${pod.runpodId}`}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300 transition-colors"
+            >
+              <ExternalLink className="w-4 h-4" />
+              Open in RunPod Console
+            </a>
             <a
               href={`https://${pod.runpodId}-8675.proxy.runpod.net/`}
               target="_blank"
@@ -316,18 +322,18 @@ export default function PodOverviewTab({ pod, liveData }: PodOverviewTabProps) {
               <ExternalLink className="w-4 h-4" />
               Open AI Toolkit (RunPod Proxy)
             </a>
-          )}
-          {sshCommand && (
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
-                <Terminal className="w-4 h-4" />
-                SSH Command
+            {sshCommand && (
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
+                  <Terminal className="w-4 h-4" />
+                  SSH Command
+                </div>
+                <CopyableField value={sshCommand} />
               </div>
-              <CopyableField value={sshCommand} />
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Host Link */}
       {pod.hostId && (

@@ -116,6 +116,11 @@ pkgs.dockerTools.streamLayeredImage {
       "DATABASE_URL=file:/workspace/aitk_db.db"
       # CUDA compute capabilities for RunPod GPU coverage (Ampere→Blackwell)
       "TORCH_CUDA_ARCH_LIST=8.0;8.6;8.9;9.0;10.0;12.0"
+      # NVIDIA container runtime: inject driver userspace libraries (libcuda.so, nvidia-smi, etc.)
+      "NVIDIA_VISIBLE_DEVICES=all"
+      "NVIDIA_DRIVER_CAPABILITIES=compute,utility"
+      # Driver libs are injected into standard paths; Nix's linker doesn't search them by default
+      "LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:/usr/lib64:/usr/local/nvidia/lib64"
     ];
   };
 }
