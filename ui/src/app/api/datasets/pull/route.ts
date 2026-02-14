@@ -7,7 +7,7 @@ import { buildHostBaseUrl } from '@/server/hostUrl';
 
 export async function POST(request: NextRequest) {
   try {
-    const { datasetName, hostId, localName } = await request.json();
+    const { datasetName, hostId, localName, files: selectiveFiles } = await request.json();
 
     if (!datasetName || !hostId) {
       return new Response(JSON.stringify({ error: 'datasetName and hostId are required' }), {
@@ -51,7 +51,12 @@ export async function POST(request: NextRequest) {
         headers: { 'Content-Type': 'application/json' },
       });
     }
-    const { files } = (await listRes.json()) as { files: string[] };
+    const { files: allFiles } = (await listRes.json()) as { files: string[] };
+    // When selectiveFiles is provided, only pull those specific files
+    const files =
+      Array.isArray(selectiveFiles) && selectiveFiles.length > 0
+        ? allFiles.filter((f: string) => selectiveFiles.includes(f))
+        : allFiles;
 
     if (!files || files.length === 0) {
       return new Response(JSON.stringify({ error: 'Remote dataset is empty' }), {

@@ -304,3 +304,64 @@ export interface SourcedDatasetInfo {
   lastModified: number | null;
   source: DataSource;
 }
+
+/**
+ * Cross-host dataset sync types
+ */
+
+/** Single file entry in a dataset manifest */
+export interface ManifestEntry {
+  path: string; // Relative path from dataset root (e.g. "img001.png")
+  size: number; // Bytes
+  mtime: number; // Epoch ms
+  type: 'image' | 'caption';
+  contentHash?: string; // SHA-256 hex (optional, computed on demand)
+  pHash?: string; // From ImageAnalysis (images only)
+}
+
+/** Full manifest for a dataset on a single host */
+export interface DatasetManifest {
+  datasetName: string;
+  generatedAt: number;
+  entries: ManifestEntry[];
+  fingerprint: string; // SHA-256 of sorted (path+size+contentHash) for quick identity check
+}
+
+/** Status of a single file when comparing two manifests */
+export interface DiffEntry {
+  path: string;
+  type: 'image' | 'caption';
+  status: 'identical' | 'local_only' | 'remote_only' | 'modified' | 'caption_conflict';
+  local?: ManifestEntry;
+  remote?: ManifestEntry;
+  pHashMatch?: { remotePath: string; distance: number }; // For renamed/recompressed images
+}
+
+/** Result of comparing local and remote manifests */
+export interface ManifestDiff {
+  status: 'synced' | 'diverged';
+  summary: {
+    identical: number;
+    localOnly: number;
+    remoteOnly: number;
+    modified: number;
+    captionConflicts: number;
+  };
+  entries: DiffEntry[];
+}
+
+/** A group of dataset instances across hosts with the same name */
+export interface DatasetGroup {
+  name: string;
+  instances: SourcedDatasetInfo[];
+  syncStatus: 'synced' | 'diverged' | 'local_only' | 'remote_only' | 'unknown';
+  hintText?: string; // e.g. "+15 images on HostB" or "Captions differ"
+}
+
+/** Action to take on a single file during sync */
+export interface SyncAction {
+  path: string;
+  action: 'pull' | 'push' | 'skip' | 'ai_merge';
+  localCaption?: string;
+  remoteCaption?: string;
+}

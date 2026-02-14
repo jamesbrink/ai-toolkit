@@ -1,20 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Modal } from '@/components/Modal';
 import Link from 'next/link';
 import { TextInput } from '@/components/formInputs';
 import useDatasetList from '@/hooks/useDatasetList';
 import useHostList from '@/hooks/useHostList';
-import useAllDatasets from '@/hooks/useAllDatasets';
-import { SourcedDatasetInfo } from '@/types';
+import useAllDatasets, { groupDatasets } from '@/hooks/useAllDatasets';
+import { SourcedDatasetInfo, DatasetGroup } from '@/types';
 import { Button } from '@/components/catalyst/button';
 import { Heading } from '@/components/catalyst/heading';
 import { Text } from '@/components/catalyst/text';
 import { FaRegTrashAlt, FaPen, FaCopy } from 'react-icons/fa';
-import { Download, Upload } from 'lucide-react';
+import { Download, Upload, CheckCircle2, AlertTriangle, RefreshCw } from 'lucide-react';
 import DatasetPushModal from '@/components/DatasetPushModal';
 import DatasetPullModal from '@/components/DatasetPullModal';
+import DatasetSyncPanel from '@/components/DatasetSyncPanel';
 import { openConfirm } from '@/components/ConfirmModal';
 import { TopBar, MainContent } from '@/components/layout';
 import UniversalTable, { TableColumn } from '@/components/UniversalTable';
@@ -43,6 +44,32 @@ function formatRelativeTime(epochMs: number | null): string {
   return `${months}mo ago`;
 }
 
+function SyncStatusBadge({ group }: { group: DatasetGroup }) {
+  if (group.syncStatus === 'synced') {
+    return (
+      <span
+        className="inline-flex items-center gap-1 text-xs text-green-600 dark:text-green-400"
+        title={`${group.instances.length} hosts in sync`}
+      >
+        <CheckCircle2 className="w-3.5 h-3.5" />
+        {group.instances.length} hosts
+      </span>
+    );
+  }
+  if (group.syncStatus === 'diverged') {
+    return (
+      <span
+        className="inline-flex items-center gap-1 text-xs text-yellow-600 dark:text-yellow-400"
+        title={group.hintText || 'Content differs'}
+      >
+        <AlertTriangle className="w-3.5 h-3.5" />
+        {group.hintText || 'Diverged'}
+      </span>
+    );
+  }
+  return null;
+}
+
 export default function Datasets() {
   const router = useRouter();
   const { hosts } = useHostList();
@@ -59,55 +86,231 @@ export default function Datasets() {
   const isLoading = hasHosts ? allLoading : localStatus === 'loading';
   const refreshDatasets = hasHosts ? refreshAllDatasets : refreshLocal;
 
+  // Group datasets by name when hosts exist
+  const { groupedDatasets } = useMemo(
+    () => (hasHosts ? groupDatasets(datasets) : { groupedDatasets: [] }),
+    [hasHosts, datasets],
+  );
+
   const [newDatasetName, setNewDatasetName] = useState('');
   const [isNewDatasetModalOpen, setIsNewDatasetModalOpen] = useState(false);
   const [exportingDataset, setExportingDataset] = useState<string | null>(null);
   const [pushDataset, setPushDataset] = useState<string | null>(null);
   const [pullDataset, setPullDataset] = useState<{ name: string; hostId: string; hostName: string } | null>(null);
+  const [syncDataset, setSyncDataset] = useState<{
+    name: string;
+    hostId: string;
+    hostName: string;
+  } | null>(null);
   const [selectedDatasets, setSelectedDatasets] = useState<Set<string>>(new Set());
 
-  const datasetKey = (row: SourcedDatasetInfo) => `${row.source.type}:${row.source.hostId ?? 'local'}:${row.name}`;
+  const onlineHosts = hosts.filter(h => h.isOnline);
 
-  const columns: TableColumn<SourcedDatasetInfo>[] = [
+  // --- Grouped view columns ---
+  const groupedColumns: TableColumn<DatasetGroup>[] = [
     {
       title: 'Dataset Name',
       key: 'name',
       sortable: true,
-      render: (row: SourcedDatasetInfo) => {
-        const href =
-          row.source.type === 'remote' && row.source.hostId
-            ? `/datasets/${row.name}?hostId=${row.source.hostId}`
-            : `/datasets/${row.name}`;
+      render: (group: DatasetGroup) => {
+        const localInstance = group.instances.find(i => i.source.type === 'local');
+        const href = localInstance
+          ? `/datasets/${group.name}`
+          : `/datasets/${group.name}?hostId=${group.instances[0].source.hostId}`;
         return (
-          <Link
-            href={href}
-            className="text-zinc-800 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white font-medium"
-          >
-            {row.name}
-          </Link>
+          <div>
+            <Link
+              href={href}
+              className="text-zinc-800 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white font-medium"
+            >
+              {group.name}
+            </Link>
+            {group.instances.length > 1 && (
+              <div className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                {group.instances.map(i => (i.source.type === 'local' ? 'Local' : i.source.hostName)).join(', ')}
+              </div>
+            )}
+          </div>
         );
       },
     },
-    // Conditionally include Host column only when remote hosts exist
-    ...(hasHosts
-      ? [
-          {
-            title: 'Host',
-            key: 'hostName',
-            sortable: true,
-            className: 'w-28',
-            render: (row: SourcedDatasetInfo) => (
-              <span
-                className={
-                  row.source.type === 'local' ? 'text-zinc-500 dark:text-zinc-400' : 'text-blue-600 dark:text-blue-300'
-                }
-              >
-                {row.source.type === 'local' ? 'Local' : row.source.hostName}
+    {
+      title: 'Sync',
+      key: 'syncStatus',
+      sortable: true,
+      className: 'w-40',
+      render: (group: DatasetGroup) => <SyncStatusBadge group={group} />,
+    },
+    {
+      title: 'Images',
+      key: 'imageCount',
+      sortable: true,
+      className: 'w-32 text-right tabular-nums',
+      render: (group: DatasetGroup) => {
+        const local = group.instances.find(i => i.source.type === 'local') || group.instances[0];
+        if (group.syncStatus === 'diverged' && group.instances.length > 1) {
+          const other = group.instances.find(i => i !== local);
+          const diff = other ? other.imageCount - local.imageCount : 0;
+          if (diff !== 0) {
+            const hostName = other?.source.type === 'remote' ? other.source.hostName : 'Local';
+            return (
+              <span className="text-zinc-700 dark:text-zinc-300">
+                {local.imageCount.toLocaleString()}{' '}
+                <span className="text-xs text-yellow-600 dark:text-yellow-400">
+                  ({diff > 0 ? '+' : ''}
+                  {diff} on {hostName})
+                </span>
               </span>
-            ),
-          } as TableColumn<SourcedDatasetInfo>,
-        ]
-      : []),
+            );
+          }
+        }
+        return <span className="text-zinc-700 dark:text-zinc-300">{local.imageCount.toLocaleString()}</span>;
+      },
+    },
+    {
+      title: 'Captioned',
+      key: 'captionCount',
+      sortable: true,
+      className: 'w-28 text-right',
+      render: (group: DatasetGroup) => {
+        const local = group.instances.find(i => i.source.type === 'local') || group.instances[0];
+        if (local.imageCount === 0) return <span className="text-zinc-500 dark:text-zinc-400">-</span>;
+        const pct = Math.round((local.captionCount / local.imageCount) * 100);
+        const color =
+          pct === 100
+            ? 'text-green-600 dark:text-green-400'
+            : pct > 0
+              ? 'text-yellow-600 dark:text-yellow-400'
+              : 'text-zinc-500 dark:text-zinc-400';
+        return (
+          <span className={`tabular-nums ${color}`}>
+            {local.captionCount}/{local.imageCount}
+          </span>
+        );
+      },
+    },
+    {
+      title: 'Size',
+      key: 'totalSizeBytes',
+      sortable: true,
+      className: 'w-24 text-right tabular-nums',
+      render: (group: DatasetGroup) => {
+        const local = group.instances.find(i => i.source.type === 'local') || group.instances[0];
+        return <span className="text-zinc-500 dark:text-zinc-400">{formatBytes(local.totalSizeBytes)}</span>;
+      },
+    },
+    {
+      title: 'Actions',
+      key: 'actions',
+      className: 'w-44 text-right',
+      render: (group: DatasetGroup) => {
+        const localInstance = group.instances.find(i => i.source.type === 'local');
+        const remoteInstance = group.instances.find(i => i.source.type === 'remote');
+
+        return (
+          <div className="flex items-center justify-end gap-1">
+            {/* Compare & Sync button for diverged groups */}
+            {group.syncStatus === 'diverged' && localInstance && remoteInstance && (
+              <button
+                className="text-zinc-500 dark:text-zinc-400 hover:text-yellow-600 dark:hover:text-yellow-400 p-2 rounded-full transition-colors"
+                onClick={() =>
+                  setSyncDataset({
+                    name: group.name,
+                    hostId: remoteInstance.source.hostId!,
+                    hostName: remoteInstance.source.hostName || 'Remote',
+                  })
+                }
+                title="Compare & Sync"
+              >
+                <RefreshCw className="w-4 h-4" />
+              </button>
+            )}
+            {/* Export (local only) */}
+            {localInstance && (
+              <button
+                className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 p-2 rounded-full transition-colors disabled:opacity-40"
+                onClick={() => handleExportDataset(group.name)}
+                disabled={exportingDataset === group.name || localInstance.imageCount === 0}
+                title="Export ZIP"
+              >
+                <Download className="w-4 h-4" />
+              </button>
+            )}
+            {/* Push (local to remote) */}
+            {localInstance && onlineHosts.length > 0 && localInstance.imageCount > 0 && (
+              <button
+                className="text-zinc-500 dark:text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 p-2 rounded-full transition-colors"
+                onClick={() => setPushDataset(group.name)}
+                title="Push to Host"
+              >
+                <Upload className="w-4 h-4" />
+              </button>
+            )}
+            {/* Pull (remote only, no local) */}
+            {!localInstance && remoteInstance && (
+              <button
+                className="text-zinc-500 dark:text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 p-2 rounded-full transition-colors"
+                onClick={() =>
+                  setPullDataset({
+                    name: group.name,
+                    hostId: remoteInstance.source.hostId!,
+                    hostName: remoteInstance.source.hostName || 'Remote',
+                  })
+                }
+                title="Clone Locally"
+              >
+                <Download className="w-4 h-4" />
+              </button>
+            )}
+            {/* Rename/Delete (local only) */}
+            {localInstance && (
+              <>
+                <button
+                  className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 p-2 rounded-full transition-colors"
+                  onClick={() => handleCopyDataset(group.name)}
+                  title="Duplicate"
+                >
+                  <FaCopy className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 p-2 rounded-full transition-colors"
+                  onClick={() => handleRenameDataset(group.name)}
+                  title="Rename"
+                >
+                  <FaPen className="w-3 h-3" />
+                </button>
+                <button
+                  className="text-zinc-500 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 p-2 rounded-full transition-colors"
+                  onClick={() => handleDeleteDataset(group.name)}
+                  title="Delete"
+                >
+                  <FaRegTrashAlt className="w-3.5 h-3.5" />
+                </button>
+              </>
+            )}
+          </div>
+        );
+      },
+    },
+  ];
+
+  // --- Flat view columns (no hosts) ---
+  const datasetKey = (row: SourcedDatasetInfo) => `${row.source.type}:${row.source.hostId ?? 'local'}:${row.name}`;
+
+  const flatColumns: TableColumn<SourcedDatasetInfo>[] = [
+    {
+      title: 'Dataset Name',
+      key: 'name',
+      sortable: true,
+      render: (row: SourcedDatasetInfo) => (
+        <Link
+          href={`/datasets/${row.name}`}
+          className="text-zinc-800 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white font-medium"
+        >
+          {row.name}
+        </Link>
+      ),
+    },
     {
       title: 'Images',
       key: 'imageCount',
@@ -160,77 +363,39 @@ export default function Datasets() {
       title: 'Actions',
       key: 'actions',
       className: 'w-40 text-right',
-      render: (row: SourcedDatasetInfo) => {
-        const isRemote = row.source.type === 'remote';
-        if (isRemote) {
-          return (
-            <div className="flex items-center justify-end gap-1">
-              <button
-                className="text-zinc-500 dark:text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 p-2 rounded-full transition-colors"
-                onClick={() =>
-                  setPullDataset({
-                    name: row.name,
-                    hostId: row.source.hostId!,
-                    hostName: row.source.hostName || 'Remote',
-                  })
-                }
-                title="Clone Locally"
-              >
-                <Download className="w-4 h-4" />
-              </button>
-              <Link
-                href={`/datasets/${row.name}?hostId=${row.source.hostId}`}
-                className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 p-2 rounded-full transition-colors text-xs"
-                title="View remote dataset"
-              >
-                View
-              </Link>
-            </div>
-          );
-        }
-        return (
-          <div className="flex items-center justify-end gap-1">
-            <button
-              className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 p-2 rounded-full transition-colors disabled:opacity-40"
-              onClick={() => handleExportDataset(row.name)}
-              disabled={exportingDataset === row.name || row.imageCount === 0}
-              title="Export ZIP"
-            >
-              <Download className="w-4 h-4" />
-            </button>
-            {onlineHosts.length > 0 && row.imageCount > 0 && (
-              <button
-                className="text-zinc-500 dark:text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 p-2 rounded-full transition-colors"
-                onClick={() => setPushDataset(row.name)}
-                title="Push to Host"
-              >
-                <Upload className="w-4 h-4" />
-              </button>
-            )}
-            <button
-              className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 p-2 rounded-full transition-colors"
-              onClick={() => handleCopyDataset(row.name)}
-              title="Duplicate"
-            >
-              <FaCopy className="w-3.5 h-3.5" />
-            </button>
-            <button
-              className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 p-2 rounded-full transition-colors"
-              onClick={() => handleRenameDataset(row.name)}
-              title="Rename"
-            >
-              <FaPen className="w-3 h-3" />
-            </button>
-            <button
-              className="text-zinc-500 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 p-2 rounded-full transition-colors"
-              onClick={() => handleDeleteDataset(row.name)}
-              title="Delete"
-            >
-              <FaRegTrashAlt className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        );
-      },
+      render: (row: SourcedDatasetInfo) => (
+        <div className="flex items-center justify-end gap-1">
+          <button
+            className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 p-2 rounded-full transition-colors disabled:opacity-40"
+            onClick={() => handleExportDataset(row.name)}
+            disabled={exportingDataset === row.name || row.imageCount === 0}
+            title="Export ZIP"
+          >
+            <Download className="w-4 h-4" />
+          </button>
+          <button
+            className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 p-2 rounded-full transition-colors"
+            onClick={() => handleCopyDataset(row.name)}
+            title="Duplicate"
+          >
+            <FaCopy className="w-3.5 h-3.5" />
+          </button>
+          <button
+            className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 p-2 rounded-full transition-colors"
+            onClick={() => handleRenameDataset(row.name)}
+            title="Rename"
+          >
+            <FaPen className="w-3 h-3" />
+          </button>
+          <button
+            className="text-zinc-500 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 p-2 rounded-full transition-colors"
+            onClick={() => handleDeleteDataset(row.name)}
+            title="Delete"
+          >
+            <FaRegTrashAlt className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      ),
     },
   ];
 
@@ -394,8 +559,6 @@ export default function Datasets() {
     setSelectedDatasets(new Set());
   };
 
-  const onlineHosts = hosts.filter(h => h.isOnline);
-
   return (
     <>
       <TopBar>
@@ -418,34 +581,46 @@ export default function Datasets() {
       </TopBar>
 
       <MainContent>
-        <UniversalTable
-          columns={columns}
-          rows={datasets}
-          isLoading={isLoading}
-          defaultSortKey="name"
-          defaultSortDir="asc"
-          onRefresh={refreshDatasets}
-          selectable
-          selectedKeys={selectedDatasets}
-          onSelectionChange={setSelectedDatasets}
-          rowKey={datasetKey}
-          bulkActions={
-            <>
-              <button
-                onClick={handleBulkDelete}
-                className="text-xs px-3 py-1 bg-red-600 hover:bg-red-500 text-white rounded"
-              >
-                Delete Selected
-              </button>
-              <button
-                onClick={handleBulkExport}
-                className="text-xs px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded"
-              >
-                Export Selected
-              </button>
-            </>
-          }
-        />
+        {hasHosts ? (
+          <UniversalTable
+            columns={groupedColumns}
+            rows={groupedDatasets}
+            isLoading={isLoading}
+            defaultSortKey="name"
+            defaultSortDir="asc"
+            onRefresh={refreshDatasets}
+            rowKey={(g: DatasetGroup) => g.name}
+          />
+        ) : (
+          <UniversalTable
+            columns={flatColumns}
+            rows={datasets}
+            isLoading={isLoading}
+            defaultSortKey="name"
+            defaultSortDir="asc"
+            onRefresh={refreshDatasets}
+            selectable
+            selectedKeys={selectedDatasets}
+            onSelectionChange={setSelectedDatasets}
+            rowKey={datasetKey}
+            bulkActions={
+              <>
+                <button
+                  onClick={handleBulkDelete}
+                  className="text-xs px-3 py-1 bg-red-600 hover:bg-red-500 text-white rounded"
+                >
+                  Delete Selected
+                </button>
+                <button
+                  onClick={handleBulkExport}
+                  className="text-xs px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded"
+                >
+                  Export Selected
+                </button>
+              </>
+            }
+          />
+        )}
       </MainContent>
 
       <DatasetPushModal
@@ -464,6 +639,15 @@ export default function Datasets() {
         datasetName={pullDataset?.name || ''}
         hostId={pullDataset?.hostId || ''}
         hostName={pullDataset?.hostName || ''}
+      />
+
+      <DatasetSyncPanel
+        isOpen={!!syncDataset}
+        onClose={() => setSyncDataset(null)}
+        datasetName={syncDataset?.name || ''}
+        hostId={syncDataset?.hostId || ''}
+        hostName={syncDataset?.hostName || ''}
+        onSyncComplete={refreshDatasets}
       />
 
       <Modal

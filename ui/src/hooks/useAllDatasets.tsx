@@ -1,10 +1,84 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
-import { SourcedDatasetInfo, DataSource } from '@/types';
+import { SourcedDatasetInfo, DataSource, DatasetGroup } from '@/types';
 import { HostInfo } from '@/hooks/useHostList';
 import { apiClient } from '@/utils/api';
 import { remoteApi } from '@/utils/remoteApi';
+
+/**
+ * Group flat dataset instances by name into DatasetGroups.
+ * Exported for testing — pure function, no side effects.
+ */
+export function groupDatasets(datasets: SourcedDatasetInfo[]): {
+  groupedDatasets: DatasetGroup[];
+  flatDatasets: SourcedDatasetInfo[];
+} {
+  const byName = new Map<string, SourcedDatasetInfo[]>();
+  for (const ds of datasets) {
+    const list = byName.get(ds.name) || [];
+    list.push(ds);
+    byName.set(ds.name, list);
+  }
+
+  const groups: DatasetGroup[] = [];
+  for (const [name, instances] of byName) {
+    const group: DatasetGroup = { name, instances, syncStatus: 'unknown' };
+
+    if (instances.length === 1) {
+      const isLocal = instances[0].source.type === 'local';
+      group.syncStatus = isLocal ? 'local_only' : 'remote_only';
+    } else {
+      // Check if all instances have identical counts + size
+      const first = instances[0];
+      const allMatch = instances.every(
+        i =>
+          i.imageCount === first.imageCount &&
+          i.captionCount === first.captionCount &&
+          i.totalSizeBytes === first.totalSizeBytes,
+      );
+
+      if (allMatch) {
+        group.syncStatus = 'synced';
+      } else {
+        group.syncStatus = 'diverged';
+        group.hintText = generateHintText(instances);
+      }
+    }
+
+    groups.push(group);
+  }
+
+  groups.sort((a, b) => a.name.localeCompare(b.name));
+  return { groupedDatasets: groups, flatDatasets: datasets };
+}
+
+function generateHintText(instances: SourcedDatasetInfo[]): string {
+  // Find the local instance (or first instance as reference)
+  const local = instances.find(i => i.source.type === 'local') || instances[0];
+  const hints: string[] = [];
+
+  for (const inst of instances) {
+    if (inst === local) continue;
+    const hostName = inst.source.hostName || 'Remote';
+
+    const imgDiff = inst.imageCount - local.imageCount;
+    if (imgDiff !== 0) {
+      const sign = imgDiff > 0 ? '+' : '';
+      hints.push(`${sign}${imgDiff} images on ${hostName}`);
+    } else {
+      const capDiff = inst.captionCount - local.captionCount;
+      if (capDiff !== 0) {
+        const sign = capDiff > 0 ? '+' : '';
+        hints.push(`${sign}${capDiff} captions on ${hostName}`);
+      } else if (inst.totalSizeBytes !== local.totalSizeBytes) {
+        hints.push(`Size differs on ${hostName}`);
+      }
+    }
+  }
+
+  return hints.join('; ') || 'Content differs';
+}
 
 const LOCAL_SOURCE: DataSource = { type: 'local' };
 

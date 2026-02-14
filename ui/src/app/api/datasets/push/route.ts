@@ -26,7 +26,7 @@ async function listDatasetFiles(datasetDir: string): Promise<string[]> {
 
 export async function POST(request: NextRequest) {
   try {
-    const { datasetName, hostId } = await request.json();
+    const { datasetName, hostId, files: selectiveFiles } = await request.json();
 
     if (!datasetName || !hostId) {
       return new Response(JSON.stringify({ error: 'datasetName and hostId are required' }), {
@@ -65,7 +65,12 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const files = await listDatasetFiles(datasetDir);
+    const allFiles = await listDatasetFiles(datasetDir);
+    // When selectiveFiles is provided, only push those specific files
+    const files =
+      Array.isArray(selectiveFiles) && selectiveFiles.length > 0
+        ? allFiles.filter(f => selectiveFiles.includes(f))
+        : allFiles;
     if (files.length === 0) {
       return new Response(JSON.stringify({ error: 'Dataset is empty' }), {
         status: 400,
