@@ -212,7 +212,7 @@ export default function Datasets() {
             {/* Compare & Sync button for diverged groups */}
             {group.syncStatus === 'diverged' && localInstance && remoteInstance && (
               <button
-                className="text-zinc-500 dark:text-zinc-400 hover:text-yellow-600 dark:hover:text-yellow-400 p-2 rounded-full transition-colors"
+                className="cursor-pointer text-zinc-500 dark:text-zinc-400 hover:text-yellow-600 dark:hover:text-yellow-400 p-2 rounded-full transition-colors"
                 onClick={() =>
                   setSyncDataset({
                     name: group.name,
@@ -228,7 +228,7 @@ export default function Datasets() {
             {/* Export (local only) */}
             {localInstance && (
               <button
-                className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 p-2 rounded-full transition-colors disabled:opacity-40"
+                className="cursor-pointer text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 p-2 rounded-full transition-colors disabled:opacity-40 disabled:cursor-default"
                 onClick={() => handleExportDataset(group.name)}
                 disabled={exportingDataset === group.name || localInstance.imageCount === 0}
                 title="Export ZIP"
@@ -239,7 +239,7 @@ export default function Datasets() {
             {/* Push (local to remote) */}
             {localInstance && onlineHosts.length > 0 && localInstance.imageCount > 0 && (
               <button
-                className="text-zinc-500 dark:text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 p-2 rounded-full transition-colors"
+                className="cursor-pointer text-zinc-500 dark:text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 p-2 rounded-full transition-colors"
                 onClick={() => setPushDataset(group.name)}
                 title="Push to Host"
               >
@@ -249,7 +249,7 @@ export default function Datasets() {
             {/* Pull (remote only, no local) */}
             {!localInstance && remoteInstance && (
               <button
-                className="text-zinc-500 dark:text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 p-2 rounded-full transition-colors"
+                className="cursor-pointer text-zinc-500 dark:text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 p-2 rounded-full transition-colors"
                 onClick={() =>
                   setPullDataset({
                     name: group.name,
@@ -266,21 +266,21 @@ export default function Datasets() {
             {localInstance && (
               <>
                 <button
-                  className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 p-2 rounded-full transition-colors"
+                  className="cursor-pointer text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 p-2 rounded-full transition-colors"
                   onClick={() => handleCopyDataset(group.name)}
                   title="Duplicate"
                 >
                   <FaCopy className="w-3.5 h-3.5" />
                 </button>
                 <button
-                  className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 p-2 rounded-full transition-colors"
+                  className="cursor-pointer text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 p-2 rounded-full transition-colors"
                   onClick={() => handleRenameDataset(group.name)}
                   title="Rename"
                 >
                   <FaPen className="w-3 h-3" />
                 </button>
                 <button
-                  className="text-zinc-500 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 p-2 rounded-full transition-colors"
+                  className="cursor-pointer text-zinc-500 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 p-2 rounded-full transition-colors"
                   onClick={() => handleDeleteDataset(group.name)}
                   title="Delete"
                 >
@@ -366,7 +366,7 @@ export default function Datasets() {
       render: (row: SourcedDatasetInfo) => (
         <div className="flex items-center justify-end gap-1">
           <button
-            className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 p-2 rounded-full transition-colors disabled:opacity-40"
+            className="cursor-pointer text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 p-2 rounded-full transition-colors disabled:opacity-40 disabled:cursor-default"
             onClick={() => handleExportDataset(row.name)}
             disabled={exportingDataset === row.name || row.imageCount === 0}
             title="Export ZIP"
@@ -374,21 +374,21 @@ export default function Datasets() {
             <Download className="w-4 h-4" />
           </button>
           <button
-            className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 p-2 rounded-full transition-colors"
+            className="cursor-pointer text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 p-2 rounded-full transition-colors"
             onClick={() => handleCopyDataset(row.name)}
             title="Duplicate"
           >
             <FaCopy className="w-3.5 h-3.5" />
           </button>
           <button
-            className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 p-2 rounded-full transition-colors"
+            className="cursor-pointer text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 p-2 rounded-full transition-colors"
             onClick={() => handleRenameDataset(row.name)}
             title="Rename"
           >
             <FaPen className="w-3 h-3" />
           </button>
           <button
-            className="text-zinc-500 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 p-2 rounded-full transition-colors"
+            className="cursor-pointer text-zinc-500 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 p-2 rounded-full transition-colors"
             onClick={() => handleDeleteDataset(row.name)}
             title="Delete"
           >

@@ -51,11 +51,21 @@ export async function POST(request: NextRequest) {
     );
 
     if (!remoteRes.ok) {
-      const errText = await remoteRes.text().catch(() => 'Unknown error');
-      return NextResponse.json(
-        { error: `Failed to fetch remote manifest: ${errText}` },
-        { status: remoteRes.status === 404 ? 404 : 502 },
-      );
+      const contentType = remoteRes.headers.get('content-type') || '';
+      let errorMessage: string;
+
+      if (remoteRes.status === 404) {
+        // Remote host likely doesn't have the manifest endpoint yet
+        errorMessage =
+          'Remote host does not support dataset comparison. It may need to be updated to the latest version.';
+      } else if (contentType.includes('application/json')) {
+        const errJson = await remoteRes.json().catch(() => null);
+        errorMessage = errJson?.error || `Remote host returned status ${remoteRes.status}`;
+      } else {
+        errorMessage = `Remote host returned status ${remoteRes.status}`;
+      }
+
+      return NextResponse.json({ error: errorMessage }, { status: remoteRes.status === 404 ? 404 : 502 });
     }
 
     const remoteManifest = (await remoteRes.json()) as DatasetManifest;
