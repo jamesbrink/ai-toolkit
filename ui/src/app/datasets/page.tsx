@@ -524,23 +524,31 @@ export default function Datasets() {
     });
   };
 
-  const getSelectedLocalDatasets = () => {
-    return datasets.filter(d => d.source.type === 'local' && selectedDatasets.has(datasetKey(d)));
+  // Get selected local dataset names (works for both grouped and flat views)
+  const getSelectedLocalNames = (): string[] => {
+    if (hasHosts) {
+      // Grouped view: selectedDatasets keys are group names
+      return groupedDatasets
+        .filter(g => selectedDatasets.has(g.name) && g.instances.some(i => i.source.type === 'local'))
+        .map(g => g.name);
+    }
+    // Flat view: selectedDatasets keys are datasetKey strings
+    return datasets.filter(d => d.source.type === 'local' && selectedDatasets.has(datasetKey(d))).map(d => d.name);
   };
 
   const handleBulkDelete = () => {
-    const localSelected = getSelectedLocalDatasets();
-    if (localSelected.length === 0) {
+    const names = getSelectedLocalNames();
+    if (names.length === 0) {
       alert('Only local datasets can be deleted.');
       return;
     }
     openConfirm({
       title: 'Delete Selected Datasets',
-      message: `Are you sure you want to delete ${localSelected.length} dataset(s)? This cannot be undone.`,
+      message: `Are you sure you want to delete ${names.length} dataset(s)? This cannot be undone.`,
       type: 'warning',
       confirmText: 'Delete All',
       onConfirm: async () => {
-        await Promise.allSettled(localSelected.map(d => apiClient.post('/api/datasets/delete', { name: d.name })));
+        await Promise.allSettled(names.map(name => apiClient.post('/api/datasets/delete', { name })));
         setSelectedDatasets(new Set());
         refreshDatasets();
       },
@@ -548,13 +556,13 @@ export default function Datasets() {
   };
 
   const handleBulkExport = async () => {
-    const localSelected = getSelectedLocalDatasets();
-    if (localSelected.length === 0) {
+    const names = getSelectedLocalNames();
+    if (names.length === 0) {
       alert('Only local datasets can be exported.');
       return;
     }
-    for (const dataset of localSelected) {
-      await handleExportDataset(dataset.name);
+    for (const name of names) {
+      await handleExportDataset(name);
     }
     setSelectedDatasets(new Set());
   };
@@ -589,7 +597,26 @@ export default function Datasets() {
             defaultSortKey="name"
             defaultSortDir="asc"
             onRefresh={refreshDatasets}
+            selectable
+            selectedKeys={selectedDatasets}
+            onSelectionChange={setSelectedDatasets}
             rowKey={(g: DatasetGroup) => g.name}
+            bulkActions={
+              <>
+                <button
+                  onClick={handleBulkDelete}
+                  className="text-xs px-3 py-1 bg-red-600 hover:bg-red-500 text-white rounded"
+                >
+                  Delete Selected
+                </button>
+                <button
+                  onClick={handleBulkExport}
+                  className="text-xs px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded"
+                >
+                  Export Selected
+                </button>
+              </>
+            }
           />
         ) : (
           <UniversalTable

@@ -122,8 +122,11 @@ export default function Settings() {
                   <Field>
                     <Label>Training Folder Path</Label>
                     <Description>
-                      We will store your training information here. Must be an absolute path. If blank, it will default
-                      to the output folder in the project root.
+                      Where training output is stored. Must be an absolute path. Can also be set via the{' '}
+                      <code className="rounded border border-zinc-950/10 bg-zinc-950/2.5 px-1 py-0.5 text-xs font-medium text-zinc-950 dark:border-white/20 dark:bg-white/5 dark:text-white">
+                        TRAINING_FOLDER
+                      </code>{' '}
+                      environment variable.
                     </Description>
                     <Input
                       type="text"
@@ -137,10 +140,13 @@ export default function Settings() {
                   <Field>
                     <Label>Dataset Folder Path</Label>
                     <Description>
-                      Where we store and find your datasets.{' '}
+                      Where datasets are stored and discovered. Can also be set via the{' '}
+                      <code className="rounded border border-zinc-950/10 bg-zinc-950/2.5 px-1 py-0.5 text-xs font-medium text-zinc-950 dark:border-white/20 dark:bg-white/5 dark:text-white">
+                        DATASETS_FOLDER
+                      </code>{' '}
+                      environment variable.{' '}
                       <span className="text-orange-600 dark:text-orange-400">
-                        Warning: This software may modify datasets so it is recommended you keep a backup somewhere else
-                        or have a dedicated folder for this software.
+                        Warning: This software may modify datasets — keep backups or use a dedicated folder.
                       </span>
                     </Description>
                     <Input
@@ -197,7 +203,21 @@ export default function Settings() {
                   <Field>
                     <Label>Claude Code OAuth Token</Label>
                     <Description>
-                      Alternative to an API key. Only one is needed -- if both are set, the API key takes priority.
+                      Alternative to an API key — only one is needed. If both are set, the API key takes priority. To
+                      generate a token, install{' '}
+                      <a
+                        href="https://docs.anthropic.com/en/docs/claude-code"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-zinc-950 underline decoration-zinc-950/50 hover:decoration-zinc-950 dark:text-white dark:decoration-white/50 dark:hover:decoration-white"
+                      >
+                        Claude Code
+                      </a>{' '}
+                      and run{' '}
+                      <code className="rounded border border-zinc-950/10 bg-zinc-950/2.5 px-1 py-0.5 text-xs font-medium text-zinc-950 dark:border-white/20 dark:bg-white/5 dark:text-white">
+                        claude setup-token
+                      </code>
+                      .
                     </Description>
                     <Input
                       type={isEnvSourced('CLAUDE_CODE_OAUTH_TOKEN') ? 'text' : 'password'}
@@ -218,7 +238,12 @@ export default function Settings() {
                   <Field>
                     <Label>Claude Chat Model</Label>
                     <Description>
-                      Model used for the AI chat assistant. More capable models give better advice but cost more.
+                      Model used for the AI chat assistant. More capable models give better advice but cost more. Falls
+                      back to the{' '}
+                      <code className="rounded border border-zinc-950/10 bg-zinc-950/2.5 px-1 py-0.5 text-xs font-medium text-zinc-950 dark:border-white/20 dark:bg-white/5 dark:text-white">
+                        CLAUDE_MODEL
+                      </code>{' '}
+                      environment variable if not set here.
                     </Description>
                     <Select name="CLAUDE_CHAT_MODEL" value={settings.CLAUDE_CHAT_MODEL} onChange={handleChange}>
                       <option value="">Sonnet 4.5 (default)</option>
@@ -232,7 +257,11 @@ export default function Settings() {
                     <Label>Claude Caption Model</Label>
                     <Description>
                       Model used for generating image captions. Haiku is recommended for speed and cost when captioning
-                      many images.
+                      many images. Falls back to the{' '}
+                      <code className="rounded border border-zinc-950/10 bg-zinc-950/2.5 px-1 py-0.5 text-xs font-medium text-zinc-950 dark:border-white/20 dark:bg-white/5 dark:text-white">
+                        CLAUDE_MODEL
+                      </code>{' '}
+                      environment variable if not set here.
                     </Description>
                     <Select name="CLAUDE_CAPTION_MODEL" value={settings.CLAUDE_CAPTION_MODEL} onChange={handleChange}>
                       <option value="">Haiku 4.5 (default)</option>
