@@ -7,12 +7,13 @@ import GpuMonitor from '@/components/GPUMonitor';
 import GPUWidget from '@/components/GPUWidget';
 import { GPUWidgetSkeleton } from '@/components/Skeleton';
 import JobsTable from '@/components/JobsTable';
+import UniversalTable, { TableColumn } from '@/components/UniversalTable';
 import useRemoteGPUInfo from '@/hooks/useRemoteGPUInfo';
-import useRemoteJobs from '@/hooks/useRemoteJobs';
+import useRemoteJobs, { RemoteJob } from '@/hooks/useRemoteJobs';
 import useDatasetList, { DatasetInfo } from '@/hooks/useDatasetList';
 import useRemoteDatasetList from '@/hooks/useRemoteDatasetList';
 import { Subheading } from '@/components/catalyst/heading';
-import { RemoteJob } from '@/hooks/useRemoteJobs';
+import { CgSpinner } from 'react-icons/cg';
 
 interface ConnectionInfo {
   address: string;
@@ -65,7 +66,7 @@ export default function HostDetailContent({ mode, hostId, hostName, connectionIn
         <Subheading level={2} className="text-sm uppercase tracking-wide mb-4">
           Jobs
         </Subheading>
-        {mode === 'local' ? <JobsTable /> : <RemoteJobsSection hostId={hostId!} />}
+        {mode === 'local' ? <LocalJobsSection /> : <RemoteJobsSection hostId={hostId!} />}
       </section>
 
       {/* Datasets */}
@@ -149,11 +150,69 @@ function RemoteGpuSection({ hostId, hostName }: { hostId: string; hostName: stri
   );
 }
 
-function RemoteJobsSection({ hostId }: { hostId: string }) {
-  const { jobs, status } = useRemoteJobs(hostId);
+// ─── Jobs Sections ─────────────────────────────────────────────────
 
-  if (status === 'loading') {
-    return <p className="text-sm text-zinc-500 dark:text-zinc-400">Loading jobs...</p>;
+function getJobStatusClass(status: string): string {
+  if (status === 'running') return 'text-blue-600 dark:text-blue-400';
+  if (status === 'completed') return 'text-green-600 dark:text-green-400';
+  if (status === 'error' || status === 'failed') return 'text-red-600 dark:text-red-400';
+  return 'text-zinc-600 dark:text-zinc-400';
+}
+
+function LocalJobsSection() {
+  return <JobsTable onlyActive={false} />;
+}
+
+function RemoteJobsSection({ hostId }: { hostId: string }) {
+  const { jobs, status, refreshJobs } = useRemoteJobs(hostId);
+
+  const columns: TableColumn<RemoteJob>[] = [
+    {
+      title: 'Name',
+      key: 'name',
+      sortable: true,
+      render: (row: RemoteJob) => (
+        <Link
+          href={`/jobs/${row.id}?hostId=${hostId}`}
+          className="flex items-center gap-2 hover:text-zinc-950 dark:hover:text-white"
+        >
+          {['running', 'stopping'].includes(row.status) && (
+            <CgSpinner className="inline animate-spin text-blue-400 flex-shrink-0" />
+          )}
+          <span className="font-medium whitespace-nowrap">{row.name}</span>
+        </Link>
+      ),
+    },
+    {
+      title: 'Status',
+      key: 'status',
+      sortable: true,
+      render: (row: RemoteJob) => <span className={getJobStatusClass(row.status)}>{row.status}</span>,
+    },
+    {
+      title: 'Step',
+      key: 'step',
+      sortable: true,
+    },
+    {
+      title: 'Speed',
+      key: 'speed_string',
+      sortable: true,
+      render: (row: RemoteJob) => <span>{row.speed_string || '-'}</span>,
+    },
+  ];
+
+  if (status === 'loading' && jobs.length === 0) {
+    return (
+      <UniversalTable
+        columns={columns}
+        rows={[]}
+        isLoading={true}
+        onRefresh={refreshJobs}
+        defaultSortKey="name"
+        defaultSortDir="asc"
+      />
+    );
   }
 
   if (jobs.length === 0) {
@@ -166,44 +225,93 @@ function RemoteJobsSection({ hostId }: { hostId: string }) {
   }
 
   return (
-    <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-left">
-            <th className="px-4 py-2 font-medium">Name</th>
-            <th className="px-4 py-2 font-medium">Status</th>
-            <th className="px-4 py-2 font-medium">Step</th>
-            <th className="px-4 py-2 font-medium">Speed</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
-          {jobs.map((job: RemoteJob) => (
-            <tr key={job.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
-              <td className="px-4 py-2 text-zinc-900 dark:text-zinc-200 font-medium">{job.name}</td>
-              <td className="px-4 py-2">
-                <span
-                  className={clsx(
-                    'text-xs',
-                    job.status === 'running' && 'text-blue-600 dark:text-blue-400',
-                    job.status === 'completed' && 'text-green-600 dark:text-green-400',
-                    job.status === 'error' && 'text-red-600 dark:text-red-400',
-                    !['running', 'completed', 'error'].includes(job.status) && 'text-zinc-600 dark:text-zinc-400',
-                  )}
-                >
-                  {job.status}
-                </span>
-              </td>
-              <td className="px-4 py-2 text-zinc-600 dark:text-zinc-400">{job.step}</td>
-              <td className="px-4 py-2 text-zinc-600 dark:text-zinc-400">{job.speed_string || '-'}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <UniversalTable
+      columns={columns}
+      rows={jobs}
+      isLoading={false}
+      onRefresh={refreshJobs}
+      defaultSortKey="name"
+      defaultSortDir="asc"
+    />
   );
 }
 
-function DatasetTable({ datasets, linkable }: { datasets: DatasetInfo[]; linkable: boolean }) {
+// ─── Dataset Sections ──────────────────────────────────────────────
+
+function datasetColumns(linkable: boolean): TableColumn<DatasetInfo>[] {
+  return [
+    {
+      title: 'Name',
+      key: 'name',
+      sortable: true,
+      render: (row: DatasetInfo) =>
+        linkable ? (
+          <Link
+            href={`/datasets/${encodeURIComponent(row.name)}`}
+            className="font-medium whitespace-nowrap hover:text-zinc-950 dark:hover:text-white"
+          >
+            {row.name}
+          </Link>
+        ) : (
+          <span className="font-medium whitespace-nowrap">{row.name}</span>
+        ),
+    },
+    {
+      title: 'Images',
+      key: 'imageCount',
+      sortable: true,
+    },
+    {
+      title: 'Captions',
+      key: 'captionCount',
+      sortable: true,
+      render: (row: DatasetInfo) => {
+        if (row.imageCount === 0) return <span>0</span>;
+        const pct = Math.round((row.captionCount / row.imageCount) * 100);
+        return (
+          <span>
+            {row.captionCount}
+            <span
+              className={clsx(
+                'ml-1.5 text-xs',
+                pct === 100
+                  ? 'text-green-600 dark:text-green-400'
+                  : pct >= 50
+                    ? 'text-yellow-600 dark:text-yellow-400'
+                    : 'text-zinc-500 dark:text-zinc-500',
+              )}
+            >
+              ({pct}%)
+            </span>
+          </span>
+        );
+      },
+    },
+    {
+      title: 'Size',
+      key: 'totalSizeBytes',
+      sortable: true,
+      render: (row: DatasetInfo) => <span>{formatBytes(row.totalSizeBytes)}</span>,
+    },
+  ];
+}
+
+function LocalDatasetsSection() {
+  const { datasets, status, refreshDatasets } = useDatasetList();
+
+  if (status === 'loading' && datasets.length === 0) {
+    return (
+      <UniversalTable
+        columns={datasetColumns(true)}
+        rows={[]}
+        isLoading={true}
+        onRefresh={refreshDatasets}
+        defaultSortKey="name"
+        defaultSortDir="asc"
+      />
+    );
+  }
+
   if (datasets.length === 0) {
     return (
       <div className="bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6 text-center">
@@ -214,55 +322,50 @@ function DatasetTable({ datasets, linkable }: { datasets: DatasetInfo[]; linkabl
   }
 
   return (
-    <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-left">
-            <th className="px-4 py-2 font-medium">Name</th>
-            <th className="px-4 py-2 font-medium">Images</th>
-            <th className="px-4 py-2 font-medium">Captions</th>
-            <th className="px-4 py-2 font-medium">Size</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
-          {datasets.map(ds => (
-            <tr key={ds.name} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
-              <td className="px-4 py-2 text-zinc-900 dark:text-zinc-200 font-medium">
-                {linkable ? (
-                  <Link href={`/datasets/${ds.name}`} className="hover:text-blue-600 dark:hover:text-blue-400">
-                    {ds.name}
-                  </Link>
-                ) : (
-                  ds.name
-                )}
-              </td>
-              <td className="px-4 py-2 text-zinc-600 dark:text-zinc-400">{ds.imageCount}</td>
-              <td className="px-4 py-2 text-zinc-600 dark:text-zinc-400">{ds.captionCount}</td>
-              <td className="px-4 py-2 text-zinc-600 dark:text-zinc-400">{formatBytes(ds.totalSizeBytes)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <UniversalTable
+      columns={datasetColumns(true)}
+      rows={datasets}
+      isLoading={false}
+      onRefresh={refreshDatasets}
+      defaultSortKey="name"
+      defaultSortDir="asc"
+    />
   );
 }
 
-function LocalDatasetsSection() {
-  const { datasets, status } = useDatasetList();
-
-  if (status === 'loading') {
-    return <p className="text-sm text-zinc-500 dark:text-zinc-400">Loading datasets...</p>;
-  }
-
-  return <DatasetTable datasets={datasets} linkable />;
-}
-
 function RemoteDatasetsSection({ hostId }: { hostId: string }) {
-  const { datasets, status } = useRemoteDatasetList(hostId);
+  const { datasets, status, refreshDatasets } = useRemoteDatasetList(hostId);
 
-  if (status === 'loading') {
-    return <p className="text-sm text-zinc-500 dark:text-zinc-400">Loading datasets...</p>;
+  if (status === 'loading' && datasets.length === 0) {
+    return (
+      <UniversalTable
+        columns={datasetColumns(false)}
+        rows={[]}
+        isLoading={true}
+        onRefresh={refreshDatasets}
+        defaultSortKey="name"
+        defaultSortDir="asc"
+      />
+    );
   }
 
-  return <DatasetTable datasets={datasets} linkable={false} />;
+  if (datasets.length === 0) {
+    return (
+      <div className="bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6 text-center">
+        <Database className="w-8 h-8 text-zinc-400 dark:text-zinc-600 mx-auto mb-3" />
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">No datasets found.</p>
+      </div>
+    );
+  }
+
+  return (
+    <UniversalTable
+      columns={datasetColumns(false)}
+      rows={datasets}
+      isLoading={false}
+      onRefresh={refreshDatasets}
+      defaultSortKey="name"
+      defaultSortDir="asc"
+    />
+  );
 }

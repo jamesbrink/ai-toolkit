@@ -52,6 +52,12 @@
             category = "development";
           }
           {
+            name = "test-coverage";
+            command = "cd ui && npm run test:coverage";
+            help = "Run Vitest tests with v8 coverage report";
+            category = "development";
+          }
+          {
             name = "check";
             command = ''
               echo "==> Type checking..."
