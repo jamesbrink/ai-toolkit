@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import fs from 'fs/promises';
 import fsSync from 'fs';
 import path from 'path';
@@ -8,6 +9,17 @@ import { createAnthropicClient, getClaudeCaptionModel } from '@/server/claude/cl
 import { analyzeDataset, getStoredAnalysis, deleteAnalyzedImages } from '@/server/datasetAnalysis';
 import { runPythonAnalysis } from '@/server/pythonAnalysis';
 import { recordUsage } from '@/server/claude/usageTracker';
+import {
+  deployPod,
+  deploySpotPod,
+  getPod,
+  stopPod,
+  resumePod,
+  terminatePod,
+  listGpuTypes,
+  getAccountInfo,
+} from '@/server/runpod';
+import type { DeployPodInput, DeploySpotPodInput } from '@/server/runpod';
 
 // Tool definitions sent to the Claude API
 export const serverToolDefinitions = [
@@ -193,6 +205,162 @@ export const serverToolDefinitions = [
     name: 'list_datasets',
     description:
       'List all available datasets with image and caption file counts. Scans the datasets directory for folders containing images.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {},
+      required: [] as string[],
+    },
+  },
+  {
+    name: 'get_job_config',
+    description:
+      'Get the full training configuration for a job. Look up by job ID or job name. Returns the parsed YAML/JSON config that was used or will be used for training.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        job_id: { type: 'string', description: 'ID of the job (optional if job_name provided)' },
+        job_name: { type: 'string', description: 'Name of the job (optional if job_id provided)' },
+      },
+      required: [] as string[],
+    },
+  },
+  {
+    name: 'stop_job',
+    description:
+      'Stop a running or queued training job. Sets the stop flag so the training process will gracefully shut down after the current step.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        job_id: { type: 'string', description: 'ID of the job to stop' },
+      },
+      required: ['job_id'],
+    },
+  },
+  {
+    name: 'compare_jobs',
+    description:
+      'Compare two training jobs side-by-side. Shows differences in their configurations, plus status, step count, and speed for each.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        job_id_a: { type: 'string', description: 'ID of the first job' },
+        job_id_b: { type: 'string', description: 'ID of the second job' },
+      },
+      required: ['job_id_a', 'job_id_b'],
+    },
+  },
+  {
+    name: 'analyze_samples',
+    description:
+      'Analyze the most recent sample images from a training job using vision AI. Returns descriptions of each sample to help evaluate training progress and quality.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        job_id: { type: 'string', description: 'ID of the training job' },
+        count: { type: 'number', description: 'Number of most recent samples to analyze (default: 4)' },
+      },
+      required: ['job_id'],
+    },
+  },
+  {
+    name: 'list_runpod_pods',
+    description: 'List all active (non-terminated) RunPod pods with their status, GPU type, cost, and connection info.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {},
+      required: [] as string[],
+    },
+  },
+  {
+    name: 'deploy_runpod_pod',
+    description:
+      'Deploy a new RunPod GPU pod running AI Toolkit. This will incur real costs on the RunPod account. Returns pod info with cost details.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        name: { type: 'string', description: 'Name for the pod' },
+        gpu_type_id: { type: 'string', description: 'GPU type ID (e.g. "NVIDIA RTX 4090")' },
+        cloud_type: {
+          type: 'string',
+          description: 'Cloud type: "COMMUNITY" or "SECURE" (default: "COMMUNITY")',
+        },
+        instance_type: {
+          type: 'string',
+          description:
+            'Instance type: "ON_DEMAND" or "SPOT" (default: "ON_DEMAND"). Spot instances are cheaper but can be interrupted.',
+        },
+        volume_gb: {
+          type: 'number',
+          description: 'Volume size in GB for persistent storage (default: 50)',
+        },
+      },
+      required: ['name', 'gpu_type_id'],
+    },
+  },
+  {
+    name: 'get_runpod_pod_status',
+    description: 'Get detailed status of a RunPod pod including connection info, uptime, and cost.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        pod_id: { type: 'string', description: 'Local database ID of the pod' },
+      },
+      required: ['pod_id'],
+    },
+  },
+  {
+    name: 'stop_runpod_pod',
+    description:
+      'Stop a running RunPod pod. The pod will be stopped but not terminated — storage is preserved and it can be resumed later.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        pod_id: { type: 'string', description: 'Local database ID of the pod' },
+      },
+      required: ['pod_id'],
+    },
+  },
+  {
+    name: 'resume_runpod_pod',
+    description: 'Resume a stopped RunPod pod. The pod will start back up with its existing volume and configuration.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        pod_id: { type: 'string', description: 'Local database ID of the pod' },
+      },
+      required: ['pod_id'],
+    },
+  },
+  {
+    name: 'terminate_runpod_pod',
+    description:
+      'Permanently terminate a RunPod pod and delete its volume. This is irreversible — all data on the pod will be lost. Requires confirm: true.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        pod_id: { type: 'string', description: 'Local database ID of the pod' },
+        confirm: { type: 'boolean', description: 'Must be true to confirm termination' },
+      },
+      required: ['pod_id', 'confirm'],
+    },
+  },
+  {
+    name: 'list_runpod_gpu_types',
+    description: 'List available RunPod GPU types with pricing, VRAM, and availability info.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        min_vram_gb: {
+          type: 'number',
+          description: 'Minimum VRAM in GB to filter by (e.g. 24 for 24GB+ GPUs)',
+        },
+      },
+      required: [] as string[],
+    },
+  },
+  {
+    name: 'get_runpod_account',
+    description: 'Get RunPod account info including balance, current spend rate, and estimated time remaining.',
     input_schema: {
       type: 'object' as const,
       properties: {},
@@ -647,6 +815,568 @@ export async function executeServerTool(name: string, input: Record<string, unkn
       return JSON.stringify(datasets, null, 2);
     } catch (err) {
       return `Error listing datasets: ${err instanceof Error ? err.message : String(err)}`;
+    }
+  }
+
+  if (name === 'get_job_config') {
+    const jobId = input.job_id as string | undefined;
+    const jobName = input.job_name as string | undefined;
+
+    if (!jobId && !jobName) return 'Error: either job_id or job_name is required';
+
+    try {
+      const job = jobId
+        ? await prisma.job.findUnique({ where: { id: jobId } })
+        : await prisma.job.findFirst({ where: { name: jobName } });
+
+      if (!job) return `Error: job not found`;
+
+      let config: unknown;
+      try {
+        config = JSON.parse(job.job_config);
+      } catch {
+        config = job.job_config;
+      }
+
+      return JSON.stringify(
+        {
+          id: job.id,
+          name: job.name,
+          status: job.status,
+          config,
+        },
+        null,
+        2,
+      );
+    } catch (err) {
+      return `Error getting job config: ${err instanceof Error ? err.message : String(err)}`;
+    }
+  }
+
+  if (name === 'stop_job') {
+    const jobId = input.job_id as string;
+    if (!jobId) return 'Error: job_id is required';
+
+    try {
+      const job = await prisma.job.findUnique({ where: { id: jobId } });
+      if (!job) return `Error: job "${jobId}" not found`;
+
+      if (job.status === 'stopped') return `Job "${job.name}" is already stopped`;
+      if (job.status === 'completed') return `Job "${job.name}" is already completed`;
+      if (job.status === 'error') return `Job "${job.name}" is in error state`;
+
+      await prisma.job.update({
+        where: { id: jobId },
+        data: { stop: true, return_to_queue: false },
+      });
+
+      return `Stop signal sent to job "${job.name}". It will stop after the current step completes.`;
+    } catch (err) {
+      return `Error stopping job: ${err instanceof Error ? err.message : String(err)}`;
+    }
+  }
+
+  if (name === 'compare_jobs') {
+    const jobIdA = input.job_id_a as string;
+    const jobIdB = input.job_id_b as string;
+
+    if (!jobIdA || !jobIdB) return 'Error: both job_id_a and job_id_b are required';
+
+    try {
+      const [jobA, jobB] = await Promise.all([
+        prisma.job.findUnique({ where: { id: jobIdA } }),
+        prisma.job.findUnique({ where: { id: jobIdB } }),
+      ]);
+
+      if (!jobA) return `Error: job "${jobIdA}" not found`;
+      if (!jobB) return `Error: job "${jobIdB}" not found`;
+
+      let configA: Record<string, unknown> = {};
+      let configB: Record<string, unknown> = {};
+      try {
+        configA = JSON.parse(jobA.job_config) as Record<string, unknown>;
+      } catch {
+        /* raw string config */
+      }
+      try {
+        configB = JSON.parse(jobB.job_config) as Record<string, unknown>;
+      } catch {
+        /* raw string config */
+      }
+
+      // Flatten configs for comparison
+      function flatten(obj: unknown, prefix = ''): Record<string, unknown> {
+        const result: Record<string, unknown> = {};
+        if (obj && typeof obj === 'object' && !Array.isArray(obj)) {
+          for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
+            const fullKey = prefix ? `${prefix}.${key}` : key;
+            if (value && typeof value === 'object' && !Array.isArray(value)) {
+              Object.assign(result, flatten(value, fullKey));
+            } else {
+              result[fullKey] = value;
+            }
+          }
+        } else {
+          result[prefix || '_root'] = obj;
+        }
+        return result;
+      }
+
+      const flatA = flatten(configA);
+      const flatB = flatten(configB);
+      const allKeys = new Set([...Object.keys(flatA), ...Object.keys(flatB)]);
+
+      const changed: Record<string, { a: unknown; b: unknown }> = {};
+      const onlyInA: Record<string, unknown> = {};
+      const onlyInB: Record<string, unknown> = {};
+
+      for (const key of allKeys) {
+        const inA = key in flatA;
+        const inB = key in flatB;
+        if (inA && inB) {
+          if (JSON.stringify(flatA[key]) !== JSON.stringify(flatB[key])) {
+            changed[key] = { a: flatA[key], b: flatB[key] };
+          }
+        } else if (inA) {
+          onlyInA[key] = flatA[key];
+        } else {
+          onlyInB[key] = flatB[key];
+        }
+      }
+
+      return JSON.stringify(
+        {
+          job_a: { id: jobA.id, name: jobA.name, status: jobA.status, step: jobA.step, speed: jobA.speed_string },
+          job_b: { id: jobB.id, name: jobB.name, status: jobB.status, step: jobB.step, speed: jobB.speed_string },
+          config_diff: {
+            changed,
+            only_in_a: onlyInA,
+            only_in_b: onlyInB,
+          },
+        },
+        null,
+        2,
+      );
+    } catch (err) {
+      return `Error comparing jobs: ${err instanceof Error ? err.message : String(err)}`;
+    }
+  }
+
+  if (name === 'analyze_samples') {
+    const jobId = input.job_id as string;
+    const count = (input.count as number) || 4;
+
+    if (!jobId) return 'Error: job_id is required';
+
+    try {
+      const job = await prisma.job.findUnique({ where: { id: jobId } });
+      if (!job) return `Error: job "${jobId}" not found`;
+
+      const trainingFolder = await getTrainingFolder();
+      const samplesDir = path.join(trainingFolder, job.name, 'samples');
+
+      if (!fsSync.existsSync(samplesDir)) {
+        return `No samples directory found at ${samplesDir}. The job may not have generated samples yet.`;
+      }
+
+      const IMAGE_EXTS = new Set(['.png', '.jpg', '.jpeg', '.webp']);
+      const files = await fs.readdir(samplesDir);
+      const imageFiles: { name: string; mtime: number }[] = [];
+
+      for (const file of files) {
+        if (!IMAGE_EXTS.has(path.extname(file).toLowerCase())) continue;
+        const stat = await fs.stat(path.join(samplesDir, file));
+        imageFiles.push({ name: file, mtime: stat.mtimeMs });
+      }
+
+      if (imageFiles.length === 0) {
+        return 'No sample images found in the samples directory.';
+      }
+
+      // Sort by modification time descending, pick most recent N
+      imageFiles.sort((a, b) => b.mtime - a.mtime);
+      const selected = imageFiles.slice(0, count);
+
+      const auth = await getAnthropicAuth();
+      if (!auth.apiKey && !auth.oauthToken) {
+        return 'Error: Anthropic API key not configured';
+      }
+      const client = createAnthropicClient(auth);
+      const model = await getClaudeCaptionModel();
+
+      type MediaType = 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif';
+      const mediaTypeMap: Record<string, MediaType> = {
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.png': 'image/png',
+        '.webp': 'image/webp',
+      };
+
+      const results: { filename: string; description: string }[] = [];
+
+      for (const file of selected) {
+        const filePath = path.join(samplesDir, file.name);
+        const ext = path.extname(file.name).toLowerCase();
+        const mediaType = mediaTypeMap[ext] || 'image/png';
+
+        const imageData = await fs.readFile(filePath);
+        const response = await client.messages.create({
+          model,
+          max_tokens: 1024,
+          messages: [
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'image',
+                  source: {
+                    type: 'base64',
+                    media_type: mediaType,
+                    data: imageData.toString('base64'),
+                  },
+                },
+                {
+                  type: 'text',
+                  text: 'This is a sample image from an AI training job. Describe what you see, noting image quality, artifacts, coherence, and any issues. Be concise.',
+                },
+              ],
+            },
+          ],
+        });
+        void recordUsage('analyze_sample', model, response);
+
+        const description = response.content
+          .filter(b => b.type === 'text')
+          .map(b => (b as { type: 'text'; text: string }).text)
+          .join('');
+
+        results.push({ filename: file.name, description });
+      }
+
+      return JSON.stringify(
+        {
+          job_name: job.name,
+          samples_dir: samplesDir,
+          total_samples: imageFiles.length,
+          analyzed: results,
+        },
+        null,
+        2,
+      );
+    } catch (err) {
+      return `Error analyzing samples: ${err instanceof Error ? err.message : String(err)}`;
+    }
+  }
+
+  if (name === 'list_runpod_pods') {
+    try {
+      const pods = await prisma.runPodPod.findMany({
+        where: { currentStatus: { not: 'terminated' } },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      if (pods.length === 0) {
+        return 'No active RunPod pods found.';
+      }
+
+      const summary = pods.map(p => ({
+        id: p.id,
+        runpodId: p.runpodId,
+        name: p.name,
+        gpuType: p.gpuTypeDisplay || p.gpuTypeId,
+        currentStatus: p.currentStatus,
+        instanceType: p.instanceType,
+        costPerHr: p.costPerHr,
+        publicIp: p.publicIp || null,
+        publicPort: p.publicPort || null,
+        volumeGb: p.volumeInGb,
+        createdAt: p.createdAt,
+      }));
+
+      return JSON.stringify(summary, null, 2);
+    } catch (err) {
+      return `Error listing pods: ${err instanceof Error ? err.message : String(err)}`;
+    }
+  }
+
+  if (name === 'deploy_runpod_pod') {
+    const podName = input.name as string;
+    const gpuTypeId = input.gpu_type_id as string;
+    const cloudType = (input.cloud_type as 'COMMUNITY' | 'SECURE') || 'COMMUNITY';
+    const instanceType = (input.instance_type as string) || 'ON_DEMAND';
+    const volumeGb = (input.volume_gb as number) || 50;
+
+    if (!podName) return 'Error: name is required';
+    if (!gpuTypeId) return 'Error: gpu_type_id is required';
+
+    try {
+      const authPassword = crypto.randomUUID().slice(0, 16);
+
+      let deployed;
+      let bidPerGpu = 0;
+
+      if (instanceType === 'SPOT') {
+        // Get spot pricing for bid
+        const gpuTypes = await listGpuTypes();
+        const gpuType = gpuTypes.find(g => g.id === gpuTypeId);
+        const spotPrice = cloudType === 'SECURE' ? gpuType?.secureSpotPrice : gpuType?.communitySpotPrice;
+        bidPerGpu = spotPrice || 0;
+
+        if (bidPerGpu === 0) {
+          return `Error: no spot pricing available for GPU type "${gpuTypeId}" in ${cloudType} cloud`;
+        }
+
+        const spotInput: DeploySpotPodInput = {
+          name: podName,
+          gpuTypeId,
+          cloudType,
+          volumeInGb: volumeGb,
+          authPassword,
+          bidPerGpu,
+        };
+        deployed = await deploySpotPod(spotInput);
+      } else {
+        const deployInput: DeployPodInput = {
+          name: podName,
+          gpuTypeId,
+          cloudType,
+          volumeInGb: volumeGb,
+          authPassword,
+        };
+        deployed = await deployPod(deployInput);
+      }
+
+      // Create DB record
+      const pod = await prisma.runPodPod.create({
+        data: {
+          runpodId: deployed.id,
+          name: deployed.name,
+          gpuTypeId,
+          gpuTypeDisplay: gpuTypeId,
+          cloudType,
+          volumeInGb: volumeGb,
+          costPerHr: deployed.costPerHr,
+          desiredStatus: deployed.desiredStatus,
+          currentStatus: 'deploying',
+          authPassword,
+          instanceType,
+          bidPerGpu,
+        },
+      });
+
+      return JSON.stringify(
+        {
+          id: pod.id,
+          runpodId: deployed.id,
+          name: deployed.name,
+          gpuType: gpuTypeId,
+          costPerHr: deployed.costPerHr,
+          instanceType,
+          volumeGb,
+          authPassword,
+          warning: `This pod costs $${deployed.costPerHr.toFixed(2)}/hr. Remember to stop or terminate it when done.`,
+        },
+        null,
+        2,
+      );
+    } catch (err) {
+      return `Error deploying pod: ${err instanceof Error ? err.message : String(err)}`;
+    }
+  }
+
+  if (name === 'get_runpod_pod_status') {
+    const podId = input.pod_id as string;
+    if (!podId) return 'Error: pod_id is required';
+
+    try {
+      const pod = await prisma.runPodPod.findUnique({ where: { id: podId } });
+      if (!pod) return `Error: pod "${podId}" not found in local database`;
+
+      // Fetch live data from RunPod API
+      let liveData = null;
+      try {
+        liveData = await getPod(pod.runpodId);
+      } catch {
+        // Live data unavailable — use DB data only
+      }
+
+      const result: Record<string, unknown> = {
+        id: pod.id,
+        runpodId: pod.runpodId,
+        name: pod.name,
+        gpuType: pod.gpuTypeDisplay || pod.gpuTypeId,
+        currentStatus: liveData?.desiredStatus || pod.currentStatus,
+        desiredStatus: pod.desiredStatus,
+        instanceType: pod.instanceType,
+        costPerHr: pod.costPerHr,
+        publicIp: pod.publicIp || null,
+        publicPort: pod.publicPort || null,
+        volumeGb: pod.volumeInGb,
+        createdAt: pod.createdAt,
+        uptimeSeconds: pod.totalUptimeSeconds,
+        estimatedSpend: pod.estimatedSpend,
+      };
+
+      if (liveData) {
+        result.liveStatus = {
+          desiredStatus: liveData.desiredStatus,
+          costPerHr: liveData.costPerHr,
+          machineId: liveData.machineId,
+        };
+        if (liveData.runtime) {
+          result.liveStatus = {
+            ...(result.liveStatus as Record<string, unknown>),
+            uptimeInSeconds: liveData.runtime.uptimeInSeconds,
+            ports: liveData.runtime.ports,
+            gpus: liveData.runtime.gpus,
+          };
+        }
+      }
+
+      return JSON.stringify(result, null, 2);
+    } catch (err) {
+      return `Error getting pod status: ${err instanceof Error ? err.message : String(err)}`;
+    }
+  }
+
+  if (name === 'stop_runpod_pod') {
+    const podId = input.pod_id as string;
+    if (!podId) return 'Error: pod_id is required';
+
+    try {
+      const pod = await prisma.runPodPod.findUnique({ where: { id: podId } });
+      if (!pod) return `Error: pod "${podId}" not found`;
+
+      if (pod.currentStatus === 'stopped') return `Pod "${pod.name}" is already stopped`;
+      if (pod.currentStatus === 'terminated') return `Pod "${pod.name}" is terminated`;
+
+      await stopPod(pod.runpodId);
+
+      await prisma.runPodPod.update({
+        where: { id: podId },
+        data: { currentStatus: 'stopped', desiredStatus: 'EXITED' },
+      });
+
+      return `Pod "${pod.name}" is being stopped. Storage is preserved — use resume_runpod_pod to restart it.`;
+    } catch (err) {
+      return `Error stopping pod: ${err instanceof Error ? err.message : String(err)}`;
+    }
+  }
+
+  if (name === 'resume_runpod_pod') {
+    const podId = input.pod_id as string;
+    if (!podId) return 'Error: pod_id is required';
+
+    try {
+      const pod = await prisma.runPodPod.findUnique({ where: { id: podId } });
+      if (!pod) return `Error: pod "${podId}" not found`;
+
+      if (pod.currentStatus === 'running') return `Pod "${pod.name}" is already running`;
+      if (pod.currentStatus === 'terminated') return `Pod "${pod.name}" is terminated and cannot be resumed`;
+
+      await resumePod(pod.runpodId);
+
+      await prisma.runPodPod.update({
+        where: { id: podId },
+        data: { currentStatus: 'deploying', desiredStatus: 'RUNNING' },
+      });
+
+      return `Pod "${pod.name}" is resuming. It will be ready in a few minutes. Cost: $${pod.costPerHr.toFixed(2)}/hr.`;
+    } catch (err) {
+      return `Error resuming pod: ${err instanceof Error ? err.message : String(err)}`;
+    }
+  }
+
+  if (name === 'terminate_runpod_pod') {
+    const podId = input.pod_id as string;
+    const confirm = input.confirm as boolean;
+
+    if (!podId) return 'Error: pod_id is required';
+    if (!confirm) {
+      return 'Error: confirm must be true to terminate a pod. Termination is irreversible — all data on the pod will be deleted.';
+    }
+
+    try {
+      const pod = await prisma.runPodPod.findUnique({ where: { id: podId } });
+      if (!pod) return `Error: pod "${podId}" not found`;
+
+      if (pod.currentStatus === 'terminated') return `Pod "${pod.name}" is already terminated`;
+
+      // Check for active jobs on this pod's host
+      if (pod.hostId) {
+        const activeJobs = await prisma.job.findMany({
+          where: { status: 'running', gpu_ids: { not: undefined } },
+        });
+        if (activeJobs.length > 0) {
+          return `Warning: there may be active training jobs. Stop all jobs before terminating the pod. Active jobs: ${activeJobs.map(j => j.name).join(', ')}`;
+        }
+      }
+
+      await terminatePod(pod.runpodId);
+
+      await prisma.runPodPod.update({
+        where: { id: podId },
+        data: { currentStatus: 'terminated', terminatedAt: new Date() },
+      });
+
+      return `Pod "${pod.name}" has been terminated. All volume data has been deleted.`;
+    } catch (err) {
+      return `Error terminating pod: ${err instanceof Error ? err.message : String(err)}`;
+    }
+  }
+
+  if (name === 'list_runpod_gpu_types') {
+    const minVramGb = input.min_vram_gb as number | undefined;
+
+    try {
+      let gpuTypes = await listGpuTypes();
+
+      if (minVramGb) {
+        gpuTypes = gpuTypes.filter(g => g.memoryInGb >= minVramGb);
+      }
+
+      // Filter to GPUs that are actually available
+      const available = gpuTypes
+        .filter(g => g.communityCloud || g.secureCloud)
+        .map(g => ({
+          id: g.id,
+          displayName: g.displayName,
+          memoryGb: g.memoryInGb,
+          communityPrice: g.communityPrice,
+          securePrice: g.securePrice,
+          communitySpotPrice: g.communitySpotPrice,
+          secureSpotPrice: g.secureSpotPrice,
+          availability: g.lowestPrice?.stockStatus || 'unknown',
+          maxGpuCount: g.maxGpuCount,
+        }));
+
+      return JSON.stringify(available, null, 2);
+    } catch (err) {
+      return `Error listing GPU types: ${err instanceof Error ? err.message : String(err)}`;
+    }
+  }
+
+  if (name === 'get_runpod_account') {
+    try {
+      const account = await getAccountInfo();
+
+      const hoursRemaining =
+        account.currentSpendPerHr > 0 ? Math.floor(account.clientBalance / account.currentSpendPerHr) : null;
+
+      return JSON.stringify(
+        {
+          balance: `$${account.clientBalance.toFixed(2)}`,
+          currentSpendPerHr: `$${account.currentSpendPerHr.toFixed(2)}/hr`,
+          lifetimeSpend: `$${account.clientLifetimeSpend.toFixed(2)}`,
+          spendLimit: `$${account.spendLimit.toFixed(2)}`,
+          underBalance: account.underBalance,
+          estimatedHoursRemaining: hoursRemaining,
+        },
+        null,
+        2,
+      );
+    } catch (err) {
+      return `Error getting account info: ${err instanceof Error ? err.message : String(err)}`;
     }
   }
 

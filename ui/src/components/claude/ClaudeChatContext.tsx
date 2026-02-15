@@ -49,6 +49,11 @@ function saveMessages(messages: ChatMessage[]) {
   }
 }
 
+// Tools listed here are informational-only: they render UI but require no user
+// action. The provider auto-sends a tool_result so the conversation continues
+// without deadlocking. To extend, add the tool name to this set.
+const AUTO_RESPOND_TOOLS = new Set(['explain_config_option']);
+
 export function ClaudeChatProvider({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isConfigured, setIsConfigured] = useState(false);
@@ -56,6 +61,7 @@ export function ClaudeChatProvider({ children }: { children: React.ReactNode }) 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [tools, setTools] = useState<unknown[]>([]);
   const [activeToolName, setActiveToolName] = useState<string | null>(null);
+  const [pendingAutoRespond, setPendingAutoRespond] = useState<ContentBlock[] | null>(null);
   const contextRef = useRef<ChatCtx | undefined>(undefined);
   const toolHandlerRef = useRef<ToolHandler | null>(null);
   const messagesInitialized = useRef(false);
@@ -192,11 +198,18 @@ export function ClaudeChatProvider({ children }: { children: React.ReactNode }) 
               const finalMessages: ChatMessage[] = [...currentMessages, { role: 'assistant', content: finalBlocks }];
               setMessages(finalMessages);
 
-              // Notify tool handler
+              // Notify tool handler (extension point for page-specific tool handling,
+              // e.g. ConfigProposal on /jobs/new applies config changes via custom events)
               for (const block of toolBlocks) {
                 if (toolHandlerRef.current && block.name && block.input) {
                   toolHandlerRef.current(block.name, block.input);
                 }
+              }
+
+              // Queue auto-response for informational tools that need no user action
+              const autoBlocks = toolBlocks.filter(b => b.name && AUTO_RESPOND_TOOLS.has(b.name));
+              if (autoBlocks.length > 0) {
+                setPendingAutoRespond(autoBlocks);
               }
             } else {
               setMessages([...currentMessages, { role: 'assistant', content: assistantText }]);
@@ -228,6 +241,26 @@ export function ClaudeChatProvider({ children }: { children: React.ReactNode }) 
     setIsStreaming(false);
     setActiveToolName(null);
   }, []);
+
+  // Auto-respond to informational tools after streaming completes
+  useEffect(() => {
+    if (pendingAutoRespond && !isStreaming) {
+      const blocks = pendingAutoRespond;
+      setPendingAutoRespond(null);
+      const toolResults: ContentBlock[] = blocks.map(b => ({
+        type: 'tool_result' as const,
+        tool_use_id: b.id!,
+        content: 'Explanation displayed to user.',
+      }));
+      const toolResultMessage: ChatMessage = { role: 'user', content: toolResults };
+      const updated = [...messages, toolResultMessage];
+      setMessages(updated);
+      processStream(
+        updated.map(m => ({ role: m.role, content: m.content })),
+        updated,
+      );
+    }
+  }, [pendingAutoRespond, isStreaming, messages, processStream]);
 
   const sendMessage = useCallback(
     (text: string) => {

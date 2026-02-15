@@ -9,6 +9,7 @@ import AuthWrapper from '@/components/AuthWrapper';
 import DocModal from '@/components/DocModal';
 import { ClaudeChatProvider } from '@/components/claude/ClaudeChatContext';
 import ChatPanel from '@/components/claude/ChatPanel';
+import PageContextProvider from '@/components/claude/PageContextProvider';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,13 +33,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <AuthWrapper authRequired={authRequired}>
             <SidebarProvider>
               <ClaudeChatProvider>
-                <div className="flex h-dvh bg-white dark:bg-gray-950">
-                  <Sidebar />
-                  <main className="flex-1 min-w-0 overflow-auto bg-white text-zinc-950 dark:bg-gray-950 dark:text-gray-100 relative">
-                    <Suspense>{children}</Suspense>
-                  </main>
-                  <ChatPanel />
-                </div>
+                <PageContextProvider>
+                  <div className="flex h-dvh bg-white dark:bg-gray-950">
+                    <Sidebar />
+                    <main className="flex-1 min-w-0 overflow-auto bg-white text-zinc-950 dark:bg-gray-950 dark:text-gray-100 relative">
+                      <Suspense>{children}</Suspense>
+                    </main>
+                    <ChatPanel />
+                  </div>
+                </PageContextProvider>
               </ClaudeChatProvider>
             </SidebarProvider>
           </AuthWrapper>

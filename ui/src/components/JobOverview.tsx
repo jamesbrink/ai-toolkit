@@ -10,6 +10,7 @@ import { getTotalSteps } from '@/utils/jobs';
 import { Cpu, HardDrive, Info, Gauge, Bot } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import useJobLog from '@/hooks/useJobLog';
+import useJobLossLog from '@/hooks/useJobLossLog';
 import { useClaudeChat } from '@/components/claude/ClaudeChatContext';
 
 interface JobOverviewProps {
@@ -24,6 +25,7 @@ export default function JobOverview({ job, hostId }: JobOverviewProps) {
     [job.gpu_ids, isMpsJob],
   );
   const { log, status: statusLog } = useJobLog(job.id, 2000, hostId);
+  const { series: lossSeries } = useJobLossLog(job.id, 10000, hostId);
   const logRef = useRef<HTMLDivElement>(null);
   // Track whether we should auto-scroll to bottom
   const [isScrolledToBottom, setIsScrolledToBottom] = useState(true);
@@ -38,6 +40,18 @@ export default function JobOverview({ job, hostId }: JobOverviewProps) {
   const { cpuInfo, isCPUInfoLoaded } = useCPUInfo(5000, hostId);
   const { isConfigured, openPanel, sendMessage, setContext } = useClaudeChat();
 
+  // Summarize loss data to last 20 points per series for context
+  const lossData = useMemo(() => {
+    const keys = Object.keys(lossSeries);
+    if (keys.length === 0) return undefined;
+    const summary: Record<string, { step: number; value: number | null }[]> = {};
+    for (const key of keys) {
+      const points = lossSeries[key];
+      summary[key] = points.slice(-20).map(p => ({ step: p.step, value: p.value }));
+    }
+    return summary;
+  }, [lossSeries]);
+
   // Provide job context to Claude when log updates
   useEffect(() => {
     if (isConfigured && log) {
@@ -49,9 +63,10 @@ export default function JobOverview({ job, hostId }: JobOverviewProps) {
         page: `/jobs/${job.id}`,
         jobData: { name: job.name, status: job.status, step: job.step, gpu_ids: job.gpu_ids },
         logTail: logLines,
+        lossData,
       });
     }
-  }, [isConfigured, log, job, setContext]);
+  }, [isConfigured, log, job, setContext, lossData]);
 
   const handleAnalyze = () => {
     const logTail = log

@@ -11,3 +11,5 @@ export const audioExtensions = ['.mp3', '.wav'];
 export const isVideo = (filePath: string) => videoExtensions.includes(filePath.toLowerCase().slice(-4));
 export const isImage = (filePath: string) => imgExtensions.includes(filePath.toLowerCase().slice(-4));
 export const isAudio = (filePath: string) => audioExtensions.includes(filePath.toLowerCase().slice(-4));
+
+export { setNestedValue } from './hooks';

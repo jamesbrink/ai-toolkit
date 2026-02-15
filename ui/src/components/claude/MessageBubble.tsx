@@ -87,6 +87,14 @@ function renderContentBlocks(blocks: ContentBlock[]): React.ReactNode {
         />
       );
     }
+    if (block.type === 'tool_use' && block.name === 'explain_config_option') {
+      return (
+        <div key={i} className="border border-blue-500/40 bg-blue-950/20 rounded-lg p-3 my-2">
+          <code className="text-xs text-blue-400">{block.input?.option_path as string}</code>
+          <div className="mt-1.5 text-sm text-zinc-300">{renderText(block.input?.explanation as string)}</div>
+        </div>
+      );
+    }
     if (block.type === 'tool_use') {
       return (
         <div key={i} className="bg-zinc-100 dark:bg-zinc-950 rounded p-2 my-1 text-xs text-zinc-600 dark:text-zinc-400">

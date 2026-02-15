@@ -8,6 +8,7 @@ import clsx from 'clsx';
 import { apiClient } from '@/utils/api';
 import { HostInfo } from '@/hooks/useHostList';
 import HostDetailContent from '@/components/HostDetailContent';
+import { useClaudeChat } from '@/components/claude/ClaudeChatContext';
 
 export default function HostDetailPage() {
   const params = useParams();
@@ -16,6 +17,7 @@ export default function HostDetailPage() {
 
   const [host, setHost] = useState<HostInfo | null>(null);
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const { isConfigured, setContext } = useClaudeChat();
 
   useEffect(() => {
     if (!hostId) return;
@@ -31,6 +33,12 @@ export default function HostDetailPage() {
         setStatus('error');
       });
   }, [hostId]);
+
+  useEffect(() => {
+    if (isConfigured && host) {
+      setContext({ page: `/hosts/${hostId}`, hostId, hostName: host.name });
+    }
+  }, [isConfigured, host, hostId, setContext]);
 
   return (
     <>

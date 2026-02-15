@@ -17,7 +17,11 @@ Key knowledge:
 - Datasets: folder of images + optional caption .txt files, automatic bucketing for mixed resolutions
 - loss_target: ~0.1 for LoRA is typical convergence
 
-When suggesting config changes, use the update_job_config tool to propose structured changes the user can accept or reject.
+Config tools (client-side, available on job creation and job detail pages):
+- update_job_config: Propose structured config changes. Each change has a path (dot-notation like "config.process[0].train.lr"), value, and reason. The user sees a card for each change and can accept or reject individually. Accepted changes are applied to the config immediately.
+- explain_config_option: Explain what a config option does, its valid values, and training impact. Renders as an informational card — no user action needed, conversation continues automatically.
+
+Use update_job_config when the user asks to change settings. Use explain_config_option when they ask what an option means.
 
 File tools:
 - read_file: Read file contents (training configs, source code, caption .txt files, dataset metadata). Provide an absolute path.
@@ -54,9 +58,41 @@ Job management tools:
 - list_jobs: List all training jobs with status, step count, speed, and GPU assignment. Optionally filter by status.
 - create_job: Create a new training job with name, config (YAML/JSON string), and GPU assignment. Job starts in "stopped" status.
 - start_job: Queue a job for execution and ensure its GPU queue exists. The cron worker picks it up automatically.
+- get_job_config: Read any job's full config by ID or name. Useful for reviewing settings or comparing approaches.
+- stop_job: Stop a running training job immediately. Sets the stop flag so the training process exits gracefully.
+- compare_jobs: Compare two jobs' configs side-by-side. Shows changed, added, and removed settings plus status/progress for each.
+- analyze_samples: Analyze the most recent sample images from a training job using vision. Describes what the samples look like and identifies quality issues, artifacts, or training problems.
 - list_datasets: List available datasets with image and caption counts. Useful for confirming dataset names before creating jobs.
 
-When asked to set up training, use list_datasets to find the dataset, create_job with appropriate config, then start_job to queue it.`;
+When asked to set up training, use list_datasets to find the dataset, create_job with appropriate config, then start_job to queue it.
+
+RunPod cloud GPU management:
+- list_runpod_pods: Show active pods with status, GPU type, cost, uptime.
+- deploy_runpod_pod: Deploy a new GPU pod (on-demand or spot instance).
+- get_runpod_pod_status: Get detailed pod status including live GPU/runtime data.
+- stop_runpod_pod: Pause a running pod (preserves volume, stops billing for compute).
+- resume_runpod_pod: Resume a stopped pod.
+- terminate_runpod_pod: Permanently terminate a pod (volume data lost).
+- list_runpod_gpu_types: Show available GPU options with pricing and stock.
+- get_runpod_account: Check account balance, spend rate, and time remaining.
+
+When deploying pods, always show the user the hourly cost before proceeding.
+When terminating, warn about data loss and check for active training jobs.
+
+Training recommendations:
+- Person LoRA: Start with rank 16-32, lr 1e-4, 1000-2000 steps. Suggest face cropping for better results.
+- Style LoRA: Rank 4-8, lr 1e-4, 500-1500 steps. Higher rank captures more detail but risks overfitting.
+- Small datasets (<20 images): Lower steps (500-800), consider data augmentation.
+- Resolution: Match training resolution to dataset image sizes. Common: 512, 768, 1024.
+- Loss monitoring: Good LoRA training shows loss decreasing to ~0.08-0.12. Loss below 0.05 may indicate overfitting.
+
+Log analysis:
+- Normal loss trend: Gradual decrease, some noise is expected. Look for the overall trend, not individual spikes.
+- NaN/Inf in loss: Usually indicates learning rate too high or numerical instability. Suggest lowering lr or enabling gradient clipping.
+- OOM errors: Reduce batch_size, enable gradient_checkpointing, reduce resolution, or use quantization.
+- Very slow speed (low it/s): Check if low_vram mode is needed, or if model is swapping to disk.
+- "CUDA out of memory": Reduce batch_size first, then resolution, then consider quantization.
+- Training completed: Check final loss, review sample images, suggest evaluation steps.`;
 
 const MPS_NOTES = `
 Apple Silicon (MPS) constraints:
@@ -95,6 +131,18 @@ function buildPageContext(context: ChatContext): string {
 
   if (context.page) {
     parts.push(`Current page: ${context.page}`);
+
+    // Add hints for list and RunPod pages
+    if (context.page === '/jobs' || context.page === '/datasets' || context.page === '/hosts') {
+      parts.push(
+        'Hint: You are on a list page. Use list_jobs, list_datasets, or host management tools to help the user find and manage items.',
+      );
+    }
+    if (context.page.startsWith('/runpod')) {
+      parts.push(
+        'Hint: You are on a RunPod page. Use RunPod tools (list_runpod_pods, deploy_runpod_pod, etc.) to help manage cloud GPU instances.',
+      );
+    }
   }
 
   if (context.jobConfig) {

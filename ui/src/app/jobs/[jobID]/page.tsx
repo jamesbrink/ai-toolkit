@@ -17,6 +17,9 @@ import { JobOverviewSkeleton } from '@/components/Skeleton';
 import { Job } from '@/server/prismaTypes';
 import { UnifiedJob } from '@/types';
 import { useClaudeChat } from '@/components/claude/ClaudeChatContext';
+import { configTools } from '@/components/claude/tools/configTools';
+import { setNestedValue } from '@/utils/basic';
+import { apiClient } from '@/utils/api';
 
 type PageKey = 'overview' | 'samples' | 'config' | 'loss_log';
 
@@ -62,17 +65,55 @@ export default function JobPage({ params }: { params: Promise<{ jobID: string }>
   const hostId = searchParams.get('hostId');
   const { job, status, refreshJob } = useJob(jobID, 5000, hostId);
   const [pageKey, setPageKey] = useState<PageKey>('overview');
-  const { setContext, isConfigured } = useClaudeChat();
+  const { setContext, setTools, isConfigured } = useClaudeChat();
+
+  // Provide config tools to Claude chat
+  useEffect(() => {
+    if (isConfigured) {
+      setTools(configTools);
+      return () => setTools([]);
+    }
+  }, [isConfigured, setTools]);
 
   useEffect(() => {
     if (isConfigured && job) {
+      let jobConfig: unknown = undefined;
+      try {
+        jobConfig = JSON.parse(job.job_config);
+      } catch {
+        // invalid config JSON
+      }
       setContext({
         page: `/jobs/${jobID}`,
         jobData: { name: job.name, status: job.status, step: job.step, gpu_ids: job.gpu_ids },
+        ...(jobConfig ? { jobConfig } : {}),
         ...(hostId ? { hostId } : {}),
       });
     }
   }, [isConfigured, job, jobID, setContext, hostId]);
+
+  // Apply config changes from Claude's ConfigProposal
+  useEffect(() => {
+    const handler = async (e: Event) => {
+      if (!job) return;
+      const { path, value } = (e as CustomEvent).detail;
+      try {
+        const parsed = JSON.parse(job.job_config);
+        const updated = setNestedValue(parsed, value, path);
+        await apiClient.post('/api/jobs', {
+          id: job.id,
+          name: job.name,
+          gpu_ids: job.gpu_ids,
+          job_config: updated,
+        });
+        refreshJob();
+      } catch (err) {
+        console.error('Failed to apply config change:', err);
+      }
+    };
+    window.addEventListener('claude-config-change', handler);
+    return () => window.removeEventListener('claude-config-change', handler);
+  }, [job, refreshJob]);
 
   const page = pages.find(p => p.value === pageKey);
 

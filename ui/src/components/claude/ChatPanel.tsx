@@ -19,7 +19,21 @@ const TOOL_LABELS: Record<string, string> = {
   list_jobs: 'Listing jobs...',
   create_job: 'Creating job...',
   start_job: 'Starting job...',
+  stop_job: 'Stopping job...',
   list_datasets: 'Listing datasets...',
+  update_job_config: 'Proposing config changes...',
+  explain_config_option: 'Explaining config option...',
+  get_job_config: 'Reading job config...',
+  compare_jobs: 'Comparing jobs...',
+  analyze_samples: 'Analyzing samples...',
+  list_runpod_pods: 'Listing RunPod pods...',
+  deploy_runpod_pod: 'Deploying RunPod pod...',
+  get_runpod_pod_status: 'Checking pod status...',
+  stop_runpod_pod: 'Stopping RunPod pod...',
+  resume_runpod_pod: 'Resuming RunPod pod...',
+  terminate_runpod_pod: 'Terminating RunPod pod...',
+  list_runpod_gpu_types: 'Listing GPU types...',
+  get_runpod_account: 'Checking RunPod account...',
 };
 
 const MIN_WIDTH = 320;
