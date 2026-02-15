@@ -5,16 +5,17 @@ import useAllQueues from '@/hooks/useAllQueues';
 import useAllGPUInfo from '@/hooks/useAllGPUInfo';
 import Link from 'next/link';
 import UniversalTable, { TableColumn } from '@/components/UniversalTable';
-import { GpuInfo, JobConfig, UnifiedJob, UnifiedQueue, DataSource } from '@/types';
+import { GpuInfo, UnifiedJob, UnifiedQueue, DataSource } from '@/types';
 import JobActionBar from './JobActionBar';
 import { Job, Queue } from '@/server/prismaTypes';
 import useQueueList from '@/hooks/useQueueList';
 import clsx from 'clsx';
 import { startQueue, stopQueue } from '@/utils/queue';
 import { startQueueOnHost, stopQueueOnHost, startJobOnHost, deleteJobOnHost } from '@/utils/remoteActions';
-import { startJob, deleteJob } from '@/utils/jobs';
+import { startJob, deleteJob, hasValidConfig, getJobConfig } from '@/utils/jobs';
 import { openConfirm } from '@/components/ConfirmModal';
 import { CgSpinner } from 'react-icons/cg';
+import { AlertTriangle } from 'lucide-react';
 import useGPUInfo from '@/hooks/useGPUInfo';
 import { HostInfo } from '@/hooks/useHostList';
 
@@ -91,12 +92,22 @@ function MultiHostJobsTable({ onlyActive, hosts }: { onlyActive: boolean; hosts:
           row.source.type === 'remote' && row.source.hostId
             ? `/jobs/${row.id}?hostId=${row.source.hostId}`
             : `/jobs/${row.id}`;
+        const isMalformed = !hasValidConfig(row);
         return (
           <Link href={href} className="flex items-center gap-2 hover:text-zinc-950 dark:hover:text-white">
             {['running', 'stopping'].includes(row.status) ? (
               <CgSpinner className="inline animate-spin text-blue-400 flex-shrink-0" />
             ) : null}
             <span className="font-medium whitespace-nowrap">{row.name}</span>
+            {isMalformed && (
+              <span
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300 rounded text-[10px] flex-shrink-0"
+                title="This job has a malformed configuration and cannot be run. Delete it and recreate."
+              >
+                <AlertTriangle className="w-3 h-3" />
+                Invalid Config
+              </span>
+            )}
             {row.source.type === 'remote' && (
               <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 rounded text-[10px] flex-shrink-0">
                 {row.source.hostName}
@@ -111,8 +122,11 @@ function MultiHostJobsTable({ onlyActive, hosts }: { onlyActive: boolean; hosts:
       key: 'step',
       sortable: true,
       render: (row: UnifiedJob) => {
-        const jobConfig: JobConfig = JSON.parse(row.job_config);
-        const totalSteps = jobConfig.config.process[0].train.steps;
+        const jobConfig = getJobConfig(row);
+        const totalSteps = jobConfig?.config.process[0].train.steps ?? 0;
+        if (!jobConfig) {
+          return <span className="text-xs text-zinc-500">—</span>;
+        }
         return (
           <div>
             <div className="text-xs text-zinc-600 dark:text-gray-400">
@@ -121,7 +135,7 @@ function MultiHostJobsTable({ onlyActive, hosts }: { onlyActive: boolean; hosts:
             <div className="bg-zinc-200 dark:bg-gray-700 rounded-full h-1.5">
               <div
                 className="bg-blue-500 h-1.5 rounded-full"
-                style={{ width: `${(row.step / totalSteps) * 100}%` }}
+                style={{ width: `${totalSteps > 0 ? (row.step / totalSteps) * 100 : 0}%` }}
               ></div>
             </div>
           </div>
@@ -424,26 +438,37 @@ function LocalJobsTable({ onlyActive }: { onlyActive: boolean }) {
       title: 'Name',
       key: 'name',
       sortable: true,
-      render: row => (
-        <Link
-          href={`/jobs/${row.id}`}
-          className="font-medium whitespace-nowrap hover:text-zinc-950 dark:hover:text-white"
-        >
-          {['running', 'stopping'].includes(row.status) ? (
-            <CgSpinner className="inline animate-spin mr-2 text-blue-400" />
-          ) : null}
-          {row.name}
-        </Link>
-      ),
+      render: row => {
+        const isMalformed = !hasValidConfig(row);
+        return (
+          <Link href={`/jobs/${row.id}`} className="flex items-center gap-2 hover:text-zinc-950 dark:hover:text-white">
+            {['running', 'stopping'].includes(row.status) ? (
+              <CgSpinner className="inline animate-spin text-blue-400 flex-shrink-0" />
+            ) : null}
+            <span className="font-medium whitespace-nowrap">{row.name}</span>
+            {isMalformed && (
+              <span
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300 rounded text-[10px] flex-shrink-0"
+                title="This job has a malformed configuration and cannot be run. Delete it and recreate."
+              >
+                <AlertTriangle className="w-3 h-3" />
+                Invalid Config
+              </span>
+            )}
+          </Link>
+        );
+      },
     },
     {
       title: 'Steps',
       key: 'step',
       sortable: true,
       render: row => {
-        const jobConfig: JobConfig = JSON.parse(row.job_config);
-        const totalSteps = jobConfig.config.process[0].train.steps;
-
+        const jobConfig = getJobConfig(row);
+        const totalSteps = jobConfig?.config.process[0].train.steps ?? 0;
+        if (!jobConfig) {
+          return <span className="text-xs text-zinc-500">—</span>;
+        }
         return (
           <div>
             <div className="text-xs text-zinc-600 dark:text-gray-400">
@@ -452,7 +477,7 @@ function LocalJobsTable({ onlyActive }: { onlyActive: boolean }) {
             <div className="bg-zinc-200 dark:bg-gray-700 rounded-full h-1.5">
               <div
                 className="bg-blue-500 h-1.5 rounded-full"
-                style={{ width: `${(row.step / totalSteps) * 100}%` }}
+                style={{ width: `${totalSteps > 0 ? (row.step / totalSteps) * 100 : 0}%` }}
               ></div>
             </div>
           </div>

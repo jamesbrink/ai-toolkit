@@ -73,11 +73,15 @@ export default function SampleImages({ job, hostId }: SampleImagesProps) {
   const didFirstScroll = useRef(false);
   const numSamples = useMemo(() => {
     if (job?.job_config) {
-      const jobConfig = JSON.parse(job.job_config) as JobConfig;
-      const sampleConfig = jobConfig.config.process[0].sample;
-      const numPrompts = sampleConfig.prompts ? sampleConfig.prompts.length : 0;
-      const numSamples = sampleConfig.samples.length;
-      return Math.max(numPrompts, numSamples, 1);
+      try {
+        const jobConfig = JSON.parse(job.job_config) as JobConfig;
+        const sampleConfig = jobConfig.config.process[0].sample;
+        const numPrompts = sampleConfig.prompts ? sampleConfig.prompts.length : 0;
+        const numSamples = sampleConfig.samples.length;
+        return Math.max(numPrompts, numSamples, 1);
+      } catch {
+        return 10;
+      }
     }
     return 10;
   }, [job]);
@@ -167,8 +171,12 @@ export default function SampleImages({ job, hostId }: SampleImagesProps) {
 
   const sampleConfig = useMemo(() => {
     if (job?.job_config) {
-      const jobConfig = JSON.parse(job.job_config) as JobConfig;
-      return jobConfig.config.process[0].sample;
+      try {
+        const jobConfig = JSON.parse(job.job_config) as JobConfig;
+        return jobConfig.config.process[0].sample;
+      } catch {
+        return null;
+      }
     }
     return null;
   }, [job]);

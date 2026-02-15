@@ -64,8 +64,12 @@ export const markJobAsStopped = (jobID: string) => {
   });
 };
 
-export const getJobConfig = (job: AnyJob) => {
-  return JSON.parse(job.job_config) as JobConfig;
+export const getJobConfig = (job: AnyJob): JobConfig | null => {
+  try {
+    return JSON.parse(job.job_config) as JobConfig;
+  } catch {
+    return null;
+  }
 };
 
 export const getAvaliableJobActions = (job: AnyJob) => {
@@ -77,7 +81,7 @@ export const getAvaliableJobActions = (job: AnyJob) => {
   const canStop = job.status === 'running' && !isStopping;
   let canStart = ['stopped', 'error'].includes(job.status) && !isStopping;
   // can resume if more steps were added
-  if (job.status === 'completed' && jobConfig.config.process[0].train.steps > job.step && !isStopping) {
+  if (job.status === 'completed' && jobConfig && jobConfig.config.process[0].train.steps > job.step && !isStopping) {
     canStart = true;
   }
   return { canDelete, canEdit, canStop, canStart, canRemoveFromQueue };
@@ -85,5 +89,9 @@ export const getAvaliableJobActions = (job: AnyJob) => {
 
 export const getTotalSteps = (job: AnyJob) => {
   const jobConfig = getJobConfig(job);
-  return jobConfig.config.process[0].train.steps;
+  return jobConfig?.config.process[0].train.steps ?? 0;
+};
+
+export const hasValidConfig = (job: AnyJob): boolean => {
+  return getJobConfig(job) !== null;
 };

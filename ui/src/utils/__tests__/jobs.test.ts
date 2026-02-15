@@ -34,7 +34,8 @@ describe('getJobConfig', () => {
   it('parses job_config JSON', () => {
     const job = makeJob();
     const config = getJobConfig(job);
-    expect(config.config.process[0].train.steps).toBe(1000);
+    expect(config).not.toBeNull();
+    expect(config!.config.process[0].train.steps).toBe(1000);
   });
 });
 

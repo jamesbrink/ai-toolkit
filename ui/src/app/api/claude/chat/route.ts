@@ -4,8 +4,17 @@ import { ChatContext } from '@/types/claude';
 import { getAnthropicAuth } from '@/server/settings';
 import { createAnthropicClient, getClaudeChatModel } from '@/server/claude/client';
 import { buildSystemPrompt } from '@/server/claude/systemPrompt';
-import { serverToolDefinitions, SERVER_TOOL_NAMES, executeViewImageRemote } from '@/server/claude/serverTools';
+import {
+  serverToolDefinitions,
+  SERVER_TOOL_NAMES,
+  executeViewImageRemote,
+  executeServerTool,
+} from '@/server/claude/serverTools';
 import { executeToolMaybeRemote, fetchRemoteImageBytes } from '@/server/claude/remoteToolExecution';
+
+// Tools that always execute locally on the hub, even when chatting with a remote host.
+// Push/pull are cross-host operations (hub ↔ remote), and list_hosts queries the local DB.
+const LOCAL_ONLY_TOOLS = new Set(['list_hosts', 'push_dataset', 'pull_dataset']);
 import { recordUsage } from '@/server/claude/usageTracker';
 
 type MessageParam = Anthropic.MessageParam;
@@ -136,7 +145,10 @@ export async function POST(req: NextRequest) {
                   `[claude-chat] Executing tool: ${block.name}, input keys: ${Object.keys(input).join(', ')}`,
                 );
 
-                if (block.name === 'view_dataset_image' && hostId) {
+                if (LOCAL_ONLY_TOOLS.has(block.name)) {
+                  // Cross-host tools always run on the hub instance
+                  result = await executeServerTool(block.name, input);
+                } else if (block.name === 'view_dataset_image' && hostId) {
                   // Vision API runs locally (hub has API key), but fetch image from remote
                   const imageData = await fetchRemoteImageBytes(input.image_path as string, hostId);
                   result = imageData

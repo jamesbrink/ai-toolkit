@@ -35,6 +35,9 @@ const TOOL_LABELS: Record<string, string> = {
   terminate_runpod_pod: 'Terminating RunPod pod...',
   list_runpod_gpu_types: 'Listing GPU types...',
   get_runpod_account: 'Checking RunPod account...',
+  list_hosts: 'Listing hosts...',
+  push_dataset: 'Pushing dataset...',
+  pull_dataset: 'Pulling dataset...',
 };
 
 const MIN_WIDTH = 320;

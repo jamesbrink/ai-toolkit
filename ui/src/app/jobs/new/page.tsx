@@ -145,7 +145,14 @@ export default function TrainingForm() {
         .then(res => res.data)
         .then(data => {
           setGpuIDs(data.gpu_ids);
-          const newJobConfig = migrateJobConfig(JSON.parse(data.job_config));
+          let parsed;
+          try {
+            parsed = JSON.parse(data.job_config);
+          } catch {
+            console.error('Cannot clone job: malformed job_config');
+            return;
+          }
+          const newJobConfig = migrateJobConfig(parsed);
           newJobConfig.config.name = `${newJobConfig.config.name}_copy`;
           setJobConfig(newJobConfig);
         })
@@ -160,7 +167,14 @@ export default function TrainingForm() {
         .then(res => res.data)
         .then(data => {
           setGpuIDs(data.gpu_ids);
-          setJobConfig(migrateJobConfig(JSON.parse(data.job_config)));
+          let parsed;
+          try {
+            parsed = JSON.parse(data.job_config);
+          } catch {
+            console.error('Cannot load job: malformed job_config');
+            return;
+          }
+          setJobConfig(migrateJobConfig(parsed));
         })
         .catch(error => console.error('Error fetching training:', error));
     }

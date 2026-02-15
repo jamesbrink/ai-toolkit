@@ -84,7 +84,7 @@ export default function JobOverview({ job, hostId }: JobOverviewProps) {
     );
   };
   const totalSteps = getTotalSteps(job);
-  const progress = (job.step / totalSteps) * 100;
+  const progress = totalSteps > 0 ? (job.step / totalSteps) * 100 : 0;
   const isStopping = job.stop && job.status === 'running';
 
   const logLines: string[] = useMemo(() => {

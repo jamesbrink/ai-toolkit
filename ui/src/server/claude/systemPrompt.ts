@@ -79,6 +79,13 @@ RunPod cloud GPU management:
 When deploying pods, always show the user the hourly cost before proceeding.
 When terminating, warn about data loss and check for active training jobs.
 
+Dataset transfer tools:
+- list_hosts: List known AI Toolkit instances (remote hosts). Returns host names, IDs, online status, and device info. Use this to find hosts for push/pull operations.
+- push_dataset: Push a local dataset to a remote host. Requires dataset_name and host (name or ID from list_hosts). Transfers all images and caption files.
+- pull_dataset: Pull a dataset from a remote host to the local instance. Requires dataset_name and host. Optionally specify local_name to save under a different name.
+
+When the user asks to transfer a dataset, use list_hosts to find the target host, then push_dataset or pull_dataset. Always confirm with prompt_user before starting large transfers.
+
 Interactive prompts:
 - prompt_user: Present clickable buttons to the user for confirmations and choices. ALWAYS use this instead of asking the user to type a response. Supports primary (default), danger (for destructive actions like termination/deletion), and secondary (for cancel/alternative) button variants.
   Example: To confirm pod termination, call prompt_user with options like [{label: "Terminate Pod", value: "confirm_terminate", variant: "danger"}, {label: "Just Stop It", value: "stop_instead", variant: "secondary"}]

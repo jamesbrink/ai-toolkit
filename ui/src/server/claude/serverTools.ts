@@ -9,6 +9,7 @@ import { createAnthropicClient, getClaudeCaptionModel } from '@/server/claude/cl
 import { analyzeDataset, getStoredAnalysis, deleteAnalyzedImages } from '@/server/datasetAnalysis';
 import { runPythonAnalysis } from '@/server/pythonAnalysis';
 import { recordUsage } from '@/server/claude/usageTracker';
+import { buildHostBaseUrl } from '@/server/hostUrl';
 import {
   deployPod,
   deploySpotPod,
@@ -365,6 +366,46 @@ export const serverToolDefinitions = [
       type: 'object' as const,
       properties: {},
       required: [] as string[],
+    },
+  },
+  {
+    name: 'list_hosts',
+    description:
+      'List known AI Toolkit host instances (discovered via mDNS or added manually). Shows name, ID, online status, device type, and GPU info. Use this to find the host ID needed for push_dataset and pull_dataset.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {},
+      required: [] as string[],
+    },
+  },
+  {
+    name: 'push_dataset',
+    description:
+      'Push (upload) a local dataset to a remote host. Transfers all images and caption files. Use list_hosts to find available hosts and list_datasets to confirm the dataset name.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        dataset_name: { type: 'string', description: 'Name of the local dataset to push' },
+        host: { type: 'string', description: 'Host name or ID to push to (from list_hosts)' },
+      },
+      required: ['dataset_name', 'host'],
+    },
+  },
+  {
+    name: 'pull_dataset',
+    description:
+      'Pull (download) a dataset from a remote host to the local instance. Transfers all images and caption files.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        dataset_name: { type: 'string', description: 'Name of the dataset on the remote host' },
+        host: { type: 'string', description: 'Host name or ID to pull from (from list_hosts)' },
+        local_name: {
+          type: 'string',
+          description: 'Optional local name for the dataset (defaults to dataset_name)',
+        },
+      },
+      required: ['dataset_name', 'host'],
     },
   },
 ];
@@ -1377,6 +1418,188 @@ export async function executeServerTool(name: string, input: Record<string, unkn
       );
     } catch (err) {
       return `Error getting account info: ${err instanceof Error ? err.message : String(err)}`;
+    }
+  }
+
+  if (name === 'list_hosts') {
+    try {
+      const hosts = await prisma.host.findMany({ where: { isHidden: false } });
+      if (hosts.length === 0) {
+        return 'No hosts found. Add hosts manually or enable mDNS discovery in Settings.';
+      }
+      const summary = hosts.map(h => ({
+        id: h.id,
+        name: h.name,
+        address: h.address,
+        port: h.port,
+        isOnline: h.isOnline,
+        deviceType: h.deviceType,
+        gpuSummary: h.gpuSummary,
+        source: h.source,
+      }));
+      return JSON.stringify(summary, null, 2);
+    } catch (err) {
+      return `Error listing hosts: ${err instanceof Error ? err.message : String(err)}`;
+    }
+  }
+
+  if (name === 'push_dataset') {
+    const datasetName = input.dataset_name as string;
+    const hostRef = input.host as string;
+
+    if (!datasetName) return 'Error: dataset_name is required';
+    if (!hostRef) return 'Error: host is required';
+
+    try {
+      // Resolve host by name or ID
+      const host = await prisma.host.findFirst({
+        where: { OR: [{ id: hostRef }, { name: hostRef }] },
+      });
+      if (!host) return `Error: host "${hostRef}" not found. Use list_hosts to see available hosts.`;
+      if (!host.isOnline) return `Error: host "${host.name}" is offline`;
+
+      const datasetsRoot = await getDatasetsRoot();
+      const datasetDir = path.join(datasetsRoot, datasetName);
+      if (!fsSync.existsSync(datasetDir)) {
+        return `Error: dataset "${datasetName}" not found at ${datasetDir}`;
+      }
+
+      // Collect files (images + captions)
+      const PUSH_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif', '.txt']);
+      function collectFiles(dir: string, base: string): { relPath: string; absPath: string }[] {
+        const results: { relPath: string; absPath: string }[] = [];
+        if (!fsSync.existsSync(dir)) return results;
+        for (const item of fsSync.readdirSync(dir)) {
+          const abs = path.join(dir, item);
+          const rel = base ? `${base}/${item}` : item;
+          const stat = fsSync.statSync(abs);
+          if (stat.isDirectory() && !item.startsWith('.') && item !== '_controls') {
+            results.push(...collectFiles(abs, rel));
+          } else if (PUSH_EXTENSIONS.has(path.extname(item).toLowerCase())) {
+            results.push({ relPath: rel, absPath: abs });
+          }
+        }
+        return results;
+      }
+      const files = collectFiles(datasetDir, '');
+      if (files.length === 0) return `Error: no files found in dataset "${datasetName}"`;
+
+      const baseUrl = buildHostBaseUrl(host.address, host.port);
+      const headers: Record<string, string> = {};
+      if (host.authToken) headers['Authorization'] = `Bearer ${host.authToken}`;
+
+      // Create dataset on remote (ignore if already exists)
+      await fetch(`${baseUrl}/api/datasets/create`, {
+        method: 'POST',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: datasetName }),
+      });
+
+      // Upload files in batches of 5
+      const BATCH_SIZE = 5;
+      let uploaded = 0;
+      let errors = 0;
+
+      for (let i = 0; i < files.length; i += BATCH_SIZE) {
+        const batch = files.slice(i, i + BATCH_SIZE);
+        const formData = new FormData();
+        formData.append('datasetName', datasetName);
+
+        for (const file of batch) {
+          const data = fsSync.readFileSync(file.absPath);
+          const blob = new Blob([data]);
+          formData.append('files', blob, file.relPath);
+        }
+
+        try {
+          const resp = await fetch(`${baseUrl}/api/datasets/upload`, {
+            method: 'POST',
+            headers,
+            body: formData,
+          });
+          if (resp.ok) {
+            uploaded += batch.length;
+          } else {
+            errors += batch.length;
+          }
+        } catch {
+          errors += batch.length;
+        }
+      }
+
+      let result = `Pushed ${uploaded} file(s) from "${datasetName}" to host "${host.name}" (${host.address}:${host.port})`;
+      if (errors > 0) result += `. ${errors} file(s) failed to upload.`;
+      return result;
+    } catch (err) {
+      return `Error pushing dataset: ${err instanceof Error ? err.message : String(err)}`;
+    }
+  }
+
+  if (name === 'pull_dataset') {
+    const datasetName = input.dataset_name as string;
+    const hostRef = input.host as string;
+    const localName = (input.local_name as string) || datasetName;
+
+    if (!datasetName) return 'Error: dataset_name is required';
+    if (!hostRef) return 'Error: host is required';
+
+    try {
+      // Resolve host by name or ID
+      const host = await prisma.host.findFirst({
+        where: { OR: [{ id: hostRef }, { name: hostRef }] },
+      });
+      if (!host) return `Error: host "${hostRef}" not found. Use list_hosts to see available hosts.`;
+      if (!host.isOnline) return `Error: host "${host.name}" is offline`;
+
+      const baseUrl = buildHostBaseUrl(host.address, host.port);
+      const headers: Record<string, string> = {};
+      if (host.authToken) headers['Authorization'] = `Bearer ${host.authToken}`;
+
+      // Fetch file list from remote
+      const listResp = await fetch(`${baseUrl}/api/datasets/${encodeURIComponent(datasetName)}/files`, { headers });
+      if (!listResp.ok) {
+        return `Error: could not list files on remote host (${listResp.status}). Dataset "${datasetName}" may not exist.`;
+      }
+      const fileList = (await listResp.json()) as { files: string[] };
+      if (!fileList.files || fileList.files.length === 0) {
+        return `Error: dataset "${datasetName}" on remote host has no files`;
+      }
+
+      // Create local directory
+      const datasetsRoot = await getDatasetsRoot();
+      const localDir = path.join(datasetsRoot, localName);
+      await fs.mkdir(localDir, { recursive: true });
+
+      // Download files one at a time
+      let downloaded = 0;
+      let errors = 0;
+
+      for (const file of fileList.files) {
+        try {
+          const fileResp = await fetch(
+            `${baseUrl}/api/datasets/${encodeURIComponent(datasetName)}/files?file=${encodeURIComponent(file)}`,
+            { headers },
+          );
+          if (!fileResp.ok) {
+            errors++;
+            continue;
+          }
+
+          const localPath = path.join(localDir, file);
+          await fs.mkdir(path.dirname(localPath), { recursive: true });
+          const buffer = Buffer.from(await fileResp.arrayBuffer());
+          await fs.writeFile(localPath, buffer);
+          downloaded++;
+        } catch {
+          errors++;
+        }
+      }
+
+      let result = `Pulled ${downloaded} file(s) from host "${host.name}" into local dataset "${localName}"`;
+      if (errors > 0) result += `. ${errors} file(s) failed to download.`;
+      return result;
+    } catch (err) {
+      return `Error pulling dataset: ${err instanceof Error ? err.message : String(err)}`;
     }
   }
 
