@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import prisma from '@/server/prisma';
 import { deployPod, deploySpotPod } from '@/server/runpod';
+import { getHFToken } from '@/server/settings';
 
 export async function GET() {
   try {
@@ -43,6 +44,13 @@ export async function POST(request: Request) {
     const defaultPw = await prisma.settings.findFirst({ where: { key: 'RUNPOD_DEFAULT_PASSWORD' } });
     const authPassword = defaultPw?.value || crypto.randomBytes(18).toString('base64url');
 
+    // Inject HuggingFace token so the pod can download gated models
+    const hfToken = (await getHFToken()) || process.env.HF_TOKEN || '';
+    const mergedEnv: Record<string, string> = { ...(env || {}) };
+    if (hfToken && !mergedEnv.HF_TOKEN) {
+      mergedEnv.HF_TOKEN = hfToken;
+    }
+
     const baseInput = {
       name,
       gpuTypeId,
@@ -53,7 +61,7 @@ export async function POST(request: Request) {
       dataCenterId: dataCenterId || undefined,
       authPassword,
       publicKey,
-      env,
+      env: Object.keys(mergedEnv).length > 0 ? mergedEnv : undefined,
     };
 
     const isSpot = instanceType === 'SPOT';

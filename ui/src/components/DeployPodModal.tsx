@@ -62,7 +62,7 @@ export default function DeployPodModal({
   const [gpuTypeId, setGpuTypeId] = useState('');
   const [cloudType, setCloudType] = useState<'COMMUNITY' | 'SECURE'>('COMMUNITY');
   const [gpuCount, setGpuCount] = useState(1);
-  const [volumeInGb, setVolumeInGb] = useState(50);
+  const [volumeInGb, setVolumeInGb] = useState(100);
   const [containerDiskInGb, setContainerDiskInGb] = useState(20);
   const [dataCenterId, setDataCenterId] = useState('');
   const [instanceType, setInstanceType] = useState<InstanceType>('ON_DEMAND');

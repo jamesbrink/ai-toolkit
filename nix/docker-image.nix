@@ -126,6 +126,8 @@ pkgs.dockerTools.streamLayeredImage {
       "TRAINING_FOLDER=/workspace/output"
       "DATA_ROOT=/workspace/data"
       "DATABASE_URL=file:/workspace/aitk_db.db"
+      # HuggingFace cache on persistent volume so models survive pod restarts
+      "HF_HOME=/workspace/huggingface"
       # CUDA compute capabilities for RunPod GPU coverage (Ampere→Blackwell)
       "TORCH_CUDA_ARCH_LIST=8.0;8.6;8.9;9.0;10.0;12.0"
       # NVIDIA container runtime: inject driver userspace libraries (libcuda.so, nvidia-smi, etc.)
