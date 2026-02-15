@@ -33,7 +33,7 @@ setup_ssh() {
   done
 
   # Start sshd (Nix has no `service` command; run the daemon directly)
-  @openssh@/sbin/sshd
+  @openssh@/bin/sshd
 
   echo "SSH host keys:"
   for key in /etc/ssh/ssh_host_*.pub; do
