@@ -63,6 +63,7 @@ pkgs.dockerTools.streamLayeredImage {
     mkdir -p run/sshd
     mkdir -p etc/ssh
     mkdir -p root/.ssh
+    mkdir -p var/empty
     chmod 700 root/.ssh
     mkdir -p tmp
     chmod 1777 tmp
