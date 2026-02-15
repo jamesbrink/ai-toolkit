@@ -24,6 +24,10 @@ export function createAnthropicClient(auth: AnthropicAuth): Anthropic {
     return new Anthropic({
       apiKey: 'oauth-placeholder', // non-empty to pass SDK validation; removed by custom fetch below
       fetch: async (input: RequestInfo | URL, init?: RequestInit) => {
+        const rawUrl = typeof input === 'string' ? input : input instanceof URL ? input.toString() : (input as Request).url;
+        console.log(`[claude-chat] OAuth fetch: ${init?.method ?? 'GET'} ${rawUrl}`);
+        const fetchStart = Date.now();
+
         const headers = new Headers(init?.headers);
 
         // Replace API-key auth with OAuth Bearer auth
@@ -109,7 +113,18 @@ export function createAnthropicClient(auth: AnthropicAuth): Anthropic {
         }
 
         // Intercept response to strip mcp__ prefix from tool names
-        const response = await globalThis.fetch(url, { ...init, body, headers });
+        let response: Response;
+        try {
+          response = await globalThis.fetch(url, { ...init, body, headers });
+        } catch (fetchErr) {
+          console.error(`[claude-chat] OAuth fetch failed: ${fetchErr instanceof Error ? fetchErr.message : String(fetchErr)}`);
+          throw fetchErr;
+        }
+
+        console.log(
+          `[claude-chat] OAuth fetch response: status=${response.status}, content-length=${response.headers.get('content-length') ?? 'unknown'}, elapsed=${Date.now() - fetchStart}ms`,
+        );
+
         if (!response.body) return response;
 
         const responseBody = await response.text();

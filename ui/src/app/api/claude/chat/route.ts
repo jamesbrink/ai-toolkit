@@ -46,8 +46,12 @@ function trimMessages(messages: MessageParam[], maxTokens: number): MessageParam
 }
 
 export async function POST(req: NextRequest) {
+  const requestStart = Date.now();
+  console.log('[claude-chat] POST handler started');
+
   const auth = await getAnthropicAuth();
   if (!auth.apiKey && !auth.oauthToken) {
+    console.error('[claude-chat] No API key or OAuth token configured');
     return new Response(JSON.stringify({ error: 'Anthropic API key not configured' }), {
       status: 400,
       headers: { 'Content-Type': 'application/json' },
@@ -59,6 +63,10 @@ export async function POST(req: NextRequest) {
   const context: (ChatContext & { hostId?: string }) | undefined = body.context;
   const clientTools: Anthropic.Tool[] | undefined = body.tools;
   const hostId: string | undefined = context?.hostId;
+
+  console.log(
+    `[claude-chat] Request: ${messages.length} messages, context=${!!context}, hostId=${hostId ?? 'none'}`,
+  );
 
   const client = createAnthropicClient(auth);
   const chatModel = await getClaudeChatModel();
@@ -77,6 +85,11 @@ export async function POST(req: NextRequest) {
         while (iterations < MAX_TOOL_LOOPS) {
           iterations++;
 
+          console.log(
+            `[claude-chat] API call #${iterations}: model=${chatModel}, messages=${loopMessages.length}, tools=${allTools.length}`,
+          );
+          const apiStart = Date.now();
+
           const response = await client.messages.create({
             model: chatModel,
             max_tokens: 4096,
@@ -86,10 +99,19 @@ export async function POST(req: NextRequest) {
           });
           void recordUsage('chat', chatModel, response);
 
+          console.log(
+            `[claude-chat] API response #${iterations}: stop_reason=${response.stop_reason}, blocks=${response.content.length}, usage=${JSON.stringify(response.usage)}, elapsed=${Date.now() - apiStart}ms`,
+          );
+
           // Check if any content blocks are server-side tool uses
           const serverToolUses = response.content.filter(b => b.type === 'tool_use' && SERVER_TOOL_NAMES.has(b.name));
 
           if (serverToolUses.length > 0) {
+            const toolNames = serverToolUses
+              .filter((b): b is Anthropic.ToolUseBlock => b.type === 'tool_use')
+              .map(b => b.name);
+            console.log(`[claude-chat] Server tools requested: ${toolNames.join(', ')}`);
+
             // Emit progress events so the UI shows what tool is being used
             for (const block of serverToolUses) {
               if (block.type === 'tool_use') {
@@ -111,6 +133,11 @@ export async function POST(req: NextRequest) {
                 const input = block.input as Record<string, unknown>;
                 let result: string;
 
+                const toolStart = Date.now();
+                console.log(
+                  `[claude-chat] Executing tool: ${block.name}, input keys: ${Object.keys(input).join(', ')}`,
+                );
+
                 if (block.name === 'view_dataset_image' && hostId) {
                   // Vision API runs locally (hub has API key), but fetch image from remote
                   const imageData = await fetchRemoteImageBytes(input.image_path as string, hostId);
@@ -120,6 +147,10 @@ export async function POST(req: NextRequest) {
                 } else {
                   result = await executeToolMaybeRemote(block.name, input, hostId);
                 }
+
+                console.log(
+                  `[claude-chat] Tool ${block.name} completed: result_length=${result.length}, elapsed=${Date.now() - toolStart}ms`,
+                );
 
                 return { type: 'tool_result' as const, tool_use_id: block.id, content: result };
               }),
@@ -156,6 +187,7 @@ export async function POST(req: NextRequest) {
           }
 
           // No server tool uses — emit content blocks as NDJSON and finish
+          console.log(`[claude-chat] Emitting ${response.content.length} content blocks as NDJSON`);
           let blockIndex = 0;
           for (const block of response.content) {
             if (block.type === 'text') {
@@ -211,9 +243,14 @@ export async function POST(req: NextRequest) {
           break;
         }
 
+        console.log(
+          `[claude-chat] Completed: ${iterations} iterations, total_elapsed=${Date.now() - requestStart}ms`,
+        );
         controller.close();
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Unknown error';
+        const stack = err instanceof Error ? err.stack : undefined;
+        console.error(`[claude-chat] Error: ${message}`, stack ?? '');
         controller.enqueue(encoder.encode(JSON.stringify({ type: 'error', error: message }) + '\n'));
         controller.close();
       }

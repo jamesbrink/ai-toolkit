@@ -15,6 +15,7 @@ export async function streamClaude(
     headers['Authorization'] = `Bearer ${token}`;
   }
 
+  console.log('[claude-stream] Fetching /api/claude/chat');
   let res: Response;
   try {
     res = await fetch('/api/claude/chat', {
@@ -25,26 +26,33 @@ export async function streamClaude(
     });
   } catch (err) {
     if (err instanceof DOMException && err.name === 'AbortError') {
+      console.log('[claude-stream] Fetch aborted');
       onDone();
       return;
     }
+    console.error('[claude-stream] Fetch error:', err);
     throw err;
   }
 
+  console.log(`[claude-stream] Response status: ${res.status}`);
+
   if (!res.ok) {
     const text = await res.text();
+    console.error(`[claude-stream] HTTP error ${res.status}: ${text.slice(0, 200)}`);
     onError(text || `HTTP ${res.status}`);
     return;
   }
 
   const reader = res.body?.getReader();
   if (!reader) {
+    console.error('[claude-stream] No response body');
     onError('No response body');
     return;
   }
 
   const decoder = new TextDecoder();
   let buffer = '';
+  let eventCount = 0;
 
   try {
     while (true) {
@@ -61,9 +69,11 @@ export async function streamClaude(
         if (!trimmed) continue;
         try {
           const event = JSON.parse(trimmed) as StreamEvent;
+          eventCount++;
+          console.log(`[claude-stream] Event #${eventCount}: type=${event.type}`);
           onEvent(event);
         } catch {
-          // skip malformed lines
+          console.warn(`[claude-stream] Malformed line: ${trimmed.slice(0, 100)}`);
         }
       }
     }
@@ -72,18 +82,23 @@ export async function streamClaude(
     if (buffer.trim()) {
       try {
         const event = JSON.parse(buffer.trim()) as StreamEvent;
+        eventCount++;
+        console.log(`[claude-stream] Event #${eventCount} (final): type=${event.type}`);
         onEvent(event);
       } catch {
-        // skip
+        console.warn(`[claude-stream] Malformed final buffer: ${buffer.trim().slice(0, 100)}`);
       }
     }
   } catch (err) {
     if (err instanceof DOMException && err.name === 'AbortError') {
+      console.log(`[claude-stream] Stream aborted after ${eventCount} events`);
       onDone();
       return;
     }
+    console.error('[claude-stream] Stream read error:', err);
     throw err;
   }
 
+  console.log(`[claude-stream] Stream complete: ${eventCount} events received`);
   onDone();
 }

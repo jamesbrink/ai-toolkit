@@ -14,15 +14,20 @@ export async function executeToolMaybeRemote(
   hostId?: string | null,
 ): Promise<string> {
   if (!hostId) {
+    console.log(`[claude-chat] executeToolMaybeRemote: local execution of ${toolName}`);
     return executeServerTool(toolName, input);
   }
 
   const host = await prisma.host.findUnique({ where: { id: hostId } });
   if (!host) {
+    console.error(`[claude-chat] executeToolMaybeRemote: host "${hostId}" not found`);
     return `Error: host "${hostId}" not found`;
   }
 
   const targetUrl = `${buildHostBaseUrl(host.address, host.port)}/api/claude/tools/execute`;
+  console.log(`[claude-chat] executeToolMaybeRemote: remote ${toolName} → ${host.address}:${host.port}`);
+  const fetchStart = Date.now();
+
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (host.authToken) {
     headers['Authorization'] = `Bearer ${host.authToken}`;
@@ -41,8 +46,13 @@ export async function executeToolMaybeRemote(
     });
     clearTimeout(timeout);
 
+    console.log(
+      `[claude-chat] Remote tool ${toolName} response: status=${response.status}, elapsed=${Date.now() - fetchStart}ms`,
+    );
+
     if (!response.ok) {
       const text = await response.text();
+      console.error(`[claude-chat] Remote tool ${toolName} error: ${response.status} ${text.slice(0, 200)}`);
       return `Error from remote host (${response.status}): ${text}`;
     }
 
@@ -51,8 +61,12 @@ export async function executeToolMaybeRemote(
   } catch (error: unknown) {
     clearTimeout(timeout);
     if (error instanceof Error && error.name === 'AbortError') {
+      console.error(`[claude-chat] Remote tool ${toolName} timed out after ${Date.now() - fetchStart}ms`);
       return 'Error: remote tool execution timed out (120s)';
     }
+    console.error(
+      `[claude-chat] Remote tool ${toolName} failed: ${error instanceof Error ? error.message : String(error)}`,
+    );
     return `Error: remote host unreachable — ${error instanceof Error ? error.message : String(error)}`;
   }
 }
