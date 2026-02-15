@@ -6,6 +6,7 @@ import remarkGfm from 'remark-gfm';
 import { ChatMessage, ConfigChange, ContentBlock } from '@/types/claude';
 import ConfigProposal from './ConfigProposal';
 import DeleteProposal from './DeleteProposal';
+import UserPrompt from './UserPrompt';
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -84,6 +85,22 @@ function renderContentBlocks(blocks: ContentBlock[]): React.ReactNode {
           toolUseId={block.id!}
           imagePaths={block.input?.image_paths as string[]}
           reason={block.input?.reason as string}
+        />
+      );
+    }
+    if (block.type === 'tool_use' && block.name === 'prompt_user') {
+      return (
+        <UserPrompt
+          key={i}
+          toolUseId={block.id!}
+          message={block.input?.message as string}
+          options={
+            block.input?.options as Array<{
+              label: string;
+              value: string;
+              variant?: 'primary' | 'danger' | 'secondary';
+            }>
+          }
         />
       );
     }

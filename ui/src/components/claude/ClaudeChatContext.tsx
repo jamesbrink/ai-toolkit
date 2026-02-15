@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useRef, useCallback, useEff
 import { ChatMessage, ChatContext as ChatCtx, ContentBlock, StreamEvent } from '@/types/claude';
 import { streamClaude } from '@/utils/claudeStream';
 import { apiClient } from '@/utils/api';
+import { universalTools } from './tools/universalTools';
 
 type ToolHandler = (toolName: string, input: Record<string, unknown>) => void;
 
@@ -125,7 +126,7 @@ export function ClaudeChatProvider({ children }: { children: React.ReactNode }) 
       streamClaude(
         apiMessages,
         contextRef.current,
-        tools.length > 0 ? tools : undefined,
+        [...universalTools, ...tools],
         (event: StreamEvent) => {
           if (event.type === 'tool_progress' && event.tool_name) {
             setActiveToolName(event.tool_name);

@@ -23,6 +23,7 @@ const TOOL_LABELS: Record<string, string> = {
   list_datasets: 'Listing datasets...',
   update_job_config: 'Proposing config changes...',
   explain_config_option: 'Explaining config option...',
+  prompt_user: 'Waiting for your choice...',
   get_job_config: 'Reading job config...',
   compare_jobs: 'Comparing jobs...',
   analyze_samples: 'Analyzing samples...',
