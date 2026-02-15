@@ -84,20 +84,23 @@ model DuplicateGroup {
 }
 
 model Host {
-  id          String   @id @default(uuid())
-  name        String
-  address     String
-  port        Int      @default(8675)
-  authToken   String   @default("")
-  instanceId  String   @unique
-  source      String   @default("manual") // "mdns" | "manual"
-  isOnline    Boolean  @default(false)
-  isHidden    Boolean  @default(false)
-  deviceType  String   @default("none") // "nvidia" | "mps" | "cpu" | "none"
-  gpuSummary  String   @default("") // JSON: GPU names/counts
-  lastSeen    DateTime @default(now())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String   @id @default(uuid())
+  name          String
+  address       String
+  port          Int      @default(8675)
+  authToken     String   @default("")
+  instanceId    String   @unique
+  source        String   @default("manual") // "mdns" | "manual" | "peer" | "gossip"
+  isOnline      Boolean  @default(false)
+  isHidden      Boolean  @default(false)
+  deviceType    String   @default("none") // "nvidia" | "mps" | "cpu" | "none"
+  gpuSummary    String   @default("") // JSON: GPU names/counts
+  canReachBack  Boolean  @default(true)  // false = behind NAT/firewall
+  gossipTtl     Int      @default(0)     // TTL for gossip-learned hosts (3→2→1→delete)
+  lastGossipAt  DateTime @default(now()) // last time seen in a gossip exchange
+  lastSeen      DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@index([address, port])
   @@index([isOnline])

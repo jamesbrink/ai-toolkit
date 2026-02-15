@@ -303,7 +303,7 @@ export default function Settings() {
                 <Subheading>Network</Subheading>
               </div>
               <Divider soft />
-              <div className="flex-1 px-6 py-5">
+              <div className="flex-1 px-6 py-5 space-y-4">
                 <SwitchField>
                   <Label>mDNS Discovery</Label>
                   <Description>
@@ -319,6 +319,21 @@ export default function Settings() {
                     checked={settings.MDNS_ENABLED === 'true'}
                     onChange={(checked: boolean) =>
                       setSettings(prev => ({ ...prev, MDNS_ENABLED: checked ? 'true' : 'false' }))
+                    }
+                  />
+                </SwitchField>
+                <SwitchField>
+                  <Label>Peer Gossip</Label>
+                  <Description>
+                    Share host lists between connected instances so they can discover each other transitively. When
+                    enabled, hosts exchange peer lists during health checks, allowing cross-subnet discovery without
+                    mDNS.
+                  </Description>
+                  <Switch
+                    color="blue"
+                    checked={settings.GOSSIP_ENABLED === 'true'}
+                    onChange={(checked: boolean) =>
+                      setSettings(prev => ({ ...prev, GOSSIP_ENABLED: checked ? 'true' : 'false' }))
                     }
                   />
                 </SwitchField>

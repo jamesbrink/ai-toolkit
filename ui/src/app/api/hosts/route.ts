@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/server/prisma';
 import { randomUUID } from 'crypto';
+import os from 'os';
 import { buildHostBaseUrl } from '@/server/hostUrl';
+import { detectDeviceType, getPrimaryLocalAddress } from '@/server/networkUtils';
 
 export async function GET() {
   try {
@@ -61,6 +63,44 @@ export async function POST(request: Request) {
     }
 
     const instanceId = remoteInstanceId || randomUUID();
+
+    // Bidirectional handshake: register ourselves on the remote host so it knows about us
+    if (remoteInstanceId) {
+      try {
+        let ourSetting = await prisma.settings.findUnique({ where: { key: 'INSTANCE_ID' } });
+        if (!ourSetting) {
+          ourSetting = await prisma.settings.create({ data: { key: 'INSTANCE_ID', value: randomUUID() } });
+        }
+        const ourPort = parseInt(process.env.PORT || '8675', 10);
+        const ourAddress = getPrimaryLocalAddress();
+        const ourDeviceType = await detectDeviceType();
+        const ourAuth = process.env.AI_TOOLKIT_AUTH || '';
+
+        const regController = new AbortController();
+        const regTimeout = setTimeout(() => regController.abort(), 5000);
+        const regHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (authToken) {
+          regHeaders['Authorization'] = `Bearer ${authToken}`;
+        }
+        await fetch(`${buildHostBaseUrl(address, portNum)}/api/hosts/register`, {
+          method: 'POST',
+          signal: regController.signal,
+          headers: regHeaders,
+          body: JSON.stringify({
+            instanceId: ourSetting.value,
+            name: os.hostname(),
+            hostname: os.hostname(),
+            address: ourAddress,
+            port: ourPort,
+            deviceType: ourDeviceType,
+            authToken: ourAuth,
+          }),
+        });
+        clearTimeout(regTimeout);
+      } catch {
+        // Bidirectional registration failed (old instance, firewall, etc.) — continue silently
+      }
+    }
 
     // Check if a host already exists at this address:port (prevents duplicates when
     // a remote instance restarts with a new instanceId)

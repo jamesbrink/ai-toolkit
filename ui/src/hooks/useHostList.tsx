@@ -13,6 +13,7 @@ export interface HostInfo {
   isOnline: boolean;
   deviceType: string;
   gpuSummary: string;
+  canReachBack: boolean;
   lastSeen: string;
 }
 

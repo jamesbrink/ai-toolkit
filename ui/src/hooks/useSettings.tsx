@@ -12,6 +12,7 @@ export interface Settings {
   CLAUDE_CHAT_MODEL: string;
   CLAUDE_CAPTION_MODEL: string;
   MDNS_ENABLED: string;
+  GOSSIP_ENABLED: string;
   RUNPOD_API_KEY: string;
   RUNPOD_SSH_PUBLIC_KEY: string;
   RUNPOD_DEFAULT_PASSWORD: string;
@@ -30,6 +31,7 @@ export default function useSettings() {
     CLAUDE_CHAT_MODEL: '',
     CLAUDE_CAPTION_MODEL: '',
     MDNS_ENABLED: 'true',
+    GOSSIP_ENABLED: 'true',
     RUNPOD_API_KEY: '',
     RUNPOD_SSH_PUBLIC_KEY: '',
     RUNPOD_DEFAULT_PASSWORD: '',
@@ -50,6 +52,7 @@ export default function useSettings() {
           CLAUDE_CHAT_MODEL: data.CLAUDE_CHAT_MODEL || '',
           CLAUDE_CAPTION_MODEL: data.CLAUDE_CAPTION_MODEL || '',
           MDNS_ENABLED: data.MDNS_ENABLED ?? 'true',
+          GOSSIP_ENABLED: data.GOSSIP_ENABLED ?? 'true',
           RUNPOD_API_KEY: data.RUNPOD_API_KEY || '',
           RUNPOD_SSH_PUBLIC_KEY: data.RUNPOD_SSH_PUBLIC_KEY || '',
           RUNPOD_DEFAULT_PASSWORD: data.RUNPOD_DEFAULT_PASSWORD || '',

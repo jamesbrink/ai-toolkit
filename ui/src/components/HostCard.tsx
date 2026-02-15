@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { Server, Edit, EyeOff, Trash2, Wifi, WifiOff } from 'lucide-react';
+import { Server, Edit, EyeOff, Trash2, Wifi, WifiOff, ArrowRightLeft } from 'lucide-react';
 import clsx from 'clsx';
 import { Badge } from '@/components/catalyst/badge';
 import { HostInfo } from '@/hooks/useHostList';
@@ -124,12 +124,38 @@ export default function HostCard({ host, onRefresh }: HostCardProps) {
           </span>
         </div>
 
-        <div className="flex items-center space-x-2">
-          <Badge color={host.source === 'mdns' ? 'blue' : host.source === 'runpod' ? 'purple' : 'zinc'}>
-            {host.source === 'mdns' ? 'mDNS' : host.source === 'runpod' ? 'RunPod' : 'Manual'}
+        <div className="flex items-center flex-wrap gap-1.5">
+          <Badge
+            color={
+              host.source === 'mdns'
+                ? 'blue'
+                : host.source === 'runpod'
+                  ? 'purple'
+                  : host.source === 'peer'
+                    ? 'green'
+                    : host.source === 'gossip'
+                      ? 'amber'
+                      : 'zinc'
+            }
+          >
+            {host.source === 'mdns'
+              ? 'mDNS'
+              : host.source === 'runpod'
+                ? 'RunPod'
+                : host.source === 'peer'
+                  ? 'Peer'
+                  : host.source === 'gossip'
+                    ? 'Gossip'
+                    : 'Manual'}
           </Badge>
           {host.deviceType && (
             <Badge color={getDeviceBadgeColor(host.deviceType)}>{host.deviceType.toUpperCase()}</Badge>
+          )}
+          {host.canReachBack === false && (
+            <span className="inline-flex items-center gap-1 text-xs text-amber-500" title="Behind NAT/firewall — can send but can't receive">
+              <ArrowRightLeft className="w-3 h-3" />
+              One-way
+            </span>
           )}
         </div>
 
