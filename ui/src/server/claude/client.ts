@@ -24,7 +24,8 @@ export function createAnthropicClient(auth: AnthropicAuth): Anthropic {
     return new Anthropic({
       apiKey: 'oauth-placeholder', // non-empty to pass SDK validation; removed by custom fetch below
       fetch: async (input: RequestInfo | URL, init?: RequestInit) => {
-        const rawUrl = typeof input === 'string' ? input : input instanceof URL ? input.toString() : (input as Request).url;
+        const rawUrl =
+          typeof input === 'string' ? input : input instanceof URL ? input.toString() : (input as Request).url;
         console.log(`[claude-chat] OAuth fetch: ${init?.method ?? 'GET'} ${rawUrl}`);
         const fetchStart = Date.now();
 
@@ -117,7 +118,9 @@ export function createAnthropicClient(auth: AnthropicAuth): Anthropic {
         try {
           response = await globalThis.fetch(url, { ...init, body, headers });
         } catch (fetchErr) {
-          console.error(`[claude-chat] OAuth fetch failed: ${fetchErr instanceof Error ? fetchErr.message : String(fetchErr)}`);
+          console.error(
+            `[claude-chat] OAuth fetch failed: ${fetchErr instanceof Error ? fetchErr.message : String(fetchErr)}`,
+          );
           throw fetchErr;
         }
 

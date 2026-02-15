@@ -53,6 +53,21 @@ export_env_vars() {
 # Detect NVIDIA driver libraries injected by the container runtime and ensure
 # they are on LD_LIBRARY_PATH so the Nix-built PyTorch can find libcuda.so.
 setup_nvidia_libs() {
+  # --- Binary paths (nvidia-smi, nvidia-debugdump, etc.) ---
+  local nvidia_bins=""
+  for dir in /usr/bin /usr/local/nvidia/bin /usr/local/cuda/bin; do
+    if [[ -x "${dir}/nvidia-smi" ]]; then
+      nvidia_bins="${nvidia_bins:+${nvidia_bins}:}${dir}"
+    fi
+  done
+  if [[ -n "$nvidia_bins" ]]; then
+    export PATH="${nvidia_bins}:${PATH}"
+    echo "NVIDIA binaries found: ${nvidia_bins}"
+  else
+    echo "Warning: nvidia-smi not found — GPU monitoring may not be available"
+  fi
+
+  # --- Library paths (libcuda.so, libnvidia-ml.so, etc.) ---
   local nvidia_dirs=""
   for dir in /usr/lib/x86_64-linux-gnu /usr/lib64 /usr/local/nvidia/lib64; do
     if [[ -f "${dir}/libcuda.so" ]]; then

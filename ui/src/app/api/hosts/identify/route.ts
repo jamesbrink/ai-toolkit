@@ -7,9 +7,17 @@ import { promisify } from 'util';
 const execAsync = promisify(exec);
 
 async function detectDeviceType(): Promise<string> {
-  // Check for NVIDIA GPU
+  // Check for NVIDIA GPU — use 'command -v' (POSIX builtin, works without 'which' package)
+  // then fall back to checking known NVIDIA binary paths directly
   try {
-    await execAsync(os.platform() === 'win32' ? 'nvidia-smi -L' : 'which nvidia-smi');
+    await execAsync(
+      os.platform() === 'win32'
+        ? 'nvidia-smi -L'
+        : 'command -v nvidia-smi || ' +
+            'test -x /usr/bin/nvidia-smi || ' +
+            'test -x /usr/local/nvidia/bin/nvidia-smi || ' +
+            'test -x /usr/local/cuda/bin/nvidia-smi',
+    );
     return 'nvidia';
   } catch {
     // No NVIDIA GPU

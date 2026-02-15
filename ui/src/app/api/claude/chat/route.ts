@@ -64,9 +64,7 @@ export async function POST(req: NextRequest) {
   const clientTools: Anthropic.Tool[] | undefined = body.tools;
   const hostId: string | undefined = context?.hostId;
 
-  console.log(
-    `[claude-chat] Request: ${messages.length} messages, context=${!!context}, hostId=${hostId ?? 'none'}`,
-  );
+  console.log(`[claude-chat] Request: ${messages.length} messages, context=${!!context}, hostId=${hostId ?? 'none'}`);
 
   const client = createAnthropicClient(auth);
   const chatModel = await getClaudeChatModel();
@@ -243,9 +241,7 @@ export async function POST(req: NextRequest) {
           break;
         }
 
-        console.log(
-          `[claude-chat] Completed: ${iterations} iterations, total_elapsed=${Date.now() - requestStart}ms`,
-        );
+        console.log(`[claude-chat] Completed: ${iterations} iterations, total_elapsed=${Date.now() - requestStart}ms`);
         controller.close();
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Unknown error';

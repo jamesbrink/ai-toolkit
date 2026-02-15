@@ -12,12 +12,12 @@ export async function GET() {
     const platform = os.platform();
     const isWindows = platform === 'win32';
 
-    // Check if nvidia-smi is available
-    const hasNvidiaSmi = await checkNvidiaSmi(isWindows);
+    // Check if nvidia-smi is available and resolve its path
+    const nvidiaSmiPath = await findNvidiaSmi(isWindows);
 
-    if (hasNvidiaSmi) {
+    if (nvidiaSmiPath) {
       // Get GPU stats
-      const gpuStats = await getGpuStats();
+      const gpuStats = await getGpuStats(nvidiaSmiPath);
 
       return NextResponse.json({
         hasNvidiaSmi: true,
@@ -54,21 +54,37 @@ export async function GET() {
   }
 }
 
-async function checkNvidiaSmi(isWindows: boolean): Promise<boolean> {
-  try {
-    if (isWindows) {
-      // Check if nvidia-smi is available on Windows
-      // It's typically located in C:\Program Files\NVIDIA Corporation\NVSMI\nvidia-smi.exe
-      // but we'll just try to run it directly as it may be in PATH
+// Known paths where NVIDIA container runtime injects nvidia-smi
+const NVIDIA_SMI_PATHS = ['/usr/bin/nvidia-smi', '/usr/local/nvidia/bin/nvidia-smi', '/usr/local/cuda/bin/nvidia-smi'];
+
+async function findNvidiaSmi(isWindows: boolean): Promise<string | null> {
+  if (isWindows) {
+    try {
       await execAsync('nvidia-smi -L');
-    } else {
-      // Linux/macOS check
-      await execAsync('which nvidia-smi');
+      return 'nvidia-smi';
+    } catch {
+      return null;
     }
-    return true;
-  } catch {
-    return false;
   }
+
+  // Try PATH first via POSIX builtin (works without 'which' package)
+  try {
+    const { stdout } = await execAsync('command -v nvidia-smi');
+    return stdout.trim();
+  } catch {
+    // Not in PATH — check known locations
+  }
+
+  for (const p of NVIDIA_SMI_PATHS) {
+    try {
+      await execAsync(`test -x ${p}`);
+      return p;
+    } catch {
+      // Not at this path
+    }
+  }
+
+  return null;
 }
 
 interface MacmonMetrics {
@@ -175,10 +191,8 @@ async function getAppleGpuUtilization(): Promise<number> {
   return 0;
 }
 
-async function getGpuStats() {
-  // Command is the same for both platforms, but the path might be different
-  const command =
-    'nvidia-smi --query-gpu=index,name,driver_version,temperature.gpu,utilization.gpu,utilization.memory,memory.total,memory.free,memory.used,power.draw,power.limit,clocks.current.graphics,clocks.current.memory,fan.speed --format=csv,noheader,nounits';
+async function getGpuStats(nvidiaSmiPath: string) {
+  const command = `${nvidiaSmiPath} --query-gpu=index,name,driver_version,temperature.gpu,utilization.gpu,utilization.memory,memory.total,memory.free,memory.used,power.draw,power.limit,clocks.current.graphics,clocks.current.memory,fan.speed --format=csv,noheader,nounits`;
 
   // Execute command
   const { stdout } = await execAsync(command, {
