@@ -32,8 +32,9 @@ setup_ssh() {
     fi
   done
 
-  # Start sshd (Nix has no `service` command; run the daemon directly)
-  @openssh@/bin/sshd
+  # Start sshd — explicitly pass our config since the Nix-built sshd has its
+  # compiled-in config path at @openssh@/etc/ssh/sshd_config (not /etc/ssh/).
+  @openssh@/bin/sshd -f /etc/ssh/sshd_config -E /var/log/sshd.log
 
   echo "SSH host keys:"
   for key in /etc/ssh/ssh_host_*.pub; do

@@ -26,6 +26,14 @@ let
     } $out
     chmod +x $out
   '';
+
+  # Symlink the Nix glibc dynamic linker to the standard FHS path so that
+  # non-Nix binaries injected by the NVIDIA container runtime (nvidia-smi,
+  # nvidia-debugdump, etc.) can find their ELF interpreter.
+  glibcLdLinux = pkgs.runCommand "glibc-ld-linux-symlink" { } ''
+    mkdir -p $out/lib64
+    ln -s ${pkgs.glibc}/lib/ld-linux-x86-64.so.2 $out/lib64/ld-linux-x86-64.so.2
+  '';
 in
 
 pkgs.dockerTools.streamLayeredImage {
@@ -46,10 +54,12 @@ pkgs.dockerTools.streamLayeredImage {
       openssh
       gnugrep
       gawk
+      glibcLdLinux
     ];
     pathsToLink = [
       "/bin"
       "/lib"
+      "/lib64"
       "/share"
     ];
   };
@@ -64,6 +74,7 @@ pkgs.dockerTools.streamLayeredImage {
     mkdir -p etc/ssh
     mkdir -p root/.ssh
     mkdir -p var/empty
+    mkdir -p var/log
     chmod 700 root/.ssh
     mkdir -p tmp
     chmod 1777 tmp
