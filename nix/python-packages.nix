@@ -109,6 +109,32 @@ self: super:
     pythonImportsCheck = [ ];
   };
 
+  lpips = self.buildPythonPackage rec {
+    pname = "lpips";
+    version = "0.1.4";
+    pyproject = true;
+
+    src = pkgs.fetchPypi {
+      inherit pname version;
+      hash = "sha256-OEYzHfbGloiuw9MApe7vbFKUNbyEYL1YIBw9YuVhiPo=";
+    };
+
+    build-system = [ self.setuptools ];
+    nativeBuildInputs = [ self.pythonRelaxDepsHook ];
+    pythonRelaxDeps = true;
+
+    dependencies = with self; [
+      torch
+      torchvision
+      numpy
+      scipy
+      tqdm
+    ];
+
+    doCheck = false;
+    pythonImportsCheck = [ "lpips" ];
+  };
+
   pytorch-fid = self.buildPythonPackage rec {
     pname = "pytorch-fid";
     version = "0.3.0";
