@@ -82,6 +82,18 @@ in
       description = "Additional environment variables for the service.";
     };
 
+    createUser = mkOption {
+      type = types.bool;
+      default = true;
+      description = "Whether to create a dedicated system user and group. Set to false when using an existing user.";
+    };
+
+    requiresMounts = mkOption {
+      type = types.listOf types.str;
+      default = [ ];
+      description = "List of systemd mount units the service requires before starting (e.g. ZFS datasets).";
+    };
+
     mdns = {
       enable = mkOption {
         type = types.bool;

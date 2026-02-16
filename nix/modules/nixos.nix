@@ -16,6 +16,8 @@
 let
   cfg = config.services.ai-toolkit;
   inherit (lib) mkDefault mkIf mkMerge;
+  isDefaultDataDir = lib.hasPrefix "/var/lib/" cfg.dataDir;
+  stateDirectoryName = lib.removePrefix "/var/lib/" cfg.dataDir;
 in
 {
   imports = [ ./common-options.nix ];
@@ -28,19 +30,11 @@ in
         dataDir = mkDefault "/var/lib/ai-toolkit";
       };
 
-      # System user and group
-      users.users.${cfg.user} = {
-        isSystemUser = true;
-        group = cfg.group;
-        home = cfg.dataDir;
-        description = "AI Toolkit service user";
-      };
-      users.groups.${cfg.group} = { };
-
       # systemd service
       systemd.services.ai-toolkit = {
         description = "AI Toolkit Web UI";
-        after = [ "network.target" ];
+        after = [ "network.target" ] ++ cfg.requiresMounts;
+        requires = cfg.requiresMounts;
         wantedBy = [ "multi-user.target" ];
 
         environment = {
@@ -65,10 +59,6 @@ in
           User = cfg.user;
           Group = cfg.group;
 
-          # State directory (auto-creates /var/lib/ai-toolkit with correct ownership)
-          StateDirectory = "ai-toolkit";
-          StateDirectoryMode = "0750";
-
           # Restart policy
           Restart = "on-failure";
           RestartSec = 5;
@@ -76,7 +66,7 @@ in
           # Hardening
           ProtectSystem = "strict";
           ReadWritePaths = [ cfg.dataDir ];
-          ProtectHome = true;
+          ProtectHome = cfg.createUser;
           PrivateTmp = true;
           NoNewPrivileges = true;
           ProtectKernelTunables = true;
@@ -88,11 +78,33 @@ in
           # GPU access needed for training jobs spawned by the worker
           PrivateDevices = false;
         }
+        // lib.optionalAttrs isDefaultDataDir {
+          StateDirectory = stateDirectoryName;
+          StateDirectoryMode = "0750";
+        }
         // lib.optionalAttrs (cfg.environmentFile != null) {
           EnvironmentFile = cfg.environmentFile;
         };
       };
     }
+
+    # System user and group (only when createUser is true)
+    (mkIf cfg.createUser {
+      users.users.${cfg.user} = {
+        isSystemUser = true;
+        group = cfg.group;
+        home = cfg.dataDir;
+        description = "AI Toolkit service user";
+      };
+      users.groups.${cfg.group} = { };
+    })
+
+    # Create data directory via tmpfiles when not using StateDirectory
+    (mkIf (!isDefaultDataDir) {
+      systemd.tmpfiles.rules = [
+        "d ${cfg.dataDir} 0750 ${cfg.user} ${cfg.group} -"
+      ];
+    })
 
     # Firewall rules
     (mkIf cfg.openFirewall {
