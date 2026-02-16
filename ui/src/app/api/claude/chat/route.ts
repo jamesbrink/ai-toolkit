@@ -54,6 +54,84 @@ function trimMessages(messages: MessageParam[], maxTokens: number): MessageParam
   return trimmed;
 }
 
+/**
+ * Ensure every assistant tool_use block has a matching tool_result in the next
+ * user message. Orphaned tool_use blocks cause a 400 error from the API.
+ * This can happen when the client sends a new user message without
+ * accepting/rejecting a pending tool proposal, or when trimMessages slices
+ * through a tool_use/tool_result pair.
+ */
+function sanitizeToolPairs(messages: MessageParam[]): MessageParam[] {
+  const result: MessageParam[] = [];
+
+  for (let i = 0; i < messages.length; i++) {
+    const msg = messages[i];
+
+    // If a user message starts with tool_result blocks, verify the preceding
+    // assistant message actually contains those tool_use ids. Drop orphaned
+    // tool_results that reference trimmed-away tool_use blocks.
+    if (msg.role === 'user' && Array.isArray(msg.content)) {
+      const prev = result[result.length - 1];
+      const prevToolIds = new Set<string>();
+      if (prev && prev.role === 'assistant' && Array.isArray(prev.content)) {
+        for (const b of prev.content as Anthropic.ContentBlock[]) {
+          if (b.type === 'tool_use') prevToolIds.add(b.id);
+        }
+      }
+
+      const filtered = (msg.content as Anthropic.ToolResultBlockParam[]).filter(
+        (b) => b.type !== 'tool_result' || prevToolIds.has(b.tool_use_id),
+      );
+
+      // If all blocks were orphaned tool_results, skip this message entirely
+      if (filtered.length === 0) continue;
+      result.push({ ...msg, content: filtered });
+      continue;
+    }
+
+    result.push(msg);
+
+    // Check assistant messages for tool_use blocks that need tool_results
+    if (msg.role !== 'assistant' || !Array.isArray(msg.content)) continue;
+
+    const toolUseIds: string[] = [];
+    for (const b of msg.content as Anthropic.ContentBlock[]) {
+      if (b.type === 'tool_use') toolUseIds.push(b.id);
+    }
+    if (toolUseIds.length === 0) continue;
+
+    // Check which ids already have results in the next message
+    const next = messages[i + 1];
+    const existingIds = new Set<string>();
+    if (next && next.role === 'user' && Array.isArray(next.content)) {
+      for (const b of next.content as Anthropic.ToolResultBlockParam[]) {
+        if (b.type === 'tool_result') existingIds.add(b.tool_use_id);
+      }
+    }
+
+    const missingIds = toolUseIds.filter((id) => !existingIds.has(id));
+    if (missingIds.length > 0) {
+      const syntheticResults: Anthropic.ToolResultBlockParam[] = missingIds.map((id) => ({
+        type: 'tool_result' as const,
+        tool_use_id: id,
+        content: 'User dismissed this action without responding.',
+      }));
+
+      if (next && next.role === 'user' && Array.isArray(next.content)) {
+        // Merge into the existing user message (handled when we process it next)
+        messages[i + 1] = {
+          ...next,
+          content: [...syntheticResults, ...(next.content as Anthropic.ToolResultBlockParam[])],
+        };
+      } else {
+        result.push({ role: 'user' as const, content: syntheticResults });
+      }
+    }
+  }
+
+  return result;
+}
+
 export async function POST(req: NextRequest) {
   const requestStart = Date.now();
   console.log('[claude-chat] POST handler started');
@@ -86,7 +164,7 @@ export async function POST(req: NextRequest) {
   const readable = new ReadableStream({
     async start(controller) {
       try {
-        let loopMessages: MessageParam[] = trimMessages(messages, MAX_MESSAGE_TOKENS);
+        let loopMessages: MessageParam[] = sanitizeToolPairs(trimMessages(messages, MAX_MESSAGE_TOKENS));
         let iterations = 0;
 
         while (iterations < MAX_TOOL_LOOPS) {

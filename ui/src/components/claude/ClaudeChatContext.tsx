@@ -31,6 +31,63 @@ const ClaudeChatContext = createContext<ClaudeChatState | null>(null);
 
 const STORAGE_KEY = 'claude_chat_messages';
 
+/**
+ * Ensures every tool_use block in assistant messages has a corresponding
+ * tool_result in the following user message. Without this, the Anthropic API
+ * rejects the request with a 400 error. Orphaned tool_use blocks happen when
+ * the user sends a new message without accepting/rejecting a pending tool
+ * proposal (e.g. config changes).
+ */
+function sanitizeToolUseResults(messages: ChatMessage[]): ChatMessage[] {
+  const result: ChatMessage[] = [];
+
+  for (let i = 0; i < messages.length; i++) {
+    result.push(messages[i]);
+    const msg = messages[i];
+
+    // Only check assistant messages with content block arrays
+    if (msg.role !== 'assistant' || !Array.isArray(msg.content)) continue;
+
+    const toolUseIds = (msg.content as ContentBlock[])
+      .filter((b) => b.type === 'tool_use' && b.id)
+      .map((b) => b.id!);
+
+    if (toolUseIds.length === 0) continue;
+
+    // Check if the next message already provides tool_results for these ids
+    const next = messages[i + 1];
+    const existingResultIds = new Set<string>();
+    if (next && next.role === 'user' && Array.isArray(next.content)) {
+      for (const block of next.content as ContentBlock[]) {
+        if (block.type === 'tool_result' && block.tool_use_id) {
+          existingResultIds.add(block.tool_use_id);
+        }
+      }
+    }
+
+    // Inject tool_results for any orphaned tool_use blocks
+    const missingIds = toolUseIds.filter((id) => !existingResultIds.has(id));
+    if (missingIds.length > 0) {
+      const syntheticResults: ContentBlock[] = missingIds.map((id) => ({
+        type: 'tool_result' as const,
+        tool_use_id: id,
+        content: 'User dismissed this action without responding.',
+      }));
+
+      // If the next message is a user message with some tool_results, merge into it
+      if (next && next.role === 'user' && Array.isArray(next.content)) {
+        const merged = [...syntheticResults, ...(next.content as ContentBlock[])];
+        result.push({ role: 'user', content: merged });
+        i++; // skip the next message since we merged it
+      } else {
+        result.push({ role: 'user', content: syntheticResults });
+      }
+    }
+  }
+
+  return result;
+}
+
 function loadMessages(): ChatMessage[] {
   if (typeof window === 'undefined') return [];
   try {
@@ -271,8 +328,10 @@ export function ClaudeChatProvider({ children }: { children: React.ReactNode }) 
       const updated = [...messages, userMessage];
       setMessages(updated);
 
-      // Build API messages (flatten content blocks to strings for simple messages)
-      const apiMessages = updated.map(m => ({
+      // Sanitize: inject tool_results for any orphaned tool_use blocks so the
+      // API doesn't reject the request with a 400 error.
+      const sanitized = sanitizeToolUseResults(updated);
+      const apiMessages = sanitized.map(m => ({
         role: m.role,
         content: m.content,
       }));
@@ -293,7 +352,9 @@ export function ClaudeChatProvider({ children }: { children: React.ReactNode }) 
       const updated = [...messages, toolResultMessage];
       setMessages(updated);
 
-      const apiMessages = updated.map(m => ({
+      // Sanitize in case earlier tool_use blocks are also orphaned
+      const sanitized = sanitizeToolUseResults(updated);
+      const apiMessages = sanitized.map(m => ({
         role: m.role,
         content: m.content,
       }));
