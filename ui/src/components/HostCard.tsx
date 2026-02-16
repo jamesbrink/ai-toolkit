@@ -152,7 +152,10 @@ export default function HostCard({ host, onRefresh }: HostCardProps) {
             <Badge color={getDeviceBadgeColor(host.deviceType)}>{host.deviceType.toUpperCase()}</Badge>
           )}
           {host.canReachBack === false && (
-            <span className="inline-flex items-center gap-1 text-xs text-amber-500" title="Behind NAT/firewall — can send but can't receive">
+            <span
+              className="inline-flex items-center gap-1 text-xs text-amber-500"
+              title="Behind NAT/firewall — can send but can't receive"
+            >
               <ArrowRightLeft className="w-3 h-3" />
               One-way
             </span>

@@ -63,9 +63,11 @@ export const SampleImagesMenu = ({ job, hostId }: SampleImagesMenuProps) => {
 interface SampleImagesProps {
   job: Job | UnifiedJob;
   hostId?: string | null;
+  /** When true, renders inline instead of using absolute positioning (for embedding in other layouts) */
+  embedded?: boolean;
 }
 
-export default function SampleImages({ job, hostId }: SampleImagesProps) {
+export default function SampleImages({ job, hostId, embedded }: SampleImagesProps) {
   const { sampleImages, status, refreshSampleImages } = useSampleImages(job.id, 5000, hostId);
   const imageBaseUrl = getImageUrlPrefix(hostId);
   const [selectedSamplePath, setSelectedSamplePath] = useState<string | null>(null);
@@ -192,7 +194,14 @@ export default function SampleImages({ job, hostId }: SampleImagesProps) {
   }, [status, sampleImages.length]);
 
   return (
-    <div ref={containerRef} className="absolute top-[80px] left-0 right-0 bottom-0 overflow-y-auto">
+    <div
+      ref={containerRef}
+      className={
+        embedded
+          ? 'relative overflow-y-auto max-h-[80vh]'
+          : 'absolute top-[80px] left-0 right-0 bottom-0 overflow-y-auto'
+      }
+    >
       <div className="pb-4">
         {PageInfoContent}
         {sampleImages && (
@@ -243,22 +252,26 @@ export default function SampleImages({ job, hostId }: SampleImagesProps) {
         imageBaseUrl={imageBaseUrl}
         hostId={hostId}
       />
-      <button
-        type="button"
-        className="fixed top-20 mt-4 right-6 w-10 h-10 rounded-full bg-white dark:bg-gray-900 shadow-lg flex items-center justify-center text-zinc-700 dark:text-white opacity-80 hover:opacity-100 cursor-pointer border border-zinc-200 dark:border-transparent"
-        onClick={scrollToTop}
-        aria-label="Scroll to top"
-      >
-        <FaCaretUp className="text-zinc-500 dark:text-gray-400" />
-      </button>
-      <button
-        type="button"
-        className="fixed bottom-5 right-6 w-10 h-10 rounded-full bg-white dark:bg-gray-900 shadow-lg flex items-center justify-center text-zinc-700 dark:text-white opacity-80 hover:opacity-100 cursor-pointer border border-zinc-200 dark:border-transparent"
-        onClick={scrollToBottom}
-        aria-label="Scroll to bottom"
-      >
-        <FaCaretDown className="text-zinc-500 dark:text-gray-400" />
-      </button>
+      {!embedded && (
+        <>
+          <button
+            type="button"
+            className="fixed top-20 mt-4 right-6 w-10 h-10 rounded-full bg-white dark:bg-gray-900 shadow-lg flex items-center justify-center text-zinc-700 dark:text-white opacity-80 hover:opacity-100 cursor-pointer border border-zinc-200 dark:border-transparent"
+            onClick={scrollToTop}
+            aria-label="Scroll to top"
+          >
+            <FaCaretUp className="text-zinc-500 dark:text-gray-400" />
+          </button>
+          <button
+            type="button"
+            className="fixed bottom-5 right-6 w-10 h-10 rounded-full bg-white dark:bg-gray-900 shadow-lg flex items-center justify-center text-zinc-700 dark:text-white opacity-80 hover:opacity-100 cursor-pointer border border-zinc-200 dark:border-transparent"
+            onClick={scrollToBottom}
+            aria-label="Scroll to bottom"
+          >
+            <FaCaretDown className="text-zinc-500 dark:text-gray-400" />
+          </button>
+        </>
+      )}
     </div>
   );
 }

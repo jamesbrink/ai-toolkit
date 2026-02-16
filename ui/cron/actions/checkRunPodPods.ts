@@ -1,5 +1,8 @@
 import prisma from '../prisma';
 import { buildHostBaseUrl } from '../../src/server/hostUrl';
+import { detectDeviceType, getPrimaryLocalAddress } from '../../src/server/networkUtils';
+import os from 'os';
+import { randomUUID } from 'crypto';
 
 const RUNPOD_API_URL = 'https://api.runpod.io/graphql';
 const HEALTH_CHECK_TIMEOUT = 10000;
@@ -107,6 +110,101 @@ async function probeRunPodInstance(
   }
 
   return null;
+}
+
+interface GossipPeer {
+  instanceId: string;
+  name: string;
+  address: string;
+  port: number;
+  deviceType?: string;
+  canReachBack?: boolean;
+}
+
+/**
+ * Register the hub on a RunPod pod so the pod knows about us and our network.
+ * Mirrors the bidirectional handshake from manual host addition (POST /api/hosts).
+ */
+async function registerHubOnPod(podBaseUrl: string, podAuthToken: string): Promise<void> {
+  try {
+    let ourSetting = await prisma.settings.findUnique({ where: { key: 'INSTANCE_ID' } });
+    if (!ourSetting) {
+      ourSetting = await prisma.settings.create({ data: { key: 'INSTANCE_ID', value: randomUUID() } });
+    }
+    const ourPort = parseInt(process.env.PORT || '8675', 10);
+    const ourAddress = getPrimaryLocalAddress();
+    const ourDeviceType = await detectDeviceType();
+    const ourAuth = process.env.AI_TOOLKIT_AUTH || '';
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), PROBE_TIMEOUT);
+    await fetch(`${podBaseUrl}/api/hosts/register`, {
+      method: 'POST',
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${podAuthToken}`,
+      },
+      body: JSON.stringify({
+        instanceId: ourSetting.value,
+        name: os.hostname(),
+        hostname: os.hostname(),
+        address: ourAddress,
+        port: ourPort,
+        deviceType: ourDeviceType,
+        authToken: ourAuth,
+      }),
+    });
+    clearTimeout(timeout);
+    console.log(`[RunPod] Registered hub on pod at ${podBaseUrl}`);
+  } catch {
+    // Registration failed (old image, firewall, etc.) — continue silently
+  }
+}
+
+/**
+ * Push our peer list to a RunPod pod via gossip health endpoint.
+ * This lets the pod learn about all hosts on the hub's network.
+ */
+async function gossipWithPod(podBaseUrl: string, podAuthToken: string, peers: GossipPeer[]): Promise<void> {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), PROBE_TIMEOUT);
+    await fetch(`${podBaseUrl}/api/hosts/health`, {
+      method: 'POST',
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${podAuthToken}`,
+      },
+      body: JSON.stringify({ peers }),
+    });
+    clearTimeout(timeout);
+  } catch {
+    // Gossip failed — non-critical
+  }
+}
+
+/**
+ * Build the current peer list for gossip exchange (non-hidden, online hosts, no auth tokens).
+ */
+async function buildPeerList(): Promise<GossipPeer[]> {
+  const gossipSetting = await prisma.settings.findUnique({ where: { key: 'GOSSIP_ENABLED' } });
+  const gossipEnabled = !gossipSetting || gossipSetting.value !== 'false';
+  if (!gossipEnabled) return [];
+
+  const onlineHosts = await prisma.host.findMany({
+    where: { isHidden: false, isOnline: true },
+    select: { instanceId: true, name: true, address: true, port: true, deviceType: true, canReachBack: true },
+  });
+  return onlineHosts.map(h => ({
+    instanceId: h.instanceId,
+    name: h.name,
+    address: h.address,
+    port: h.port,
+    deviceType: h.deviceType,
+    canReachBack: h.canReachBack,
+  }));
 }
 
 export default async function checkRunPodPods(): Promise<void> {
@@ -235,6 +333,16 @@ export default async function checkRunPodPods(): Promise<void> {
             });
           }
           console.log(`[RunPod] Auto-registered host for pod "${pod.name}" at ${probeAddr}:${probePort}`);
+
+          // Bidirectional handshake: register the hub on the pod so it knows about us
+          const podBaseUrl = buildHostBaseUrl(probeAddr, probePort);
+          await registerHubOnPod(podBaseUrl, pod.authPassword);
+
+          // Push our peer list so the pod learns about other hosts on our network
+          const peers = await buildPeerList();
+          if (peers.length > 0) {
+            await gossipWithPod(podBaseUrl, pod.authPassword, peers);
+          }
         }
       }
 
@@ -247,22 +355,29 @@ export default async function checkRunPodPods(): Promise<void> {
           if (probeResult) {
             const { identity, address: probeAddr, port: probePort } = probeResult;
             const addressChanged = existingHost.address !== probeAddr || existingHost.port !== probePort;
-            if (addressChanged || !existingHost.isOnline) {
-              await prisma.host.update({
-                where: { id: pod.hostId },
-                data: {
-                  address: probeAddr,
-                  port: probePort,
-                  isOnline: true,
-                  isHidden: false,
-                  lastSeen: new Date(),
-                  deviceType: identity.deviceType || existingHost.deviceType,
-                  gpuSummary: identity.gpuSummary || existingHost.gpuSummary,
-                },
-              });
-              if (addressChanged) {
-                console.log(`[RunPod] Updated host address for pod "${pod.name}" to ${probeAddr}:${probePort}`);
-              }
+            if (addressChanged) {
+              console.log(`[RunPod] Updated host address for pod "${pod.name}" to ${probeAddr}:${probePort}`);
+            }
+
+            // Always update lastSeen and isOnline on successful probe
+            await prisma.host.update({
+              where: { id: pod.hostId },
+              data: {
+                address: probeAddr,
+                port: probePort,
+                isOnline: true,
+                isHidden: false,
+                lastSeen: new Date(),
+                deviceType: identity.deviceType || existingHost.deviceType,
+                gpuSummary: identity.gpuSummary || existingHost.gpuSummary,
+              },
+            });
+
+            // Push peer list to pod on each health check so it stays up-to-date
+            const podBaseUrl = buildHostBaseUrl(probeAddr, probePort);
+            const peers = await buildPeerList();
+            if (peers.length > 0) {
+              await gossipWithPod(podBaseUrl, pod.authPassword, peers);
             }
           }
         }

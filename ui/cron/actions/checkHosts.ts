@@ -180,10 +180,10 @@ export default async function checkHosts(): Promise<void> {
           const fallbackController = new AbortController();
           const fallbackTimeout = setTimeout(() => fallbackController.abort(), HEALTH_CHECK_TIMEOUT);
           delete headers['Content-Type'];
-          const fallbackRes = await fetch(
-            `${buildHostBaseUrl(host.address, host.port)}/api/hosts/identify`,
-            { signal: fallbackController.signal, headers },
-          );
+          const fallbackRes = await fetch(`${buildHostBaseUrl(host.address, host.port)}/api/hosts/identify`, {
+            signal: fallbackController.signal,
+            headers,
+          });
           clearTimeout(fallbackTimeout);
           if (!fallbackRes.ok) throw new Error(`HTTP ${fallbackRes.status}`);
           data = await fallbackRes.json();

@@ -131,8 +131,9 @@ export default function PodTrainingTab({
       </div>
 
       {/* Sample Images */}
-      <div>
-        <SampleImages job={adaptedJob} hostId={hostId} />
+      <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4">
+        <h3 className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-3">Sample Images</h3>
+        <SampleImages job={adaptedJob} hostId={hostId} embedded />
       </div>
     </div>
   );
