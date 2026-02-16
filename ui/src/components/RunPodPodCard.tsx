@@ -70,8 +70,27 @@ export default function RunPodPodCard({ pod, onRefresh }: RunPodPodCardProps) {
       type: 'danger',
       confirmText: 'Terminate',
       onConfirm: async () => {
-        await apiClient.post(`/api/runpod/pods/${pod.id}/terminate`);
-        onRefresh();
+        try {
+          await apiClient.post(`/api/runpod/pods/${pod.id}/terminate`);
+          onRefresh();
+        } catch (err: unknown) {
+          const resp = (err as { response?: { status?: number; data?: { activeJobCount?: number } } })?.response;
+          if (resp?.status === 409) {
+            const count = resp.data?.activeJobCount ?? 0;
+            openConfirm({
+              title: 'Active Jobs Running',
+              message: `This pod has ${count} active job(s). Terminating will stop them immediately and all unsaved progress will be lost. Continue?`,
+              type: 'danger',
+              confirmText: 'Force Terminate',
+              onConfirm: async () => {
+                await apiClient.post(`/api/runpod/pods/${pod.id}/terminate`, { confirmTerminate: true });
+                onRefresh();
+              },
+            });
+          } else {
+            throw err;
+          }
+        }
       },
     });
   };

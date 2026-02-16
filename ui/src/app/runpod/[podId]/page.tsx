@@ -123,8 +123,27 @@ export default function RunPodPodDetailPage() {
       type: 'danger',
       confirmText: 'Terminate',
       onConfirm: async () => {
-        await apiClient.post(`/api/runpod/pods/${params.podId}/terminate`);
-        fetchPod();
+        try {
+          await apiClient.post(`/api/runpod/pods/${params.podId}/terminate`);
+          fetchPod();
+        } catch (err: unknown) {
+          const resp = (err as { response?: { status?: number; data?: { activeJobCount?: number } } })?.response;
+          if (resp?.status === 409) {
+            const count = resp.data?.activeJobCount ?? 0;
+            openConfirm({
+              title: 'Active Jobs Running',
+              message: `This pod has ${count} active job(s). Terminating will stop them immediately and all unsaved progress will be lost. Continue?`,
+              type: 'danger',
+              confirmText: 'Force Terminate',
+              onConfirm: async () => {
+                await apiClient.post(`/api/runpod/pods/${params.podId}/terminate`, { confirmTerminate: true });
+                fetchPod();
+              },
+            });
+          } else {
+            throw err;
+          }
+        }
       },
     });
   };
