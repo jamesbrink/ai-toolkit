@@ -4,6 +4,7 @@
 {
   lib,
   stdenv,
+  bash,
   buildNpmPackage,
   nodejs_22,
   makeWrapper,
@@ -109,13 +110,14 @@ buildNpmPackage {
     # --- Wrapper script ---
     mkdir -p $out/bin
     substitute ${./ai-toolkit-ui-wrapper.sh} $out/bin/ai-toolkit-ui \
+      --subst-var-by bash "${bash}" \
       --subst-var-by ui "$out/lib/ai-toolkit-ui" \
       --subst-var-by toolkit "${ai-toolkit}" \
       --subst-var-by prismaEngines7 "${prisma-engines_7}"
     chmod +x $out/bin/ai-toolkit-ui
 
     wrapProgram $out/bin/ai-toolkit-ui \
-      --prefix PATH : ${lib.makeBinPath ([ nodejs_22 ] ++ lib.optionals stdenv.isDarwin [ macmon ])} \
+      --prefix PATH : ${lib.makeBinPath ([ bash nodejs_22 ] ++ lib.optionals stdenv.isDarwin [ macmon ])} \
       --set NODE_ENV "production"
 
     runHook postInstall
