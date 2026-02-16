@@ -28,7 +28,7 @@
 
       # Non-per-system outputs: overlay and service modules
       flake = {
-        overlays.default = import ./nix/overlay.nix;
+        overlays.default = import ./nix/overlay.nix { nixpkgs = inputs.nixpkgs; };
         nixosModules.default = import ./nix/modules/nixos.nix;
         darwinModules.default = import ./nix/modules/darwin.nix;
       };

@@ -7,6 +7,7 @@
 #
 # NOTE: On Linux, CUDA support requires allowUnfree in the consumer's nixpkgs config:
 #   nixpkgs.config.allowUnfree = true;
+{ nixpkgs }:
 final: prev:
 let
   pythonOverlay = import ./python-packages.nix {
@@ -18,9 +19,13 @@ let
     packageOverrides = pythonOverlay;
   };
 
-  # Prisma 7 engine binaries — nixpkgs stable may only ship prisma-engines
-  # (versioned at Prisma 5/6), so fall back gracefully.
-  prismaEngines7 = final.prisma-engines_7 or final.prisma-engines;
+  # Prisma 7 engine binaries — the consumer's nixpkgs may not ship
+  # prisma-engines_7, so fall back to the flake's own nixpkgs input.
+  flakePkgs = import nixpkgs {
+    inherit (final) system;
+    config.allowUnfree = true;
+  };
+  prismaEngines7 = final.prisma-engines_7 or flakePkgs.prisma-engines_7 or final.prisma-engines;
 in
 {
   ai-toolkit = final.callPackage ./ai-toolkit.nix { inherit python3; };
