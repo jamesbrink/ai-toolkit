@@ -49,10 +49,5 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Increase payload size limit (default is 4mb)
-export const config = {
-  api: {
-    bodyParser: false,
-    responseLimit: '50mb',
-  },
-};
+// Allow large file uploads (App Router route segment config)
+export const dynamic = 'force-dynamic';
