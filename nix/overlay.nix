@@ -17,10 +17,15 @@ let
   python3 = final.python312.override {
     packageOverrides = pythonOverlay;
   };
+
+  # Prisma 7 engine binaries — nixpkgs stable may only ship prisma-engines
+  # (versioned at Prisma 5/6), so fall back gracefully.
+  prismaEngines7 = final.prisma-engines_7 or final.prisma-engines;
 in
 {
   ai-toolkit = final.callPackage ./ai-toolkit.nix { inherit python3; };
   ai-toolkit-ui = final.callPackage ./ai-toolkit-ui.nix {
     ai-toolkit = final.ai-toolkit;
+    prisma-engines_7 = prismaEngines7;
   };
 }
