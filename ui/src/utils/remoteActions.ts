@@ -20,7 +20,10 @@ export function routePost(source: DataSource, localPath: string, data?: unknown)
 }
 
 // Job actions
-export const startJobOnHost = (source: DataSource, jobId: string) => routeAction(source, `/api/jobs/${jobId}/start`);
+export const startJobOnHost = (source: DataSource, jobId: string, restart = false) => {
+  const url = restart ? `/api/jobs/${jobId}/start?restart=true` : `/api/jobs/${jobId}/start`;
+  return routeAction(source, url);
+};
 
 export const stopJobOnHost = (source: DataSource, jobId: string) => routeAction(source, `/api/jobs/${jobId}/stop`);
 

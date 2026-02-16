@@ -1,10 +1,13 @@
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Trash2, Pen, Play, Pause, Cog, X } from 'lucide-react';
+import { Trash2, Pen, Play, Pause, Cog, X, SlidersHorizontal, RotateCcw, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/catalyst/button';
 import { openConfirm } from '@/components/ConfirmModal';
 import { Job } from '@/server/prismaTypes';
 import { DataSource, UnifiedJob } from '@/types';
-import { startJob, stopJob, deleteJob, getAvaliableJobActions, markJobAsStopped } from '@/utils/jobs';
+import { startJob, stopJob, deleteJob, getAvaliableJobActions, markJobAsStopped, getCheckpointStep } from '@/utils/jobs';
 import { startQueue } from '@/utils/queue';
 import {
   startJobOnHost,
@@ -14,6 +17,7 @@ import {
   startQueueOnHost,
 } from '@/utils/remoteActions';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
+import LiveConfigPanel from '@/components/LiveConfigPanel';
 
 interface JobActionBarProps {
   job: Job | UnifiedJob;
@@ -36,14 +40,35 @@ export default function JobActionBar({
 }: JobActionBarProps) {
   const { canStart, canStop, canEdit, canRemoveFromQueue } = getAvaliableJobActions(job);
   const isRemote = source?.type === 'remote';
+  const isRunning = job.status === 'running';
+
+  const [checkpointStep, setCheckpointStep] = useState<number | null>(null);
+  const [checkpointLoaded, setCheckpointLoaded] = useState(false);
+  const [tuneOpen, setTuneOpen] = useState(false);
 
   if (!afterDelete) afterDelete = onRefresh;
 
-  const doStartJob = async () => {
-    if (isRemote) {
-      await startJobOnHost(source!, job.id);
+  // Load checkpoint info when the job can be started
+  const loadCheckpoint = useCallback(async () => {
+    if (canStart && !isRemote) {
+      const step = await getCheckpointStep(job.id);
+      setCheckpointStep(step);
+      setCheckpointLoaded(true);
     } else {
-      await startJob(job.id);
+      setCheckpointStep(null);
+      setCheckpointLoaded(false);
+    }
+  }, [canStart, isRemote, job.id]);
+
+  useEffect(() => {
+    loadCheckpoint();
+  }, [loadCheckpoint]);
+
+  const doStartJob = async (restart = false) => {
+    if (isRemote) {
+      await startJobOnHost(source!, job.id, restart);
+    } else {
+      await startJob(job.id, restart);
     }
   };
 
@@ -79,19 +104,67 @@ export default function JobActionBar({
     }
   };
 
+  const handleStart = async (restart = false) => {
+    if (!canStart) return;
+    await doStartJob(restart);
+    if (autoStartQueue) {
+      await doStartQueue(job.gpu_ids);
+    }
+    if (onRefresh) onRefresh();
+  };
+
+  // Show resume dropdown when checkpoints exist
+  const hasCheckpoint = checkpointLoaded && checkpointStep !== null && checkpointStep > 0;
+
   return (
     <div className={`flex items-center ${className ?? ''}`}>
-      {canStart && (
+      {canStart && hasCheckpoint && !isRemote && (
+        <Menu as="div" className="relative flex items-center">
+          <MenuButton className="ml-1 flex items-center gap-0.5 p-2.5 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300">
+            <Play className="w-5 h-5" />
+            <ChevronDown className="w-3 h-3" />
+          </MenuButton>
+          <MenuItems
+            anchor="bottom"
+            className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded shadow-lg w-56 px-2 py-2 mt-4 text-zinc-800 dark:text-zinc-200 z-50"
+          >
+            <MenuItem>
+              <div
+                className="cursor-pointer px-4 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded text-zinc-800 dark:text-zinc-200"
+                onClick={() => handleStart(false)}
+              >
+                <div className="flex items-center gap-2">
+                  <Play className="w-4 h-4" />
+                  <span>Resume from step {checkpointStep.toLocaleString()}</span>
+                </div>
+              </div>
+            </MenuItem>
+            <MenuItem>
+              <div
+                className="cursor-pointer px-4 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded text-zinc-800 dark:text-zinc-200"
+                onClick={() => {
+                  openConfirm({
+                    title: 'Restart from Scratch',
+                    message: `This will ignore the existing checkpoint at step ${checkpointStep.toLocaleString()} and start training from step 0. Are you sure?`,
+                    type: 'warning',
+                    confirmText: 'Restart',
+                    onConfirm: () => handleStart(true),
+                  });
+                }}
+              >
+                <div className="flex items-center gap-2">
+                  <RotateCcw className="w-4 h-4" />
+                  <span>Restart from scratch</span>
+                </div>
+              </div>
+            </MenuItem>
+          </MenuItems>
+        </Menu>
+      )}
+      {canStart && (!hasCheckpoint || isRemote) && (
         <Button
           plain
-          onClick={async () => {
-            if (!canStart) return;
-            await doStartJob();
-            if (autoStartQueue) {
-              await doStartQueue(job.gpu_ids);
-            }
-            if (onRefresh) onRefresh();
-          }}
+          onClick={() => handleStart(false)}
           className="ml-1"
         >
           <Play className="w-5 h-5" />
@@ -129,6 +202,16 @@ export default function JobActionBar({
           className="ml-1"
         >
           <Pause className="w-5 h-5" />
+        </Button>
+      )}
+      {isRunning && !isRemote && (
+        <Button
+          plain
+          onClick={() => setTuneOpen(true)}
+          className="ml-1"
+          title="Live config tuning"
+        >
+          <SlidersHorizontal className="w-5 h-5" />
         </Button>
       )}
       {canEdit && !isRemote && (
@@ -204,6 +287,8 @@ export default function JobActionBar({
           </MenuItem>
         </MenuItems>
       </Menu>
+
+      <LiveConfigPanel job={job} isOpen={tuneOpen} onClose={() => setTuneOpen(false)} />
     </div>
   );
 }

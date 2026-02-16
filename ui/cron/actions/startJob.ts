@@ -4,6 +4,7 @@ import { spawn } from 'child_process';
 import path from 'path';
 import fs from 'fs';
 import { TOOLKIT_ROOT, getTrainingFolder, getHFToken } from '../paths';
+import { findLatestCheckpointStep } from './checkpointUtils';
 const isWindows = process.platform === 'win32';
 
 const startAndWatchJob = async (job: Job): Promise<void> => {
@@ -51,6 +52,24 @@ const startAndWatchJob = async (job: Job): Promise<void> => {
   const dbUrl = process.env.DATABASE_URL || '';
   const dbPath = dbUrl.startsWith('file:') ? dbUrl.slice(5) : path.join(TOOLKIT_ROOT, 'aitk_db.db');
   jobConfig.config.process[0].sqlite_db_path = dbPath;
+
+  // Smart resume: auto-detect latest checkpoint and inject start_step
+  if (job.force_restart) {
+    // User chose "restart from scratch" — explicitly set start_step to 0
+    jobConfig.config.process[0].train.start_step = 0;
+    console.log(`Job "${job.name}": force restart from step 0`);
+  } else {
+    const latestStep = await findLatestCheckpointStep(job.name, trainingRoot);
+    if (latestStep !== null && jobConfig.config.process[0].train.start_step == null) {
+      jobConfig.config.process[0].train.start_step = latestStep;
+      console.log(`Job "${job.name}": resuming from checkpoint step ${latestStep}`);
+      // Update the DB step so the UI shows the correct starting point
+      await prisma.job.update({
+        where: { id: jobID },
+        data: { step: latestStep },
+      });
+    }
+  }
 
   // write the config file
   fs.writeFileSync(configPath, JSON.stringify(jobConfig, null, 2));

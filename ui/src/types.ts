@@ -284,6 +284,8 @@ export interface UnifiedJob {
   info: string;
   stop: boolean;
   return_to_queue: boolean;
+  config_overrides: string;
+  force_restart: boolean;
   source: DataSource;
 }
 

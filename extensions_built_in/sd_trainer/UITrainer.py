@@ -1,4 +1,5 @@
 from collections import OrderedDict
+import json
 import os
 import sqlite3
 import asyncio
@@ -9,7 +10,7 @@ import threading
 import time
 import signal
 
-AITK_Status = Literal["running", "stopped", "error", "completed"]
+AITK_Status = Literal["running", "stopped", "error", "completed", "queued"]
 
 
 class UITrainer(SDTrainer):
@@ -33,6 +34,9 @@ class UITrainer(SDTrainer):
         # Initialize the status
         self._run_async_operation(self._update_status("running", "Starting"))
         self._stop_watcher_started = False
+        # Config override checking (throttled to every 10 steps)
+        self._override_check_counter = 0
+        self._override_check_interval = 10
         # self.start_stop_watcher(interval_sec=2.0)
     
     def start_stop_watcher(self, interval_sec: float = 5.0):
@@ -209,7 +213,7 @@ class UITrainer(SDTrainer):
 
         try:
             await asyncio.gather(*self._async_tasks)
-        except Exception as e:
+        except Exception:
             pass
         finally:
             # Clear the task list after completion
@@ -243,9 +247,78 @@ class UITrainer(SDTrainer):
         asyncio.run(self.wait_for_all_async())
         self.thread_pool.shutdown(wait=True)
 
+    # -- Live config override support --
+    # Allowed keys mapped to (config_object_attr, field_name) or special handler
+    _OVERRIDE_KEYS = {
+        'sample_every': ('sample_config', 'sample_every'),
+        'save_every': ('save_config', 'save_every'),
+        'log_every': ('logging_config', 'log_every'),
+        'lr': None,  # special: updates optimizer param_groups
+        'cfg_scale': ('train_config', 'cfg_scale'),
+        'gradient_accumulation': ('train_config', 'gradient_accumulation'),
+    }
+
+    def _read_config_overrides(self):
+        """Read config_overrides column from the Job row via thread pool to avoid blocking training."""
+        def _read():
+            with self._db_connect() as conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    "SELECT config_overrides FROM Job WHERE id = ?", (self.job_id,))
+                row = cursor.fetchone()
+                if row is None or not row[0]:
+                    return {}
+                try:
+                    return json.loads(row[0])
+                except (json.JSONDecodeError, TypeError):
+                    return {}
+        # Run in thread pool so SQLite lock waits don't block the training loop
+        future = self.thread_pool.submit(_read)
+        try:
+            return future.result(timeout=2.0)
+        except Exception:
+            return {}
+
+    def check_config_overrides(self):
+        """Check for live config overrides from the UI and apply them."""
+        overrides = self._read_config_overrides()
+        if not overrides:
+            return
+
+        for key, value in overrides.items():
+            if key not in self._OVERRIDE_KEYS:
+                continue
+
+            mapping = self._OVERRIDE_KEYS[key]
+
+            if mapping is None and key == 'lr':
+                # Special handling for learning rate: update optimizer param_groups
+                if self.optimizer is not None:
+                    current_lr = self.optimizer.param_groups[0].get('lr')
+                    if current_lr != value:
+                        for pg in self.optimizer.param_groups:
+                            pg['lr'] = value
+                        print(f"[LiveConfig] lr: {current_lr} -> {value}")
+                continue
+
+            config_attr, field_name = mapping
+            config_obj = getattr(self, config_attr, None)
+            if config_obj is None:
+                continue
+
+            current = getattr(config_obj, field_name, None)
+            if current != value:
+                setattr(config_obj, field_name, value)
+                print(f"[LiveConfig] {key}: {current} -> {value}")
+
     def end_step_hook(self):
         super(UITrainer, self).end_step_hook()
         self.update_step()
+        # Check for live config overrides (throttled)
+        self._override_check_counter += 1
+        if self._override_check_counter >= self._override_check_interval:
+            self._override_check_counter = 0
+            self.check_config_overrides()
         self.maybe_stop()
 
     def hook_before_model_load(self):

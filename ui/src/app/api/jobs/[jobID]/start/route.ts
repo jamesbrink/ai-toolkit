@@ -3,6 +3,7 @@ import prisma from '@/server/prisma';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ jobID: string }> }) {
   const { jobID } = await params;
+  const restart = request.nextUrl.searchParams.get('restart') === 'true';
 
   try {
     const job = await prisma.job.findUnique({
@@ -49,7 +50,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         status: 'queued',
         stop: false,
         return_to_queue: false,
-        info: 'Job queued',
+        info: restart ? 'Job queued (restart from scratch)' : 'Job queued',
+        config_overrides: '', // Clear stale overrides from previous run
+        force_restart: restart,
       },
     });
 

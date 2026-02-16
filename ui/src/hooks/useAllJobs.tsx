@@ -22,6 +22,8 @@ function normalizeJob(raw: Record<string, unknown>, source: DataSource): Unified
     info: (raw.info as string) ?? '',
     stop: (raw.stop as boolean) ?? false,
     return_to_queue: (raw.return_to_queue as boolean) ?? false,
+    config_overrides: (raw.config_overrides as string) ?? '',
+    force_restart: (raw.force_restart as boolean) ?? false,
     source,
   };
 }

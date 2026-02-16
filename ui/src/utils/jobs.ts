@@ -4,10 +4,11 @@ import { apiClient } from '@/utils/api';
 
 type AnyJob = Job | UnifiedJob;
 
-export const startJob = (jobID: string) => {
+export const startJob = (jobID: string, restart = false) => {
+  const url = restart ? `/api/jobs/${jobID}/start?restart=true` : `/api/jobs/${jobID}/start`;
   return new Promise<void>((resolve, reject) => {
     apiClient
-      .get(`/api/jobs/${jobID}/start`)
+      .get(url)
       .then(res => res.data)
       .then(() => {
         resolve();
@@ -17,6 +18,28 @@ export const startJob = (jobID: string) => {
         reject(error);
       });
   });
+};
+
+export const getCheckpointStep = (jobID: string): Promise<number | null> => {
+  return apiClient
+    .get(`/api/jobs/${jobID}/checkpoint-step`)
+    .then(res => res.data?.step ?? null)
+    .catch(() => null);
+};
+
+export const getConfigOverrides = (jobID: string): Promise<Record<string, number>> => {
+  return apiClient
+    .get(`/api/jobs/${jobID}/config-overrides`)
+    .then(res => res.data?.overrides ?? {})
+    .catch(() => ({}));
+};
+
+export const setConfigOverrides = (jobID: string, overrides: Record<string, number>): Promise<void> => {
+  return apiClient.patch(`/api/jobs/${jobID}/config-overrides`, { overrides }).then(() => {});
+};
+
+export const clearConfigOverrides = (jobID: string): Promise<void> => {
+  return apiClient.delete(`/api/jobs/${jobID}/config-overrides`).then(() => {});
 };
 
 export const stopJob = (jobID: string) => {

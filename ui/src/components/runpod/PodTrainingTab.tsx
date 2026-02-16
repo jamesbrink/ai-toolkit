@@ -40,6 +40,8 @@ function toUnifiedJob(job: RemoteJob): UnifiedJob {
     info: job.info,
     stop: job.stop,
     return_to_queue: job.return_to_queue,
+    config_overrides: '',
+    force_restart: false,
     source: { type: 'remote' },
   };
 }

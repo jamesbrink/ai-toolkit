@@ -26,6 +26,8 @@ function makeJob(overrides: Record<string, unknown> = {}) {
     info: '',
     speed_string: '',
     queue_position: 0,
+    config_overrides: '',
+    force_restart: false,
   };
   return { ...defaults, ...overrides };
 }

@@ -31,10 +31,12 @@ model Job {
   status          String   @default("stopped")
   stop            Boolean  @default(false)
   return_to_queue Boolean  @default(false) // same as stop, but will be set to 'queued' when stopped
-  step            Int      @default(0)
-  info            String   @default("")
-  speed_string    String   @default("")
-  queue_position  Int      @default(0)
+  step              Int      @default(0)
+  info              String   @default("")
+  speed_string      String   @default("")
+  queue_position    Int      @default(0)
+  config_overrides  String   @default("")  // JSON of live-tweakable overrides for running jobs
+  force_restart     Boolean  @default(false) // When true, ignore checkpoints and start from step 0
 
   @@index([status])
   @@index([gpu_ids])
