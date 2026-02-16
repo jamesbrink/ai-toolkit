@@ -101,5 +101,36 @@ in
         description = "Whether to enable mDNS discovery and advertising.";
       };
     };
+
+    secrets = {
+      claudeOauthTokenFile = mkOption {
+        type = types.nullOr types.path;
+        default = null;
+        description = ''
+          Path to a file containing the Claude Code OAuth token.
+          Sets CLAUDE_CODE_OAUTH_TOKEN at runtime. Use this with agenix
+          or sops-nix to avoid storing secrets in the Nix store.
+        '';
+      };
+
+      hfTokenFile = mkOption {
+        type = types.nullOr types.path;
+        default = null;
+        description = ''
+          Path to a file containing the HuggingFace token.
+          Sets HF_TOKEN at runtime for downloading gated/private models.
+        '';
+      };
+
+      anthropicApiKeyFile = mkOption {
+        type = types.nullOr types.path;
+        default = null;
+        description = ''
+          Path to a file containing the Anthropic API key.
+          Sets ANTHROPIC_API_KEY at runtime. Only needed if not using
+          claudeOauthTokenFile (OAuth token takes priority in the app).
+        '';
+      };
+    };
   };
 }

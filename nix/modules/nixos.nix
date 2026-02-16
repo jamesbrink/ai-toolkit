@@ -5,7 +5,8 @@
 #   services.ai-toolkit = {
 #     enable = true;
 #     openFirewall = true;
-#     environmentFile = "/run/secrets/ai-toolkit.env";
+#     secrets.claudeOauthTokenFile = config.age.secrets."claude-token".path;
+#     secrets.hfTokenFile = config.age.secrets."hf-token".path;
 #   };
 {
   config,
@@ -20,6 +21,29 @@ let
   stateDirectoryName = lib.removePrefix "/var/lib/" cfg.dataDir;
   # Detect NVIDIA GPU support so we can put nvidia-smi on the service PATH
   hasNvidia = builtins.elem "nvidia" (config.services.xserver.videoDrivers or [ ]);
+  # Whether any secret file options are set
+  hasSecretFiles =
+    cfg.secrets.claudeOauthTokenFile != null
+    || cfg.secrets.hfTokenFile != null
+    || cfg.secrets.anthropicApiKeyFile != null;
+  # Script to generate env file from secret files at runtime
+  secretsEnvScript = pkgs.writeShellScript "ai-toolkit-secrets-env" ''
+    set -euo pipefail
+    ENV_FILE="/run/ai-toolkit/env"
+    mkdir -p /run/ai-toolkit
+    : > "$ENV_FILE"
+    ${lib.optionalString (cfg.secrets.claudeOauthTokenFile != null) ''
+      echo "CLAUDE_CODE_OAUTH_TOKEN=$(cat ${lib.escapeShellArg cfg.secrets.claudeOauthTokenFile})" >> "$ENV_FILE"
+    ''}
+    ${lib.optionalString (cfg.secrets.hfTokenFile != null) ''
+      echo "HF_TOKEN=$(cat ${lib.escapeShellArg cfg.secrets.hfTokenFile})" >> "$ENV_FILE"
+    ''}
+    ${lib.optionalString (cfg.secrets.anthropicApiKeyFile != null) ''
+      echo "ANTHROPIC_API_KEY=$(cat ${lib.escapeShellArg cfg.secrets.anthropicApiKeyFile})" >> "$ENV_FILE"
+    ''}
+    chmod 640 "$ENV_FILE"
+    chown ${cfg.user}:${cfg.group} "$ENV_FILE"
+  '';
 in
 {
   imports = [ ./common-options.nix ];
@@ -87,11 +111,26 @@ in
           StateDirectory = stateDirectoryName;
           StateDirectoryMode = "0750";
         }
-        // lib.optionalAttrs (cfg.environmentFile != null) {
-          EnvironmentFile = cfg.environmentFile;
+        // lib.optionalAttrs (cfg.environmentFile != null || hasSecretFiles) {
+          EnvironmentFile =
+            if hasSecretFiles then "/run/ai-toolkit/env" else cfg.environmentFile;
         };
       };
     }
+
+    # Secrets env file generator (oneshot that runs before the main service)
+    (mkIf hasSecretFiles {
+      systemd.services.ai-toolkit-secrets = {
+        description = "Generate AI Toolkit secrets environment file";
+        wantedBy = [ "ai-toolkit.service" ];
+        before = [ "ai-toolkit.service" ];
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+          ExecStart = "+${secretsEnvScript}";
+        };
+      };
+    })
 
     # System user and group (only when createUser is true)
     (mkIf cfg.createUser {

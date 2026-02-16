@@ -5,6 +5,8 @@
 #   services.ai-toolkit = {
 #     enable = true;
 #     user = "youruser";  # your macOS login username
+#     secrets.claudeOauthTokenFile = config.age.secrets."claude-token".path;
+#     secrets.hfTokenFile = config.age.secrets."hf-token".path;
 #   };
 {
   config,
@@ -53,6 +55,17 @@ in
           set -a
           source ${lib.escapeShellArg (toString cfg.environmentFile)}
           set +a
+        ''}
+
+        # Load secrets from file-based options (agenix/sops-nix compatible)
+        ${lib.optionalString (cfg.secrets.claudeOauthTokenFile != null) ''
+          export CLAUDE_CODE_OAUTH_TOKEN="$(cat ${lib.escapeShellArg cfg.secrets.claudeOauthTokenFile})"
+        ''}
+        ${lib.optionalString (cfg.secrets.hfTokenFile != null) ''
+          export HF_TOKEN="$(cat ${lib.escapeShellArg cfg.secrets.hfTokenFile})"
+        ''}
+        ${lib.optionalString (cfg.secrets.anthropicApiKeyFile != null) ''
+          export ANTHROPIC_API_KEY="$(cat ${lib.escapeShellArg cfg.secrets.anthropicApiKeyFile})"
         ''}
 
         # Additional user environment variables
