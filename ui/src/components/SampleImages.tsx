@@ -7,6 +7,7 @@ import { LuImageOff, LuLoader, LuBan } from 'react-icons/lu';
 import { Button } from '@headlessui/react';
 import { FaDownload } from 'react-icons/fa';
 import { apiClient } from '@/utils/api';
+import { remoteApi } from '@/utils/remoteApi';
 import clsx from 'clsx';
 import { FaCaretDown, FaCaretUp } from 'react-icons/fa';
 import SampleImageViewer from './SampleImageViewer';
@@ -73,6 +74,14 @@ export default function SampleImages({ job, hostId, embedded }: SampleImagesProp
   const [selectedSamplePath, setSelectedSamplePath] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const didFirstScroll = useRef(false);
+
+  const deleteSample = (imgPath: string) => {
+    const deleteRequest = hostId
+      ? remoteApi.post(hostId, 'img/delete', { imgPath })
+      : apiClient.post('/api/img/delete', { imgPath });
+    deleteRequest.then(() => refreshSampleImages()).catch(error => console.error('Error deleting sample:', error));
+  };
+
   const numSamples = useMemo(() => {
     if (job?.job_config) {
       try {
@@ -227,6 +236,7 @@ export default function SampleImages({ job, hostId, embedded }: SampleImagesProp
                     sampleImages={sampleImages}
                     alt="Sample Image"
                     onClick={() => setSelectedSamplePath(sample)}
+                    onDelete={() => deleteSample(sample)}
                     observerRoot={containerRef.current}
                     imageBaseUrl={imageBaseUrl}
                   />

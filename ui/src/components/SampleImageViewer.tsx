@@ -5,7 +5,6 @@ import { Dialog, DialogBackdrop, DialogPanel } from '@headlessui/react';
 import { SampleConfig, SampleItem } from '@/types';
 import { Cog } from 'lucide-react';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
-import { openConfirm } from './ConfirmModal';
 import { apiClient } from '@/utils/api';
 import { remoteApi } from '@/utils/remoteApi';
 import { isVideo } from '@/utils/basic';
@@ -321,28 +320,19 @@ export default function SampleImageViewer({
                     <div
                       className="cursor-pointer text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded px-2 py-1"
                       onClick={() => {
-                        const message = `Are you sure you want to delete this sample? This action cannot be undone.`;
-                        openConfirm({
-                          title: 'Delete Sample',
-                          message: message,
-                          type: 'warning',
-                          confirmText: 'Delete',
-                          onConfirm: () => {
-                            const deleteRequest = hostId
-                              ? remoteApi.post(hostId, 'img/delete', { imgPath: imgPath })
-                              : apiClient.post('/api/img/delete', { imgPath: imgPath });
-                            deleteRequest
-                              .then(() => {
-                                onChange(null);
-                                if (refreshSampleImages) {
-                                  refreshSampleImages();
-                                }
-                              })
-                              .catch(error => {
-                                console.error('Error deleting image:', error);
-                              });
-                          },
-                        });
+                        const deleteRequest = hostId
+                          ? remoteApi.post(hostId, 'img/delete', { imgPath: imgPath })
+                          : apiClient.post('/api/img/delete', { imgPath: imgPath });
+                        deleteRequest
+                          .then(() => {
+                            onChange(null);
+                            if (refreshSampleImages) {
+                              refreshSampleImages();
+                            }
+                          })
+                          .catch(error => {
+                            console.error('Error deleting image:', error);
+                          });
                       }}
                     >
                       Delete Sample

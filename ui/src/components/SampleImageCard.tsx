@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState, ReactNode } from 'react';
 import { isVideo } from '@/utils/basic';
+import { LuTrash2 } from 'react-icons/lu';
 
 interface SampleImageCardProps {
   imageUrl: string;
@@ -23,6 +24,7 @@ const SampleImageCard: React.FC<SampleImageCardProps> = ({
   alt,
   children,
   className = '',
+  onDelete,
   onClick = () => {},
   observerRoot = null,
   rootMargin = '200px 0px',
@@ -61,7 +63,12 @@ const SampleImageCard: React.FC<SampleImageCardProps> = ({
 
   return (
     <div className={`flex flex-col ${className}`}>
-      <div ref={cardRef} className="relative w-full cursor-pointer" style={{ paddingBottom: '100%' }} onClick={onClick}>
+      <div
+        ref={cardRef}
+        className="group relative w-full cursor-pointer"
+        style={{ paddingBottom: '100%' }}
+        onClick={onClick}
+      >
         <div className="absolute inset-0 rounded-t-lg shadow-md">
           {isVisible ? (
             isVideo(imageUrl) ? (
@@ -93,6 +100,19 @@ const SampleImageCard: React.FC<SampleImageCardProps> = ({
           ) : null}
 
           {children && isVisible && <div className="absolute inset-0 flex items-center justify-center">{children}</div>}
+          {onDelete && isVisible && (
+            <button
+              type="button"
+              onClick={e => {
+                e.stopPropagation();
+                onDelete();
+              }}
+              className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/60 hover:bg-red-600 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+              aria-label="Delete sample"
+            >
+              <LuTrash2 className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
       </div>
     </div>
