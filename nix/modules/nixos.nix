@@ -18,6 +18,8 @@ let
   inherit (lib) mkDefault mkIf mkMerge;
   isDefaultDataDir = lib.hasPrefix "/var/lib/" cfg.dataDir;
   stateDirectoryName = lib.removePrefix "/var/lib/" cfg.dataDir;
+  # Detect NVIDIA GPU support so we can put nvidia-smi on the service PATH
+  hasNvidia = builtins.elem "nvidia" (config.services.xserver.videoDrivers or [ ]);
 in
 {
   imports = [ ./common-options.nix ];
@@ -36,6 +38,9 @@ in
         after = [ "network.target" ] ++ cfg.requiresMounts;
         requires = cfg.requiresMounts;
         wantedBy = [ "multi-user.target" ];
+
+        # Put nvidia-smi on the service PATH so the UI can detect GPUs
+        path = lib.optional hasNvidia config.hardware.nvidia.package;
 
         environment = {
           PORT = toString cfg.port;
