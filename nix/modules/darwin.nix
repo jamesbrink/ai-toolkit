@@ -35,8 +35,11 @@ in
       dataDir = mkDefault "/Users/${cfg.user}/.local/share/ai-toolkit";
     };
 
-    # launchd user agent
-    launchd.user.agents.ai-toolkit = {
+    # System-level launchd daemon.
+    # Must be a daemon (not a user agent) so that macOS Sequoia's Local
+    # Network Privacy does not block outbound LAN connections — system
+    # daemons and their children are exempt from the LNP restriction.
+    launchd.daemons.ai-toolkit = {
       script = ''
         set -euo pipefail
 
@@ -45,6 +48,7 @@ in
         export AI_TOOLKIT_UI_HOST="${cfg.host}"
         export AI_TOOLKIT_UI_DATA="${cfg.dataDir}"
         export AI_TOOLKIT_MDNS="${if cfg.mdns.enable then "true" else "false"}"
+        export HOME="/Users/${cfg.user}"
 
         ${lib.optionalString (cfg.auth != null) ''
           export AI_TOOLKIT_AUTH=${lib.escapeShellArg cfg.auth}
@@ -76,6 +80,8 @@ in
 
       serviceConfig = {
         Label = "com.ostris.ai-toolkit";
+        UserName = cfg.user;
+        GroupName = "staff";
         RunAtLoad = true;
         KeepAlive = true;
         StandardOutPath = "${cfg.dataDir}/logs/stdout.log";
