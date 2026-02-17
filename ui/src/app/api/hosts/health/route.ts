@@ -151,13 +151,71 @@ export async function POST(request: Request) {
     const port = parseInt(process.env.PORT || '8675', 10);
     const ourInstanceId = setting.value;
 
-    // Parse incoming peers
+    // Parse incoming peers and sender identity
     const body = await request.json();
     const incomingPeers: GossipPeer[] = body.peers || [];
+    const sender = body.sender as GossipPeer | undefined;
 
     // Merge incoming peers into our DB
     if (incomingPeers.length > 0) {
       await mergeGossipPeers(incomingPeers, ourInstanceId);
+    }
+
+    // Register the caller (sender) so we discover them even if our mDNS/gossip is empty
+    if (sender?.instanceId && sender?.address && sender.instanceId !== ourInstanceId) {
+      try {
+        const existingByAddr = await prisma.host.findFirst({
+          where: { address: sender.address, port: sender.port },
+        });
+
+        if (existingByAddr) {
+          await prisma.host.update({
+            where: { id: existingByAddr.id },
+            data: {
+              instanceId: sender.instanceId,
+              name: sender.name || existingByAddr.name,
+              source: existingByAddr.source === 'mdns' ? 'mdns' : 'health-check',
+              isOnline: true,
+              lastSeen: new Date(),
+              ...(sender.deviceType ? { deviceType: sender.deviceType } : {}),
+            },
+          });
+        } else {
+          const existingById = await prisma.host.findUnique({
+            where: { instanceId: sender.instanceId },
+          });
+
+          if (existingById) {
+            await prisma.host.update({
+              where: { instanceId: sender.instanceId },
+              data: {
+                address: sender.address,
+                port: sender.port,
+                name: sender.name || existingById.name,
+                isOnline: true,
+                lastSeen: new Date(),
+                ...(sender.deviceType ? { deviceType: sender.deviceType } : {}),
+              },
+            });
+          } else {
+            await prisma.host.create({
+              data: {
+                name: sender.name || sender.address,
+                address: sender.address,
+                port: sender.port,
+                instanceId: sender.instanceId,
+                deviceType: sender.deviceType || 'none',
+                source: 'health-check',
+                isOnline: true,
+                lastSeen: new Date(),
+              },
+            });
+            console.log(`[Health] Registered caller: ${sender.name || sender.address} at ${sender.address}:${sender.port}`);
+          }
+        }
+      } catch (error) {
+        console.error(`[Health] Failed to register sender ${sender.instanceId}:`, error);
+      }
     }
 
     // Build our peer list for the response

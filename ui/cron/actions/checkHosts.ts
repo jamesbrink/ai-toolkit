@@ -1,5 +1,7 @@
 import prisma from '../prisma';
+import os from 'os';
 import { buildHostBaseUrl } from '../../src/server/hostUrl';
+import { detectDeviceType, getPrimaryLocalAddress } from '../../src/server/networkUtils';
 
 const HEALTH_CHECK_TIMEOUT = 5000;
 const FAILURE_THRESHOLD = 3;
@@ -127,6 +129,19 @@ export default async function checkHosts(): Promise<void> {
   const gossipSetting = await prisma.settings.findUnique({ where: { key: 'GOSSIP_ENABLED' } });
   const gossipEnabled = !gossipSetting || gossipSetting.value !== 'false';
 
+  // Build sender identity so the receiving host can register us
+  const ourDeviceType = gossipEnabled ? await detectDeviceType() : undefined;
+  const ourPort = parseInt(process.env.PORT || '8675', 10);
+  const sender = gossipEnabled
+    ? {
+        instanceId: ourInstanceId,
+        name: `AI Toolkit - ${os.hostname()}`,
+        address: getPrimaryLocalAddress(),
+        port: ourPort,
+        deviceType: ourDeviceType,
+      }
+    : undefined;
+
   // Build peer list for gossip exchange (non-hidden, online hosts, no auth tokens)
   let peerList: GossipPeer[] = [];
   if (gossipEnabled) {
@@ -171,7 +186,7 @@ export default async function checkHosts(): Promise<void> {
           method: 'POST',
           signal: controller.signal,
           headers,
-          body: JSON.stringify({ peers: peerList }),
+          body: JSON.stringify({ peers: peerList, sender }),
         });
         clearTimeout(timeout);
 
