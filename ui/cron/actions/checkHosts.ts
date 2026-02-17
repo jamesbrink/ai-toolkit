@@ -231,17 +231,20 @@ export default async function checkHosts(): Promise<void> {
       if (gossipEnabled && data.peers && data.peers.length > 0) {
         await mergeGossipPeers(data.peers, ourInstanceId);
       }
-    } catch {
+    } catch (error) {
       const count = (failureCounts.get(host.id) || 0) + 1;
       failureCounts.set(host.id, count);
 
+      const errMsg = error instanceof Error ? error.message : String(error);
       if (count >= FAILURE_THRESHOLD && host.isOnline) {
         await prisma.host.update({
           where: { id: host.id },
           data: { isOnline: false },
         });
+      }
+      if (count <= FAILURE_THRESHOLD || count % 10 === 0) {
         console.log(
-          `[HealthCheck] Host "${host.name}" (${host.address}:${host.port}) marked offline after ${count} failures`,
+          `[HealthCheck] Host "${host.name}" (${host.address}:${host.port}) check failed (${count}): ${errMsg}`,
         );
       }
     }
