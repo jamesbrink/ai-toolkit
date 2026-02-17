@@ -172,7 +172,9 @@ export async function startMdns(): Promise<void> {
   instanceId = await getOrCreateInstanceId();
   const hostname = os.hostname();
 
-  bonjour = new Bonjour();
+  bonjour = new Bonjour(undefined, (err: Error) => {
+    console.warn('[mDNS] Network error (non-fatal):', err.message);
+  });
 
   // Publish this instance
   bonjour.publish({
