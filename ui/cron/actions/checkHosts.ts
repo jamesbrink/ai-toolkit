@@ -235,7 +235,8 @@ export default async function checkHosts(): Promise<void> {
       const count = (failureCounts.get(host.id) || 0) + 1;
       failureCounts.set(host.id, count);
 
-      const errMsg = error instanceof Error ? error.message : String(error);
+      const cause = error instanceof Error && 'cause' in error ? (error.cause as Error)?.message || '' : '';
+      const errMsg = error instanceof Error ? `${error.message}${cause ? ` [cause: ${cause}]` : ''}` : String(error);
       if (count >= FAILURE_THRESHOLD && host.isOnline) {
         await prisma.host.update({
           where: { id: host.id },
