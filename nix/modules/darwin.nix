@@ -75,13 +75,17 @@ in
         # Additional user environment variables
         ${envLines}
 
-        exec ${cfg.package}/bin/ai-toolkit-ui
+        # Ensure data & log directories are owned by the service user
+        /usr/sbin/chown -R ${cfg.user}:staff ${lib.escapeShellArg cfg.dataDir}
+
+        # Drop to the service user via su while preserving the environment.
+        # The daemon starts as root (bypassing macOS Local Network Privacy)
+        # and the child process inherits the LNP exemption.
+        exec /usr/bin/su -m ${cfg.user} -c 'exec ${cfg.package}/bin/ai-toolkit-ui'
       '';
 
       serviceConfig = {
         Label = "com.ostris.ai-toolkit";
-        UserName = cfg.user;
-        GroupName = "staff";
         RunAtLoad = true;
         KeepAlive = true;
         StandardOutPath = "${cfg.dataDir}/logs/stdout.log";
