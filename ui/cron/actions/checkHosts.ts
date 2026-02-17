@@ -121,7 +121,6 @@ async function cleanupStaleGossipHosts(): Promise<void> {
 }
 
 export default async function checkHosts(): Promise<void> {
-  console.log('[HealthCheck] Starting host check cycle...');
   // Get our instance ID for gossip
   const ourSetting = await prisma.settings.findUnique({ where: { key: 'INSTANCE_ID' } });
   const ourInstanceId = ourSetting?.value || '';
@@ -163,8 +162,6 @@ export default async function checkHosts(): Promise<void> {
   const hosts = await prisma.host.findMany({
     where: { isHidden: false, source: { not: 'runpod' } },
   });
-  console.log(`[HealthCheck] Checking ${hosts.length} host(s), sender: ${sender?.address || 'none'}`);
-
   for (const host of hosts) {
     // Skip health-checking hosts we can't reach back to
     if (!host.canReachBack) continue;
