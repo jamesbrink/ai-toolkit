@@ -315,6 +315,11 @@ self: super:
     }
   );
 
+  # mcp has a flaky stdio test that fails in the Nix sandbox
+  mcp = super.mcp.overridePythonAttrs (old: {
+    doCheck = false;
+  });
+
   # diffusers pinned to specific git commit
   diffusers = super.diffusers.overridePythonAttrs (old: {
     version = "0.37.0.dev0";
