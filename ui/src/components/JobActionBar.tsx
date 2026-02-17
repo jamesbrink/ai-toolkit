@@ -7,7 +7,14 @@ import { Button } from '@/components/catalyst/button';
 import { openConfirm } from '@/components/ConfirmModal';
 import { Job } from '@/server/prismaTypes';
 import { DataSource, UnifiedJob } from '@/types';
-import { startJob, stopJob, deleteJob, getAvaliableJobActions, markJobAsStopped, getCheckpointStep } from '@/utils/jobs';
+import {
+  startJob,
+  stopJob,
+  deleteJob,
+  getAvaliableJobActions,
+  markJobAsStopped,
+  getCheckpointStep,
+} from '@/utils/jobs';
 import { startQueue } from '@/utils/queue';
 import {
   startJobOnHost,
@@ -162,11 +169,7 @@ export default function JobActionBar({
         </Menu>
       )}
       {canStart && (!hasCheckpoint || isRemote) && (
-        <Button
-          plain
-          onClick={() => handleStart(false)}
-          className="ml-1"
-        >
+        <Button plain onClick={() => handleStart(false)} className="ml-1">
           <Play className="w-5 h-5" />
         </Button>
       )}
@@ -205,12 +208,7 @@ export default function JobActionBar({
         </Button>
       )}
       {isRunning && !isRemote && (
-        <Button
-          plain
-          onClick={() => setTuneOpen(true)}
-          className="ml-1"
-          title="Live config tuning"
-        >
+        <Button plain onClick={() => setTuneOpen(true)} className="ml-1" title="Live config tuning">
           <SlidersHorizontal className="w-5 h-5" />
         </Button>
       )}

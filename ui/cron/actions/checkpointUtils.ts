@@ -11,10 +11,7 @@ import { getTrainingFolder } from '../paths';
  *   {jobName}_LoRA_{step}.safetensors     — named LoRA saves
  *   {jobName}_{step}/                     — diffusers format directories
  */
-export async function findLatestCheckpointStep(
-  jobName: string,
-  trainingRoot?: string,
-): Promise<number | null> {
+export async function findLatestCheckpointStep(jobName: string, trainingRoot?: string): Promise<number | null> {
   const root = trainingRoot ?? (await getTrainingFolder());
   const saveRoot = path.join(root, jobName);
 

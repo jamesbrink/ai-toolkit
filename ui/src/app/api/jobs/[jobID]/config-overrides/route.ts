@@ -1,14 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/server/prisma';
 
-const ALLOWED_KEYS = new Set([
-  'sample_every',
-  'save_every',
-  'log_every',
-  'lr',
-  'cfg_scale',
-  'gradient_accumulation',
-]);
+const ALLOWED_KEYS = new Set(['sample_every', 'save_every', 'log_every', 'lr', 'cfg_scale', 'gradient_accumulation']);
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ jobID: string }> }) {
   const { jobID } = await params;

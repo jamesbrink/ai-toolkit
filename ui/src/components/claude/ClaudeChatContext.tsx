@@ -48,9 +48,7 @@ function sanitizeToolUseResults(messages: ChatMessage[]): ChatMessage[] {
     // Only check assistant messages with content block arrays
     if (msg.role !== 'assistant' || !Array.isArray(msg.content)) continue;
 
-    const toolUseIds = (msg.content as ContentBlock[])
-      .filter((b) => b.type === 'tool_use' && b.id)
-      .map((b) => b.id!);
+    const toolUseIds = (msg.content as ContentBlock[]).filter(b => b.type === 'tool_use' && b.id).map(b => b.id!);
 
     if (toolUseIds.length === 0) continue;
 
@@ -66,9 +64,9 @@ function sanitizeToolUseResults(messages: ChatMessage[]): ChatMessage[] {
     }
 
     // Inject tool_results for any orphaned tool_use blocks
-    const missingIds = toolUseIds.filter((id) => !existingResultIds.has(id));
+    const missingIds = toolUseIds.filter(id => !existingResultIds.has(id));
     if (missingIds.length > 0) {
-      const syntheticResults: ContentBlock[] = missingIds.map((id) => ({
+      const syntheticResults: ContentBlock[] = missingIds.map(id => ({
         type: 'tool_result' as const,
         tool_use_id: id,
         content: 'User dismissed this action without responding.',

@@ -80,7 +80,7 @@ function sanitizeToolPairs(messages: MessageParam[]): MessageParam[] {
       }
 
       const filtered = (msg.content as Anthropic.ToolResultBlockParam[]).filter(
-        (b) => b.type !== 'tool_result' || prevToolIds.has(b.tool_use_id),
+        b => b.type !== 'tool_result' || prevToolIds.has(b.tool_use_id),
       );
 
       // If all blocks were orphaned tool_results, skip this message entirely
@@ -109,9 +109,9 @@ function sanitizeToolPairs(messages: MessageParam[]): MessageParam[] {
       }
     }
 
-    const missingIds = toolUseIds.filter((id) => !existingIds.has(id));
+    const missingIds = toolUseIds.filter(id => !existingIds.has(id));
     if (missingIds.length > 0) {
-      const syntheticResults: Anthropic.ToolResultBlockParam[] = missingIds.map((id) => ({
+      const syntheticResults: Anthropic.ToolResultBlockParam[] = missingIds.map(id => ({
         type: 'tool_result' as const,
         tool_use_id: id,
         content: 'User dismissed this action without responding.',

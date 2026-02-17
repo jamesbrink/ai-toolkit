@@ -117,7 +117,15 @@ buildNpmPackage {
     chmod +x $out/bin/ai-toolkit-ui
 
     wrapProgram $out/bin/ai-toolkit-ui \
-      --prefix PATH : ${lib.makeBinPath ([ bash nodejs_22 ] ++ lib.optionals stdenv.isDarwin [ macmon ])} \
+      --prefix PATH : ${
+        lib.makeBinPath (
+          [
+            bash
+            nodejs_22
+          ]
+          ++ lib.optionals stdenv.isDarwin [ macmon ]
+        )
+      } \
       --set NODE_ENV "production"
 
     runHook postInstall

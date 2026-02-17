@@ -112,8 +112,7 @@ in
           StateDirectoryMode = "0750";
         }
         // lib.optionalAttrs (cfg.environmentFile != null || hasSecretFiles) {
-          EnvironmentFile =
-            if hasSecretFiles then "/run/ai-toolkit/env" else cfg.environmentFile;
+          EnvironmentFile = if hasSecretFiles then "/run/ai-toolkit/env" else cfg.environmentFile;
         };
       };
     }

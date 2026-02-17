@@ -146,9 +146,7 @@ export default function LiveConfigPanel({ job, isOpen, onClose }: LiveConfigPane
                   min={field.min}
                 />
                 {isOverridden && (
-                  <span className="absolute top-3 right-0 text-[10px] text-blue-400">
-                    original: {originalVal}
-                  </span>
+                  <span className="absolute top-3 right-0 text-[10px] text-blue-400">original: {originalVal}</span>
                 )}
               </div>
             );

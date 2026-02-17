@@ -210,7 +210,9 @@ export async function POST(request: Request) {
                 lastSeen: new Date(),
               },
             });
-            console.log(`[Health] Registered caller: ${sender.name || sender.address} at ${sender.address}:${sender.port}`);
+            console.log(
+              `[Health] Registered caller: ${sender.name || sender.address} at ${sender.address}:${sender.port}`,
+            );
           }
         }
       } catch (error) {
