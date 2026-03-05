@@ -331,7 +331,7 @@ self: super:
     src = pkgs.fetchPypi {
       pname = "tomlkit";
       inherit version;
-      hash = "sha256-sCKHkjFo2+2MKcIpJFaXLxkIh/tHqNfGnPZIhNJbe/Q=";
+      hash = "sha256-QwzyR+5X3yuU7j++WI5x02KpQeu1Rd7Cm1OWHWGt0qE=";
     };
   });
 
