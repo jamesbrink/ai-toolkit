@@ -325,6 +325,12 @@ self: super:
     doCheck = false;
   });
 
+  # gradio pins tomlkit<0.14.0 but nixpkgs has 0.14.0
+  gradio = super.gradio.overridePythonAttrs (old: {
+    nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ self.pythonRelaxDepsHook ];
+    pythonRelaxDeps = [ "tomlkit" ];
+  });
+
   # diffusers pinned to specific git commit
   diffusers = super.diffusers.overridePythonAttrs (old: {
     version = "0.37.0.dev0";
