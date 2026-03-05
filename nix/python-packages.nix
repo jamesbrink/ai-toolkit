@@ -337,9 +337,14 @@ self: super:
 
 
   # gradio test_pipelines fails on Darwin (diffusers needs CUDA)
-  # Use overrideAttrs to preserve the override/sans-reverse-dependencies passthru
-  gradio = super.gradio.overrideAttrs (old: {
+  # Must override both gradio and its sans-reverse-dependencies variant
+  gradio = super.gradio.overridePythonAttrs (old: {
     doCheck = false;
+    passthru = (old.passthru or { }) // {
+      sans-reverse-dependencies = super.gradio.passthru.sans-reverse-dependencies.overridePythonAttrs (_: {
+        doCheck = false;
+      });
+    };
   });
 
   # diffusers pinned to specific git commit
