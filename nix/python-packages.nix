@@ -325,10 +325,14 @@ self: super:
     doCheck = false;
   });
 
-  # gradio pins tomlkit<0.14.0 but nixpkgs has 0.14.0
-  gradio = super.gradio.overridePythonAttrs (old: {
-    nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ self.pythonRelaxDepsHook ];
-    pythonRelaxDeps = [ "tomlkit" ];
+  # tomlkit 0.14.0 in nixpkgs exceeds gradio's <0.14.0 cap — pin back
+  tomlkit = super.tomlkit.overridePythonAttrs (old: rec {
+    version = "0.13.3";
+    src = pkgs.fetchPypi {
+      pname = "tomlkit";
+      inherit version;
+      hash = "sha256-sCKHkjFo2+2MKcIpJFaXLxkIh/tHqNfGnPZIhNJbe/Q=";
+    };
   });
 
   # diffusers pinned to specific git commit
