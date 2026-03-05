@@ -320,6 +320,11 @@ self: super:
     doCheck = false;
   });
 
+  # twisted test_fullWriteBuffer flaky timeout on aarch64-darwin
+  twisted = super.twisted.overridePythonAttrs (old: {
+    doCheck = false;
+  });
+
   # diffusers pinned to specific git commit
   diffusers = super.diffusers.overridePythonAttrs (old: {
     version = "0.37.0.dev0";
