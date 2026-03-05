@@ -335,10 +335,6 @@ self: super:
     };
   });
 
-  # gradio test_pipelines fails on Darwin (no CUDA, diffusers autocast warning)
-  gradio = super.gradio.overridePythonAttrs (old: {
-    doCheck = false;
-  });
 
   # diffusers pinned to specific git commit
   diffusers = super.diffusers.overridePythonAttrs (old: {
