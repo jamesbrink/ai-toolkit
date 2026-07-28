@@ -320,6 +320,12 @@ self: super:
     doCheck = false;
   });
 
+  # jupyter-server test_execution_state asserts kernel state 'busy' but gets
+  # 'starting' — a timing-sensitive check that reliably fails on loaded builders
+  jupyter-server = super.jupyter-server.overridePythonAttrs (old: {
+    disabledTests = (old.disabledTests or [ ]) ++ [ "test_execution_state" ];
+  });
+
   # twisted test_fullWriteBuffer flaky timeout on aarch64-darwin
   twisted = super.twisted.overridePythonAttrs (old: {
     doCheck = false;
