@@ -1,6 +1,10 @@
 # Python package overlay for ai-toolkit
 # Adds missing packages and pins versions that diverge significantly from nixpkgs
-{ pkgs, lib }:
+{
+  pkgs,
+  lib,
+  flakePkgs,
+}:
 
 self: super:
 {
@@ -341,14 +345,23 @@ self: super:
     };
   });
 
-
   # gradio test_pipelines fails on Darwin (diffusers needs CUDA)
   # overridePythonAttrs strips .override, which nixpkgs' gradio needs
   # for its self-referential sans-reverse-dependencies passthru.
   # Re-attach .override from the original to keep the eval chain intact.
+  #
+  # Source gradio from this flake's own nixpkgs when the consumer's copy is the
+  # unmaintained v5 line. nixpkgs 25.11 ships gradio 5.49.1, marked insecure
+  # (CVE-2026-27167, CVE-2026-28416, CVE-2026-28415), which hard-fails eval for
+  # any consumer on stable. Drop this once stable carries v6.
   gradio =
     let
-      orig = super.gradio;
+      consumerGradio = super.gradio;
+      orig =
+        if lib.versionAtLeast (consumerGradio.version or "0") "6" then
+          consumerGradio
+        else
+          flakePkgs.python312Packages.gradio;
     in
     orig.overridePythonAttrs (old: {
       doCheck = false;

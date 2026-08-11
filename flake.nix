@@ -51,6 +51,8 @@
           python3 = pkgs.python312.override {
             packageOverrides = import ./nix/python-packages.nix {
               inherit pkgs lib;
+              # Standalone builds already use this flake's nixpkgs.
+              flakePkgs = pkgs;
             };
           };
 
