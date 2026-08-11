@@ -10,9 +10,17 @@
 { nixpkgs }:
 final: prev:
 let
+  # This flake's own nixpkgs input, used as a fallback whenever the consumer's
+  # nixpkgs is too old to carry a package we need (see prismaEngines7, gradio).
+  flakePkgs = import nixpkgs {
+    inherit (final.stdenv.hostPlatform) system;
+    config.allowUnfree = true;
+  };
+
   pythonOverlay = import ./python-packages.nix {
     pkgs = final;
     lib = final.lib;
+    inherit flakePkgs;
   };
 
   python3 = final.python312.override {
@@ -21,10 +29,6 @@ let
 
   # Prisma 7 engine binaries — the consumer's nixpkgs may not ship
   # prisma-engines_7, so fall back to the flake's own nixpkgs input.
-  flakePkgs = import nixpkgs {
-    inherit (final) system;
-    config.allowUnfree = true;
-  };
   prismaEngines7 = final.prisma-engines_7 or flakePkgs.prisma-engines_7 or final.prisma-engines;
 in
 {
